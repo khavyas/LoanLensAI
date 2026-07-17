@@ -48,7 +48,7 @@ npx expo start             # press 'w' for web
 
 Demo logins (after seed): `officer@loanlens.demo` / `demo1234`, `borrower@loanlens.demo` / `demo1234`.
 
-## No-local-Node workflow (office laptop)
+## No-local-Node workflow 
 
 Local machines with firewall restrictions never run Node — everything runs in the cloud:
 
