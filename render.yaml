@@ -13,7 +13,7 @@ services:
     envVars:
       - key: MONGODB_URI
         sync: false # paste in dashboard
-      - key: OPENAI_API_KEY
+      - key: ANTHROPIC_API_KEY
         sync: false
       - key: JWT_SECRET
         generateValue: true

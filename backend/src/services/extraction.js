@@ -1,7 +1,7 @@
 import fs from 'node:fs';
-import { openai, CHAT_MODEL } from './openaiClient.js';
+import { anthropic, MODEL, parseJsonResponse } from './anthropicClient.js';
 
-const EXTRACTION_PROMPT = `You are a loan document analyst. Look at this document image and return STRICT JSON only (no markdown) with this shape:
+const EXTRACTION_PROMPT = `You are a loan document analyst. Look at this document and return STRICT JSON only (no markdown, no commentary) with this shape:
 {
   "docType": "pay-stub" | "w2" | "bank-statement" | "drivers-license" | "unknown",
   "confidence": 0.0-1.0,
@@ -16,24 +16,23 @@ const EXTRACTION_PROMPT = `You are a loan document analyst. Look at this documen
   }
 }
 Rules:
-- grossMonthlyIncome must be MONTHLY. If the document shows bi-weekly or annual pay, convert it and note the original in payPeriod.
+- grossMonthlyIncome must be MONTHLY. If the document shows weekly, bi-weekly, or annual pay, convert it and note the original in payPeriod.
 - Use null for anything not visible. Never guess.
 - confidence reflects how legible/complete the document is, not your certainty about the docType alone.`;
 
 export async function classifyAndExtract(filePath, mimeType) {
-  const base64 = fs.readFileSync(filePath).toString('base64');
-  const res = await openai.chat.completions.create({
-    model: CHAT_MODEL,
-    response_format: { type: 'json_object' },
-    messages: [
-      {
-        role: 'user',
-        content: [
-          { type: 'text', text: EXTRACTION_PROMPT },
-          { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } },
-        ],
-      },
-    ],
+  const data = fs.readFileSync(filePath).toString('base64');
+
+  const fileBlock =
+    mimeType === 'application/pdf'
+      ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data } }
+      : { type: 'image', source: { type: 'base64', media_type: mimeType, data } };
+
+  const res = await anthropic.messages.create({
+    model: MODEL,
+    max_tokens: 1024,
+    messages: [{ role: 'user', content: [fileBlock, { type: 'text', text: EXTRACTION_PROMPT }] }],
   });
-  return JSON.parse(res.choices[0].message.content);
+
+  return parseJsonResponse(res.content[0].text);
 }

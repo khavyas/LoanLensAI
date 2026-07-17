@@ -1,25 +1,15 @@
 import PolicyChunk from '../models/PolicyChunk.js';
 import Document from '../models/Document.js';
-import { openai, CHAT_MODEL, embed } from './openaiClient.js';
+import { anthropic, MODEL, parseJsonResponse } from './anthropicClient.js';
 import { missingDocuments } from './verification.js';
 
-function cosine(a, b) {
-  let dot = 0, na = 0, nb = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    na += a[i] * a[i];
-    nb += b[i] * b[i];
-  }
-  return dot / (Math.sqrt(na) * Math.sqrt(nb));
-}
-
-async function retrieve(question, k = 4) {
-  const [qVec] = await embed(question);
-  const chunks = await PolicyChunk.find({}).lean();
-  return chunks
-    .map((c) => ({ ...c, score: cosine(qVec, c.embedding) }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, k);
+// POC retrieval: the whole policy corpus (~30 small chunks) fits in Claude's
+// context, so we ground on ALL of it and require citations. The scale-up path
+// (thousands of chunks) swaps this for embeddings + vector search without
+// touching the rest of the pipeline.
+async function policyContext() {
+  const chunks = await PolicyChunk.find({}).sort({ sourceDoc: 1, chunkIndex: 1 }).lean();
+  return chunks.map((c) => `[${c.sourceDoc}]\n${c.text}`).join('\n\n');
 }
 
 function applicationStateSummary(application, documents) {
@@ -43,20 +33,20 @@ function applicationStateSummary(application, documents) {
 
 export async function answerQuestion({ question, application, role }) {
   const documents = await Document.find({ applicationId: application._id }).lean();
-  const chunks = await retrieve(question);
-
-  const context = chunks
-    .map((c, i) => `[Source ${i + 1}: ${c.sourceDoc}]\n${c.text}`)
-    .join('\n\n');
+  const context = await policyContext();
 
   const system = `You are LoanLens, a loan assistant for First Community Bank (a fictional demo bank).
 You are talking to a ${role === 'officer' ? 'loan officer reviewing this application' : 'borrower asking about their own application'}.
 
 STRICT RULES:
 - Answer ONLY from the policy excerpts and the application state below. If the answer is not there, say you don't have that information and suggest contacting the bank.
-- Cite every factual claim with its source in brackets, e.g. [Auto Loan Requirements] or [Application state].
-- Be concise and friendly. Never invent policy, rates, or timelines.
+- Never invent policy, rates, or timelines. Never quote interest rates.
+- Be concise and friendly.
 ${role !== 'officer' ? '- Do not reveal internal review details beyond what concerns the borrower directly.' : ''}
+
+Respond with STRICT JSON only (no markdown fences):
+{"answer": "your answer text", "sources": ["exact title of each policy document you used", ...]}
+Use "Application state" as a source name when you used the application data.
 
 POLICY EXCERPTS:
 ${context}
@@ -64,16 +54,22 @@ ${context}
 APPLICATION STATE:
 ${JSON.stringify(applicationStateSummary(application, documents), null, 2)}`;
 
-  const res = await openai.chat.completions.create({
-    model: CHAT_MODEL,
-    messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: question },
-    ],
+  const res = await anthropic.messages.create({
+    model: MODEL,
+    max_tokens: 1024,
+    system,
+    messages: [{ role: 'user', content: question }],
   });
 
-  return {
-    answer: res.choices[0].message.content,
-    sources: chunks.map((c) => ({ doc: c.sourceDoc, score: Number(c.score.toFixed(3)) })),
-  };
+  const raw = res.content[0].text;
+  try {
+    const parsed = parseJsonResponse(raw);
+    return {
+      answer: parsed.answer,
+      sources: (parsed.sources || []).map((doc) => ({ doc })),
+    };
+  } catch {
+    // Model didn't return valid JSON — degrade gracefully rather than erroring.
+    return { answer: raw, sources: [] };
+  }
 }

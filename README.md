@@ -17,7 +17,7 @@ AI-powered loan document copilot — FocusNext 2026 POC.
 | Mobile/web app | React Native (Expo, web-enabled) |
 | Backend | Node.js + Express |
 | Database | MongoDB Atlas (M0 free tier) |
-| AI | OpenAI — gpt-4o-mini (vision + chat), text-embedding-3-small (RAG) |
+| AI | Anthropic Claude — vision extraction + RAG-grounded chat (full policy corpus in context; embeddings/vector search is the scale-up path) |
 
 ## Repo layout
 
@@ -33,7 +33,7 @@ docs/      Roadmap, demo script
 ```bash
 # backend
 cd backend
-cp .env.example .env       # fill MONGODB_URI + OPENAI_API_KEY
+cp .env.example .env       # fill MONGODB_URI + ANTHROPIC_API_KEY
 npm install
 npm run seed               # demo users + applications
 npm run ingest             # index policy docs for RAG
@@ -53,7 +53,7 @@ Demo logins (after seed): `officer@loanlens.demo` / `demo1234`, `borrower@loanle
 Local machines with firewall restrictions never run Node — everything runs in the cloud:
 
 1. **Code** lives on GitHub; edit locally or in **GitHub Codespaces** (Node preinstalled).
-2. **Backend** deploys on Render from this repo ([render.yaml](render.yaml)): root dir `backend`, build `npm install`, start `npm start`. Set `MONGODB_URI`, `OPENAI_API_KEY`, `JWT_SECRET`, `SETUP_SECRET` in the Render dashboard.
+2. **Backend** deploys on Render from this repo ([render.yaml](render.yaml)): root dir `backend`, build `npm install`, start `npm start`. Set `MONGODB_URI`, `ANTHROPIC_API_KEY`, `JWT_SECRET`, `SETUP_SECRET` in the Render dashboard.
 3. **First-time setup without a shell** — call once after deploy (replace host + secret):
    - `POST https://<app>.onrender.com/admin/seed?secret=<SETUP_SECRET>`
    - `POST https://<app>.onrender.com/admin/ingest?secret=<SETUP_SECRET>`

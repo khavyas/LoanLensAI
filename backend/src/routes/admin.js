@@ -7,7 +7,6 @@ import User from '../models/User.js';
 import Application from '../models/Application.js';
 import Document from '../models/Document.js';
 import PolicyChunk from '../models/PolicyChunk.js';
-import { embed } from '../services/openaiClient.js';
 
 // One-time setup endpoints for environments with no shell access (Render free tier).
 // Guarded by SETUP_SECRET; disable by unsetting the env var after setup.
@@ -85,9 +84,8 @@ router.post('/ingest', async (_req, res, next) => {
       const raw = fs.readFileSync(path.join(policyDir, file), 'utf8');
       const title = (raw.match(/^# (.+)$/m) || [null, file])[1].trim();
       const chunks = raw.split(/\n(?=## )/).map((s) => s.trim()).filter((s) => s.length > 40);
-      const vectors = await embed(chunks);
       await PolicyChunk.insertMany(
-        chunks.map((text, i) => ({ sourceDoc: title, chunkIndex: i, text, embedding: vectors[i] }))
+        chunks.map((text, i) => ({ sourceDoc: title, chunkIndex: i, text }))
       );
       total += chunks.length;
     }
