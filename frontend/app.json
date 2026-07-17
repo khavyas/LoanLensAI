@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "LoanLens AI",
+    "slug": "loanlens",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

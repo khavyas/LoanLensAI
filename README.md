@@ -23,7 +23,7 @@ AI-powered loan document copilot — FocusNext 2026 POC.
 
 ```
 backend/   Express API — auth, applications, document extraction, verification, RAG chat
-mobile/    Expo React Native app
+frontend/  Expo React Native app (runs on web + mobile)
 data/      Synthetic dataset: policy docs, seed applications (NO real data, ever)
 docs/      Roadmap, demo script
 ```
@@ -39,9 +39,10 @@ npm run seed               # demo users + applications
 npm run ingest             # index policy docs for RAG
 npm run dev                # http://localhost:4000
 
-# mobile (separate terminal)
-cd mobile
+# frontend (separate terminal — or GitHub Codespaces)
+cd frontend
 npm install
+cp .env.example .env       # point EXPO_PUBLIC_API_URL at your Render backend
 npx expo start             # press 'w' for web
 ```
 
