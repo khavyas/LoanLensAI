@@ -23,7 +23,9 @@ router.use((req, res, next) => {
 
 const REQUIRED_DOCS = ['pay-stub', 'drivers-license', 'bank-statement'];
 
-router.post('/seed', async (_req, res, next) => {
+// .all so these work from a plain browser address bar (GET) too — they're
+// secret-guarded, idempotent demo setup, not production mutations.
+router.all('/seed', async (_req, res, next) => {
   try {
     await Promise.all([User.deleteMany({}), Application.deleteMany({}), Document.deleteMany({})]);
     const passwordHash = await bcrypt.hash('demo1234', 10);
@@ -72,7 +74,7 @@ router.post('/seed', async (_req, res, next) => {
   }
 });
 
-router.post('/ingest', async (_req, res, next) => {
+router.all('/ingest', async (_req, res, next) => {
   try {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const policyDir = path.resolve(__dirname, '../../../data/policies');
