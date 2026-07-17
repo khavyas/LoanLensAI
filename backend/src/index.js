@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.js';
 import applicationRoutes from './routes/applications.js';
 import documentRoutes from './routes/documents.js';
 import chatRoutes from './routes/chat.js';
+import adminRoutes from './routes/admin.js';
 
 const app = express();
 app.use(cors());
@@ -17,6 +18,7 @@ app.use('/auth', authRoutes);
 app.use('/applications', applicationRoutes);
 app.use('/documents', documentRoutes);
 app.use('/chat', chatRoutes);
+app.use('/admin', adminRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

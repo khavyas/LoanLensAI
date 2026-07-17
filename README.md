@@ -47,6 +47,19 @@ npx expo start             # press 'w' for web
 
 Demo logins (after seed): `officer@loanlens.demo` / `demo1234`, `borrower@loanlens.demo` / `demo1234`.
 
+## No-local-Node workflow (office laptop)
+
+Local machines with firewall restrictions never run Node — everything runs in the cloud:
+
+1. **Code** lives on GitHub; edit locally or in **GitHub Codespaces** (Node preinstalled).
+2. **Backend** deploys on Render from this repo ([render.yaml](render.yaml)): root dir `backend`, build `npm install`, start `npm start`. Set `MONGODB_URI`, `OPENAI_API_KEY`, `JWT_SECRET`, `SETUP_SECRET` in the Render dashboard.
+3. **First-time setup without a shell** — call once after deploy (replace host + secret):
+   - `POST https://<app>.onrender.com/admin/seed?secret=<SETUP_SECRET>`
+   - `POST https://<app>.onrender.com/admin/ingest?secret=<SETUP_SECRET>`
+   - `GET  https://<app>.onrender.com/admin/status?secret=<SETUP_SECRET>` to verify counts
+4. **Atlas**: Network Access → allow `0.0.0.0/0` (Render free tier has no static IP; demo DB holds synthetic data only).
+5. **Demo day**: open `/health` ~5 minutes early — free-tier services cold-start after 15 idle minutes.
+
 ## Rules
 
 - **Synthetic data only.** No client documents, schemas, or screenshots.

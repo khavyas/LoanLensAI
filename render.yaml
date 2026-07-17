@@ -1,0 +1,21 @@
+# Render Blueprint — deploy the LoanLens backend from this repo.
+# In Render: New → Blueprint → select this repo, or create the Web Service
+# manually with the same settings.
+services:
+  - type: web
+    name: loanlens-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: MONGODB_URI
+        sync: false # paste in dashboard
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SETUP_SECRET
+        generateValue: true
