@@ -59,7 +59,8 @@ Local machines with firewall restrictions never run Node — everything runs in 
    - `POST https://<app>.onrender.com/admin/ingest?secret=<SETUP_SECRET>`
    - `GET  https://<app>.onrender.com/admin/status?secret=<SETUP_SECRET>` to verify counts
 4. **Atlas**: Network Access → allow `0.0.0.0/0` (Render free tier has no static IP; demo DB holds synthetic data only).
-5. **Demo day**: open `/health` ~5 minutes early — free-tier services cold-start after 15 idle minutes.
+5. **Frontend** deploys on Render as a **Static Site**: root dir `frontend`, build `npm install && npx expo export --platform web`, publish directory `dist`, env var `EXPO_PUBLIC_API_URL` = the backend URL. Add a rewrite rule `/*` → `/index.html`. Static sites are free and never cold-start.
+6. **Demo day**: open the backend's `/health` ~5 minutes early — free-tier web services cold-start after 15 idle minutes (the static frontend does not).
 
 ## Rules
 

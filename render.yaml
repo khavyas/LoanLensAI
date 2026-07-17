@@ -19,3 +19,17 @@ services:
         generateValue: true
       - key: SETUP_SECRET
         generateValue: true
+
+  - type: web
+    name: loanlens-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npx expo export --platform web
+    staticPublishPath: dist
+    envVars:
+      - key: EXPO_PUBLIC_API_URL
+        sync: false # set to the backend service URL, e.g. https://loanlensai.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

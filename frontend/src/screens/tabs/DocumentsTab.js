@@ -21,7 +21,9 @@ export default function DocumentsTab({ app, onChanged }) {
 
     const form = new FormData();
     if (Platform.OS === 'web') {
-      form.append('file', asset.file, asset.name);
+      // Some browsers don't populate asset.file — fall back to fetching the blob URI.
+      const file = asset.file ?? (await (await fetch(asset.uri)).blob());
+      form.append('file', file, asset.name);
     } else {
       form.append('file', { uri: asset.uri, name: asset.name, type: asset.mimeType || 'image/jpeg' });
     }
