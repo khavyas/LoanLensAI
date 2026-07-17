@@ -2,13 +2,16 @@ import { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { api } from '../../api/client';
-import { colors } from '../../theme';
+import { colors, labelize } from '../../theme';
+import { Pill, Card, Overline } from '../../components/ui';
 
-const OVERALL_COLOR = { pass: colors.success, 'needs-review': colors.warning, fail: colors.danger };
+const OVERALL_TONE = { pass: 'success', 'needs-review': 'warning', fail: 'danger' };
 
 export default function DocumentsTab({ app, onChanged }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+
+  const receivedTypes = new Set((app.documents || []).map((d) => d.docType));
 
   async function pickAndUpload() {
     setError(null);
@@ -31,7 +34,7 @@ export default function DocumentsTab({ app, onChanged }) {
     setBusy(true);
     try {
       await api.uploadDocument(app._id, form);
-      onChanged(); // refetch application incl. new document + verification
+      onChanged();
     } catch (e) {
       setError(e.message);
     } finally {
@@ -41,92 +44,78 @@ export default function DocumentsTab({ app, onChanged }) {
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>
-      {app.missingDocuments?.length > 0 && (
-        <View style={styles.missingBox}>
-          <Text style={styles.missingTitle}>Still needed</Text>
-          {app.missingDocuments.map((d) => (
-            <Text key={d} style={styles.missingItem}>
-              • {d.replace(/-/g, ' ')}
-            </Text>
-          ))}
-        </View>
-      )}
+      <Card style={{ marginBottom: 12 }}>
+        <Overline>Required documents</Overline>
+        {(app.requiredDocTypes || []).map((t) => {
+          const received = receivedTypes.has(t);
+          return (
+            <View key={t} style={styles.reqRow}>
+              <View style={[styles.dot, { backgroundColor: received ? colors.success : colors.faint }]} />
+              <Text style={styles.reqName}>{labelize(t)}</Text>
+              <Pill tone={received ? 'success' : 'neutral'}>{received ? 'Received' : 'Pending'}</Pill>
+            </View>
+          );
+        })}
+      </Card>
 
       <TouchableOpacity style={styles.uploadBtn} onPress={pickAndUpload} disabled={busy}>
         {busy ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.uploadText}>＋ Upload document</Text>
+          <Text style={styles.uploadText}>Upload document</Text>
         )}
       </TouchableOpacity>
       {busy && <Text style={styles.busyHint}>AI is classifying and extracting…</Text>}
       {error && <Text style={styles.error}>{error}</Text>}
 
       {(app.documents || []).map((doc) => (
-        <View key={doc._id} style={styles.card}>
+        <Card key={doc._id} style={{ marginTop: 12 }}>
           <View style={styles.cardHeader}>
-            <Text style={styles.docType}>{(doc.docType || 'unknown').replace(/-/g, ' ')}</Text>
-            <View
-              style={[
-                styles.badge,
-                { backgroundColor: OVERALL_COLOR[doc.verification?.overall] || colors.muted },
-              ]}
-            >
-              <Text style={styles.badgeText}>{doc.verification?.overall}</Text>
-            </View>
+            <Text style={styles.docType}>{labelize(doc.docType || 'unknown')}</Text>
+            <Pill tone={OVERALL_TONE[doc.verification?.overall] || 'neutral'}>
+              {labelize(doc.verification?.overall || 'pending')}
+            </Pill>
           </View>
           <Text style={styles.confidence}>
-            Extraction confidence: {Math.round((doc.confidence || 0) * 100)}%
+            Extraction confidence · {Math.round((doc.confidence || 0) * 100)}%
           </Text>
           {Object.entries(doc.extractedFields || {})
             .filter(([, v]) => v != null)
             .map(([k, v]) => (
               <View key={k} style={styles.fieldRow}>
-                <Text style={styles.fieldKey}>{k}</Text>
+                <Text style={styles.fieldKey}>{labelize(k.replace(/([A-Z])/g, '-$1'))}</Text>
                 <Text style={styles.fieldVal}>{String(v)}</Text>
               </View>
             ))}
-        </View>
+        </Card>
       ))}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  missingBox: {
-    backgroundColor: '#FFF7E6',
-    borderColor: colors.warning,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+  reqRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
+  dot: { width: 8, height: 8, borderRadius: 4, marginRight: 10 },
+  reqName: { flex: 1, color: colors.text, fontWeight: '600', fontSize: 14 },
+  uploadBtn: {
+    backgroundColor: colors.accent,
+    borderRadius: 8,
+    paddingVertical: 13,
+    alignItems: 'center',
   },
-  missingTitle: { fontWeight: '800', color: colors.warning, marginBottom: 4 },
-  missingItem: { color: colors.text, textTransform: 'capitalize' },
-  uploadBtn: { backgroundColor: colors.accent, borderRadius: 10, padding: 14, alignItems: 'center' },
-  uploadText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  busyHint: { textAlign: 'center', color: colors.muted, marginTop: 8 },
-  error: { color: colors.danger, marginTop: 8 },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 14,
-    marginTop: 12,
-  },
+  uploadText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  busyHint: { textAlign: 'center', color: colors.muted, marginTop: 8, fontSize: 13 },
+  error: { color: colors.danger, marginTop: 8, fontSize: 13 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  docType: { fontWeight: '800', fontSize: 16, color: colors.text, textTransform: 'capitalize' },
-  badge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
-  badgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  confidence: { color: colors.muted, fontSize: 12, marginTop: 4, marginBottom: 8 },
+  docType: { fontWeight: '800', fontSize: 16, color: colors.text },
+  confidence: { color: colors.faint, fontSize: 12, marginTop: 4, marginBottom: 8 },
   fieldRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderTopWidth: 1,
     borderColor: colors.border,
   },
-  fieldKey: { color: colors.muted },
-  fieldVal: { color: colors.text, fontWeight: '600', flexShrink: 1, textAlign: 'right' },
+  fieldKey: { color: colors.muted, fontSize: 13 },
+  fieldVal: { color: colors.text, fontWeight: '600', fontSize: 13, flexShrink: 1, textAlign: 'right' },
 });

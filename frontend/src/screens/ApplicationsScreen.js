@@ -3,15 +3,17 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } fr
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme';
+import { colors, labelize, STATUS_TONE, shadow } from '../theme';
+import { Pill, Overline } from '../components/ui';
 
-const STATUS_COLORS = {
-  submitted: colors.accent,
-  'needs-review': colors.warning,
-  approved: colors.success,
-  rejected: colors.danger,
-  draft: colors.muted,
-};
+function initials(name) {
+  return (name || '')
+    .split(/\s+/)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+}
 
 export default function ApplicationsScreen({ navigation }) {
   const { user, logout } = useAuth();
@@ -37,66 +39,88 @@ export default function ApplicationsScreen({ navigation }) {
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.topBar}>
-        <Text style={styles.welcome}>
-          {user.name} · {user.role === 'officer' ? 'Loan Officer' : 'Borrower'}
-        </Text>
-        <TouchableOpacity onPress={logout}>
-          <Text style={styles.logout}>Log out</Text>
-        </TouchableOpacity>
-      </View>
-
-      <FlatList
-        data={apps}
-        keyExtractor={(item) => item._id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={load} />}
-        contentContainerStyle={{ padding: 16 }}
-        ListEmptyComponent={<Text style={styles.empty}>No applications yet.</Text>}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => navigation.navigate('ApplicationDetail', { id: item._id })}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={styles.name}>{item.applicantName}</Text>
-              <Text style={styles.meta}>
-                {item.productType === 'auto-loan' ? 'Auto Loan' : 'Personal Loan'} · $
-                {item.requestedAmount?.toLocaleString()}
-              </Text>
-            </View>
-            <View style={[styles.badge, { backgroundColor: STATUS_COLORS[item.status] || colors.muted }]}>
-              <Text style={styles.badgeText}>{item.status}</Text>
-            </View>
+      <View style={styles.inner}>
+        <View style={styles.topBar}>
+          <View>
+            <Overline>{user.role === 'officer' ? 'Loan Officer Portal' : 'Borrower Portal'}</Overline>
+            <Text style={styles.heading}>
+              {user.role === 'officer' ? 'Loan Applications' : 'My Applications'}
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+            <Text style={styles.logout}>Sign out</Text>
           </TouchableOpacity>
-        )}
-      />
+        </View>
+
+        <FlatList
+          data={apps}
+          keyExtractor={(item) => item._id}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={load} />}
+          contentContainerStyle={{ paddingBottom: 24 }}
+          ListEmptyComponent={<Text style={styles.empty}>No applications yet.</Text>}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => navigation.navigate('ApplicationDetail', { id: item._id })}
+            >
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{initials(item.applicantName)}</Text>
+              </View>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={styles.name}>{item.applicantName}</Text>
+                <Text style={styles.meta}>
+                  {labelize(item.productType)} · ${item.requestedAmount?.toLocaleString()}
+                </Text>
+              </View>
+              <Pill tone={STATUS_TONE[item.status] || 'neutral'}>{labelize(item.status)}</Pill>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: colors.bg },
+  inner: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center', padding: 20 },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 16,
-    paddingBottom: 0,
+    alignItems: 'flex-end',
+    marginBottom: 16,
   },
-  welcome: { color: colors.text, fontWeight: '600' },
-  logout: { color: colors.accent, fontWeight: '600' },
+  heading: { fontSize: 24, fontWeight: '800', color: colors.text, marginTop: 2 },
+  logoutBtn: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    backgroundColor: colors.card,
+  },
+  logout: { color: colors.neutral, fontWeight: '600', fontSize: 13 },
   card: {
     backgroundColor: colors.card,
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
+    padding: 16,
+    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...shadow,
   },
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.infoBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { color: colors.info, fontWeight: '800', fontSize: 14 },
   name: { fontSize: 16, fontWeight: '700', color: colors.text },
-  meta: { color: colors.muted, marginTop: 2 },
-  badge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  badgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  meta: { color: colors.muted, marginTop: 2, fontSize: 13 },
   empty: { textAlign: 'center', color: colors.muted, marginTop: 40 },
 });
