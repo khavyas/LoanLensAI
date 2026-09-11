@@ -40,6 +40,35 @@ export function verifyDocument(application, extracted) {
     });
   }
 
+  if (f.businessName != null && application.businessName) {
+    const match = normalizeName(f.businessName) === normalizeName(application.businessName);
+    checks.push({
+      field: 'Business name',
+      expected: application.businessName,
+      found: f.businessName,
+      status: match ? 'match' : 'mismatch',
+      explanation: match
+        ? 'Business name on document matches the application.'
+        : 'Business/DBA name on this document does not exactly match the application. Confirm the legal entity name before closing — mismatched entity names are a common cause of stalled loan closings.',
+    });
+  }
+
+  if (f.annualBusinessRevenue != null && application.statedAnnualBusinessRevenue != null) {
+    const stated = application.statedAnnualBusinessRevenue;
+    const found = f.annualBusinessRevenue;
+    const diff = Math.abs(stated - found) / stated;
+    const ok = diff <= INCOME_TOLERANCE;
+    checks.push({
+      field: 'Annual business revenue',
+      expected: `$${stated.toLocaleString()}`,
+      found: `$${found.toLocaleString()}`,
+      status: ok ? 'match' : 'mismatch',
+      explanation: ok
+        ? `Documented revenue is within ${INCOME_TOLERANCE * 100}% of the stated revenue.`
+        : `Application states $${stated.toLocaleString()}/yr but this document shows $${found.toLocaleString()}/yr (${(diff * 100).toFixed(0)}% difference). Ask the applicant to confirm or provide additional financial statements.`,
+    });
+  }
+
   if (f.employerName != null && application.employerName) {
     const match = normalizeName(f.employerName) === normalizeName(application.employerName);
     checks.push({

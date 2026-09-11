@@ -6,6 +6,12 @@ import Application from '../models/Application.js';
 import Document from '../models/Document.js';
 
 const REQUIRED_DOCS = ['pay-stub', 'drivers-license', 'bank-statement'];
+const SMB_REQUIRED_DOCS = [
+  'business-tax-return',
+  'personal-financial-statement',
+  'business-license',
+  'ownership-disclosure',
+];
 
 async function run() {
   await connectDb();
@@ -18,6 +24,18 @@ async function run() {
   ]);
 
   await Application.create([
+    {
+      applicantName: 'Dana Whitfield',
+      applicantEmail: 'dana.whitfield@example.demo',
+      productType: 'small-business-loan',
+      businessName: 'Whitfield & Co. Bakery LLC',
+      statedAnnualBusinessRevenue: 340000, // planted mismatch: tax return will show $275,400
+      address: '14 Crestline Rd, Springfield',
+      ssnLast4: '6672',
+      requestedAmount: 85000,
+      requiredDocTypes: SMB_REQUIRED_DOCS,
+      status: 'submitted',
+    },
     {
       applicantName: 'Jordan Rivera',
       applicantEmail: 'borrower@loanlens.demo',
@@ -55,7 +73,7 @@ async function run() {
     },
   ]);
 
-  console.log('Seeded 2 users and 3 applications.');
+  console.log('Seeded 2 users and 4 applications.');
   console.log('Logins: officer@loanlens.demo / demo1234  ·  borrower@loanlens.demo / demo1234');
   process.exit(0);
 }

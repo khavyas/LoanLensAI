@@ -14,6 +14,10 @@ A pay stub dated within the last 30 days showing employer name, pay period, and 
 
 The most recent monthly statement for the applicant's primary checking or savings account, showing the account holder's name and the full statement period. Screenshots of account balances are not accepted.
 
+## Accepted documents for small business loans
+
+A current business license or certificate of formation showing the legal business name and entity type; the business's two most recent federal tax returns (Schedule C or equivalent) showing gross receipts; a personal financial statement from each owner with 25% or more ownership; and a beneficial ownership disclosure listing every such owner with their exact ownership percentage. The legal/DBA business name must match exactly across all four documents — see the Small Business Loan Requirements policy for how name mismatches are handled.
+
 ## Document quality standards
 
 Uploads must be legible photos or scans: all four corners visible, no glare covering figures, text readable without magnification. Blurry, cropped, or partially obscured documents are rejected automatically and the applicant is asked to re-upload.

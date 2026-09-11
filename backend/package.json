@@ -10,7 +10,8 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "seed": "node src/scripts/seed.js",
-    "ingest": "node src/scripts/ingestPolicies.js"
+    "ingest": "node src/scripts/ingestPolicies.js",
+    "reset": "npm run seed && npm run ingest"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

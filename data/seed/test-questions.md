@@ -21,6 +21,14 @@ Officer role:
 14. How do I convert bi-weekly pay to monthly? → ×26 ÷12 [Income Verification Policy]
 15. Can the system auto-decline this? → no, human review guarantee [Income Verification Policy]
 
+Small business scenario (Dana Whitfield, Whitfield & Co. Bakery LLC — revenue mismatch + business name mismatch both planted):
+
+19. What documents do I need for a small business loan? → tax returns, personal financial statement, business license, ownership disclosure [Small Business Loan Requirements]
+20. Why is my business loan application flagged? → business name mismatch ("Whitfield & Co. Bakery LLC" vs "Whitfield And Co Bakery LLC") and revenue mismatch ($340,000 stated vs $275,400 documented) [Application state / Small Business Loan Requirements]
+21. Why does the legal name on my license need to match my application exactly? → entity name matching policy, common cause of closing delays [Small Business Loan Requirements]
+22. How much ownership do I need to disclose? → 25% or more, with exact percentage [Small Business Loan Requirements]
+23. How long until I get a decision on my business loan? → 5 business days after all 4 docs verified, clock pauses on unresolved exceptions [Small Business Loan Requirements]
+
 Grounding checks (must refuse / say not available):
 
 16. What's the bank's routing number? → not in corpus, must say unavailable

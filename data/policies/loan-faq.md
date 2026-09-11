@@ -18,6 +18,10 @@ Auto loans: within 2 business days of a complete application. Personal loans: wi
 
 Yes. If a document shows different information than your application (for example, a different income figure), you can correct the application to match the documentation. Corrections restart verification for the affected fields only.
 
+## I'm applying for a small business loan — why was my business name flagged?
+
+The legal or DBA name on one of your documents doesn't exactly match the business name on your application — even a small difference like "&" versus "and" counts. This is a routine check, not a rejection; a loan officer will confirm which spelling is correct before your application moves forward.
+
 ## Who sees my documents?
 
 Documents are processed automatically to extract and verify key fields, then reviewed only by the loan officer assigned to your application. Decisions are always made by a person, not by the automated system.

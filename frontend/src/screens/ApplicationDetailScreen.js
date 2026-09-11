@@ -31,12 +31,25 @@ export default function ApplicationDetailScreen({ route }) {
 
   if (!app) return <Text style={styles.loading}>Loading application…</Text>;
 
-  const facts = [
-    { label: 'Product', value: labelize(app.productType) },
-    { label: 'Requested', value: `$${app.requestedAmount?.toLocaleString()}` },
-    { label: 'Stated income', value: `$${app.statedMonthlyIncome?.toLocaleString()}/mo` },
-    { label: 'Employer', value: app.employerName || '—' },
-  ];
+  const facts =
+    app.productType === 'small-business-loan'
+      ? [
+          { label: 'Product', value: labelize(app.productType) },
+          { label: 'Requested', value: `$${app.requestedAmount?.toLocaleString()}` },
+          { label: 'Business', value: app.businessName || '—' },
+          {
+            label: 'Stated annual revenue',
+            value: app.statedAnnualBusinessRevenue
+              ? `$${app.statedAnnualBusinessRevenue.toLocaleString()}/yr`
+              : '—',
+          },
+        ]
+      : [
+          { label: 'Product', value: labelize(app.productType) },
+          { label: 'Requested', value: `$${app.requestedAmount?.toLocaleString()}` },
+          { label: 'Stated income', value: `$${app.statedMonthlyIncome?.toLocaleString()}/mo` },
+          { label: 'Employer', value: app.employerName || '—' },
+        ];
 
   return (
     <View style={styles.wrap}>
