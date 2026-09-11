@@ -22,6 +22,10 @@ Yes. If a document shows different information than your application (for exampl
 
 The legal or DBA name on one of your documents doesn't exactly match the business name on your application — even a small difference like "&" versus "and" counts. This is a routine check, not a rejection; a loan officer will confirm which spelling is correct before your application moves forward.
 
+## Why was my requested loan amount flagged?
+
+The amount you requested is well above what our rough, automated affordability estimate suggests is supportable by your documented income (or, for a business loan, documented annual revenue). This is not a denial — it's a routine check that asks a loan officer to take a closer look, since it could reflect other income sources, existing savings, or simply a typo in the amount entered.
+
 ## Who sees my documents?
 
 Documents are processed automatically to extract and verify key fields, then reviewed only by the loan officer assigned to your application. Decisions are always made by a person, not by the automated system.

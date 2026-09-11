@@ -21,13 +21,18 @@ Officer role:
 14. How do I convert bi-weekly pay to monthly? → ×26 ÷12 [Income Verification Policy]
 15. Can the system auto-decline this? → no, human review guarantee [Income Verification Policy]
 
-Small business scenario (Dana Whitfield, Whitfield & Co. Bakery LLC — revenue mismatch + business name mismatch both planted):
+Small business scenario (Dana Whitfield, Whitfield & Co. Bakery LLC — revenue mismatch, business name mismatch, and affordability flag all planted):
 
 19. What documents do I need for a small business loan? → tax returns, personal financial statement, business license, ownership disclosure [Small Business Loan Requirements]
-20. Why is my business loan application flagged? → business name mismatch ("Whitfield & Co. Bakery LLC" vs "Whitfield And Co Bakery LLC") and revenue mismatch ($340,000 stated vs $275,400 documented) [Application state / Small Business Loan Requirements]
+20. Why is my business loan application flagged? → business name mismatch ("Whitfield & Co. Bakery LLC" vs "Whitfield And Co Bakery LLC"), revenue mismatch ($340,000 stated vs $275,400 documented), and requested amount ($110,000) exceeding the ~$82,620 affordability estimate (30% of documented revenue) [Application state / Small Business Loan Requirements]
 21. Why does the legal name on my license need to match my application exactly? → entity name matching policy, common cause of closing delays [Small Business Loan Requirements]
 22. How much ownership do I need to disclose? → 25% or more, with exact percentage [Small Business Loan Requirements]
 23. How long until I get a decision on my business loan? → 5 business days after all 4 docs verified, clock pauses on unresolved exceptions [Small Business Loan Requirements]
+24. Why was my requested loan amount flagged? → estimate based on documented revenue/income, not a denial, officer reviews [Small Business Loan Requirements / Loan FAQ]
+
+Affordability check — manual QA scenario (not seeded, exercise by hand):
+
+25. Temporarily edit a personal-loan application's requestedAmount to an implausible figure (e.g. $500,000 against $2,500/mo documented income) and re-upload its pay stub. Verification tab should show a "Requested amount vs. affordability" row, status Warning, explanation stating the requested amount is roughly Nx the estimated affordable maximum and suggesting a data-entry-error check. Application should move to "Needs Review" in the applications list (not just inside the document detail) — this is the fix for warning-level flags surfacing at the list level, not only hard mismatches.
 
 Grounding checks (must refuse / say not available):
 

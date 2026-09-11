@@ -8,18 +8,21 @@ loan closings — entity-name mismatches and revenue verification are harder, le
 commoditized problems than a mortgage pay stub, and they map directly to gaps found in
 production support tickets. Use the beats below exactly as written but substitute:
 
-- Applicant: **Dana Whitfield**, product **Small Business Loan**, requested **$85,000**.
+- Applicant: **Dana Whitfield**, product **Small Business Loan**, requested **$110,000**.
 - Upload `whitfield-bakery-business-tax-return.png` in Beat 1 → extracted annual
   revenue **$275,400**.
-- In Beat 2, point at **two** flagged rows instead of one: **Annual business revenue**
-  ($340,000 stated vs. $275,400 documented) and **Business name**
+- In Beat 2, point at **three** flagged rows instead of one: **Annual business revenue**
+  ($340,000 stated vs. $275,400 documented), **Business name**
   ("Whitfield & Co. Bakery LLC" on the application vs. "Whitfield And Co Bakery LLC" on
-  the business license) — call out that the name-mismatch pattern is the single most
+  the business license — call out that this name-mismatch pattern is the single most
   common reason small-business loan closings get delayed in the real world, not a
-  hypothetical edge case.
-- In Beat 3, ask *"Why is this application flagged?"* → answer should cite both the
-  revenue and business-name exceptions from the **Small Business Loan Requirements**
-  policy.
+  hypothetical edge case), and **Requested amount vs. affordability** (the $110,000
+  ask is about 1.3x the ~$82,620 estimate the system derives from the documented
+  $275,400 revenue) — a good moment to explain this is a triage estimate for the
+  officer, never an auto-decline.
+- In Beat 3, ask *"Why is this application flagged?"* → answer should cite all three
+  exceptions — revenue, business-name, and requested-amount — from the
+  **Small Business Loan Requirements** policy.
 
 Keep the Jordan Rivera (consumer auto-loan) walkthrough below as the fallback script —
 it's simpler to narrate live if something goes wrong with the business-loan upload, and

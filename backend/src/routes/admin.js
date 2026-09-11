@@ -45,7 +45,9 @@ async function runSeed() {
       statedAnnualBusinessRevenue: 340000, // planted mismatch: tax return will show $275,400
       address: '14 Crestline Rd, Springfield',
       ssnLast4: '6672',
-      requestedAmount: 85000,
+      // Planted affordability flag: 30% of documented revenue ($275,400 on the
+      // tax return) caps this at ~$82,620 — $110,000 is a clear, demo-able breach.
+      requestedAmount: 110000,
       requiredDocTypes: SMB_REQUIRED_DOCS,
       status: 'submitted',
     },

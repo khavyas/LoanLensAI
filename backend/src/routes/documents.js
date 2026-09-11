@@ -30,7 +30,11 @@ router.post('/:applicationId', upload.single('file'), async (req, res, next) => 
       verification,
     });
 
-    if (verification.overall === 'fail') {
+    // A 'warning'-level flag (e.g. an affordability check) is just as important
+    // for an officer to see in their queue as a hard 'fail' — both mean a human
+    // needs to look, so both surface at the application level, not just inside
+    // this document's own verification detail.
+    if (verification.overall === 'fail' || verification.overall === 'needs-review') {
       application.status = 'needs-review';
       await application.save();
     }

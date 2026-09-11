@@ -18,6 +18,10 @@ The legal business name and any "doing business as" (DBA) name must match exactl
 
 Annual business revenue stated on the application is compared against gross receipts on the most recent business tax return. Differences of 5% or less are accepted as rounding or seasonal variation. Differences greater than 5% trigger a verification exception and require the applicant to provide an explanation or additional financial statements (for example, year-to-date profit and loss) before underwriting can proceed.
 
+## Loan amount affordability estimate
+
+As a rough affordability estimate (not a debt-service-coverage calculation or a credit decision), the system compares the requested loan amount against documented annual revenue from the business tax return, using a guideline that the loan amount should not exceed roughly 30% of documented annual revenue, capped at the $250,000 product maximum. A requested amount above this estimate is flagged for officer review — the officer should assess the business's actual debt-service capacity (existing obligations, cash flow, net profit) before underwriting, since this estimate does not account for those factors.
+
 ## Beneficial ownership disclosure
 
 Every individual owning 25% or more of the business must be listed on the ownership disclosure with their exact ownership percentage. Ownership percentages across all listed owners should reconcile to the business's actual cap table; officers should flag any disclosure that appears incomplete (for example, a sole proprietorship where only a partial percentage is disclosed).

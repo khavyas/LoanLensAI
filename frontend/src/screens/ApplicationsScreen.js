@@ -69,7 +69,7 @@ export default function ApplicationsScreen({ navigation }) {
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text style={styles.name}>{item.applicantName}</Text>
                 <Text style={styles.meta}>
-                  {labelize(item.productType)} · ${item.requestedAmount?.toLocaleString()}
+                  {labelize(item.productType)} · ${item.requestedAmount?.toLocaleString('en-US')}
                 </Text>
               </View>
               <Pill tone={STATUS_TONE[item.status] || 'neutral'}>{labelize(item.status)}</Pill>

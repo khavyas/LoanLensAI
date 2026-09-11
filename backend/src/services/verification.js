@@ -3,6 +3,19 @@
 
 const INCOME_TOLERANCE = 0.05; // 5%
 
+// Simplified affordability heuristics — advisory triage only, NOT a real
+// underwriting/credit decision. We deliberately avoid any interest-rate math
+// (the assistant never quotes rates), so these estimate a rough maximum from
+// documented income/revenue alone. maxPaymentRatio/maxTermMonths translate
+// the ratio and term language already in the product policy docs into a
+// single dollar ceiling; a loan officer always makes the real call.
+const AFFORDABILITY = {
+  'auto-loan': { maxPaymentRatio: 1 / 3, maxTermMonths: 72, productCap: 75000 },
+  'personal-loan': { maxPaymentRatio: 0.45, maxTermMonths: 36, productCap: 25000 },
+};
+const SMALL_BUSINESS_REVENUE_CAP_RATIO = 0.3; // rough rule of thumb, not a debt-service-coverage calc
+const SMALL_BUSINESS_PRODUCT_CAP = 250000;
+
 function normalizeName(s) {
   return (s || '').toLowerCase().replace(/[^a-z ]/g, '').split(/\s+/).filter(Boolean).sort().join(' ');
 }
@@ -31,12 +44,12 @@ export function verifyDocument(application, extracted) {
     const ok = diff <= INCOME_TOLERANCE;
     checks.push({
       field: 'Monthly income',
-      expected: `$${stated.toLocaleString()}`,
-      found: `$${found.toLocaleString()}`,
+      expected: `$${stated.toLocaleString('en-US')}`,
+      found: `$${found.toLocaleString('en-US')}`,
       status: ok ? 'match' : 'mismatch',
       explanation: ok
         ? `Documented income is within ${INCOME_TOLERANCE * 100}% of the stated income.`
-        : `Application states $${stated.toLocaleString()}/mo but this document shows $${found.toLocaleString()}/mo (${(diff * 100).toFixed(0)}% difference). Ask the borrower to confirm or provide additional proof of income.`,
+        : `Application states $${stated.toLocaleString('en-US')}/mo but this document shows $${found.toLocaleString('en-US')}/mo (${(diff * 100).toFixed(0)}% difference). Ask the borrower to confirm or provide additional proof of income.`,
     });
   }
 
@@ -60,12 +73,47 @@ export function verifyDocument(application, extracted) {
     const ok = diff <= INCOME_TOLERANCE;
     checks.push({
       field: 'Annual business revenue',
-      expected: `$${stated.toLocaleString()}`,
-      found: `$${found.toLocaleString()}`,
+      expected: `$${stated.toLocaleString('en-US')}`,
+      found: `$${found.toLocaleString('en-US')}`,
       status: ok ? 'match' : 'mismatch',
       explanation: ok
         ? `Documented revenue is within ${INCOME_TOLERANCE * 100}% of the stated revenue.`
-        : `Application states $${stated.toLocaleString()}/yr but this document shows $${found.toLocaleString()}/yr (${(diff * 100).toFixed(0)}% difference). Ask the applicant to confirm or provide additional financial statements.`,
+        : `Application states $${stated.toLocaleString('en-US')}/yr but this document shows $${found.toLocaleString('en-US')}/yr (${(diff * 100).toFixed(0)}% difference). Ask the applicant to confirm or provide additional financial statements.`,
+    });
+  }
+
+  if (application.requestedAmount != null && f.grossMonthlyIncome != null && AFFORDABILITY[application.productType]) {
+    const { maxPaymentRatio, maxTermMonths, productCap } = AFFORDABILITY[application.productType];
+    const maxAffordable = Math.min(productCap, f.grossMonthlyIncome * maxPaymentRatio * maxTermMonths);
+    const requested = application.requestedAmount;
+    const ok = requested <= maxAffordable;
+    checks.push({
+      field: 'Requested amount vs. affordability',
+      expected: `Up to ~$${Math.round(maxAffordable).toLocaleString('en-US')} (estimated from documented income)`,
+      found: `$${requested.toLocaleString('en-US')} requested`,
+      status: ok ? 'match' : 'warning',
+      explanation: ok
+        ? 'Requested amount is within the estimated affordable range for the documented income.'
+        : `Requested amount is about ${(requested / maxAffordable).toFixed(1)}x the estimated affordable maximum based on documented income. This is a rough estimate, not a credit decision — confirm this isn't a data-entry error and review full affordability (existing debts, credit profile) before underwriting.`,
+    });
+  }
+
+  if (
+    application.requestedAmount != null &&
+    f.annualBusinessRevenue != null &&
+    application.productType === 'small-business-loan'
+  ) {
+    const maxAffordable = Math.min(SMALL_BUSINESS_PRODUCT_CAP, f.annualBusinessRevenue * SMALL_BUSINESS_REVENUE_CAP_RATIO);
+    const requested = application.requestedAmount;
+    const ok = requested <= maxAffordable;
+    checks.push({
+      field: 'Requested amount vs. affordability',
+      expected: `Up to ~$${Math.round(maxAffordable).toLocaleString('en-US')} (estimated at ${SMALL_BUSINESS_REVENUE_CAP_RATIO * 100}% of documented annual revenue)`,
+      found: `$${requested.toLocaleString('en-US')} requested`,
+      status: ok ? 'match' : 'warning',
+      explanation: ok
+        ? 'Requested amount is within the estimated affordable range for the documented annual revenue.'
+        : `Requested amount is about ${(requested / maxAffordable).toFixed(1)}x the estimated affordable maximum based on documented annual revenue. This is a rough estimate, not a credit decision — review full debt-service capacity (existing obligations, cash flow) before underwriting.`,
     });
   }
 

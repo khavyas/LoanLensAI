@@ -35,19 +35,19 @@ export default function ApplicationDetailScreen({ route }) {
     app.productType === 'small-business-loan'
       ? [
           { label: 'Product', value: labelize(app.productType) },
-          { label: 'Requested', value: `$${app.requestedAmount?.toLocaleString()}` },
+          { label: 'Requested', value: `$${app.requestedAmount?.toLocaleString('en-US')}` },
           { label: 'Business', value: app.businessName || '—' },
           {
             label: 'Stated annual revenue',
             value: app.statedAnnualBusinessRevenue
-              ? `$${app.statedAnnualBusinessRevenue.toLocaleString()}/yr`
+              ? `$${app.statedAnnualBusinessRevenue.toLocaleString('en-US')}/yr`
               : '—',
           },
         ]
       : [
           { label: 'Product', value: labelize(app.productType) },
-          { label: 'Requested', value: `$${app.requestedAmount?.toLocaleString()}` },
-          { label: 'Stated income', value: `$${app.statedMonthlyIncome?.toLocaleString()}/mo` },
+          { label: 'Requested', value: `$${app.requestedAmount?.toLocaleString('en-US')}` },
+          { label: 'Stated income', value: `$${app.statedMonthlyIncome?.toLocaleString('en-US')}/mo` },
           { label: 'Employer', value: app.employerName || '—' },
         ];
 
