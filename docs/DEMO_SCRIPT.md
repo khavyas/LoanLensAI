@@ -66,6 +66,28 @@ for a second pass.
    rule with a tolerance band. Auditable, explainable, no hallucinated risk calls."*
 4. Optionally upload the license or bank statement to show clean **Match** rows too.
 
+## Beat 2.5 — Live self-service fix (30-40s) — the headline feature
+
+This is the moment that answers "how is this actually faster, not just prettier."
+
+1. Still in **Verification**, switch to the **Documents** tab. Point at the **Action
+   needed** card at the top — it lists the same flagged item(s) in plain language,
+   each with its own **Re-upload** button (or **Upload** for anything not yet received).
+2. Tap **Re-upload** next to the flagged item (e.g. Business name, for the
+   small-business scenario) and pick a corrected document — for a live demo, this can
+   be the officer clicking it themselves; the button and flow are identical to what the
+   borrower sees on their own login, there's no special officer-only path here.
+3. Watch it resolve: the item disappears from **Action needed**, and if that was the
+   *last* open item, the application's status pill flips itself from **Needs Review**
+   back to normal — with no officer having to manually clear anything.
+4. *"Today this loop is an email, a wait, and a re-check — often days. Here it's one
+   click and it's instantly reflected for both sides, because officer and borrower are
+   reading the exact same live list, not two separate views that drift apart."*
+5. Optional curveball proof point: pick a deliberately wrong file type for the fix
+   (e.g. a bank statement when a driver's license was requested) — it's caught
+   immediately with a specific "wrong document type" message, not a silent failure the
+   applicant only discovers days later.
+
 ## Beat 3 — Ask the loan file (60s)
 
 1. Still as officer, open the **Assistant** tab. Ask (or tap the suggestion):

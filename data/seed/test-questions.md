@@ -34,6 +34,14 @@ Affordability check — manual QA scenario (not seeded, exercise by hand):
 
 25. Temporarily edit a personal-loan application's requestedAmount to an implausible figure (e.g. $500,000 against $2,500/mo documented income) and re-upload its pay stub. Verification tab should show a "Requested amount vs. affordability" row, status Warning, explanation stating the requested amount is roughly Nx the estimated affordable maximum and suggesting a data-entry-error check. Application should move to "Needs Review" in the applications list (not just inside the document detail) — this is the fix for warning-level flags surfacing at the list level, not only hard mismatches.
 
+Live exception / self-service re-upload — manual QA scenario (not seeded, exercise by hand):
+
+26. Upload Jordan Rivera's pay stub as normal (plants the income mismatch) — confirm the Documents tab shows an "Action needed" card with a "Monthly income" exception and a Re-upload button. Re-upload a corrected pay stub (edit the seed image or a copy with matching income) via that same button — confirm the exception disappears, the application status returns from "Needs Review" to "Submitted" without any officer action, and the old pay stub is no longer shown as current (visible only under "Show document history").
+27. Try a targeted re-upload with the wrong file type on purpose (e.g. upload a bank statement image while fixing the "Driver's License" required item) — confirm it's caught immediately with a "Document type" mismatch explanation naming both the expected and actual type, not a silent or confusing failure.
+28. Immediately follow #27 with the *correct* document type for that same item — confirm the earlier wrong-type attempt is superseded (not left behind as a second, orphaned exception) and the item now shows Received.
+29. As borrower, confirm you cannot upload a document to another applicant's application by editing the applicationId in a request (expect 403 "Not your application"); confirm the officer role is unaffected and can still upload to any application.
+30. After resolving all exceptions on an application, ask the assistant "why is this application flagged?" as the officer — confirm it does NOT reference the earlier, now-resolved issue (the assistant's context should only reflect current, unresolved state).
+
 Grounding checks (must refuse / say not available):
 
 16. What's the bank's routing number? → not in corpus, must say unavailable

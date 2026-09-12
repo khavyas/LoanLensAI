@@ -25,3 +25,7 @@ Uploads must be legible photos or scans: all four corners visible, no glare cove
 ## What happens after upload
 
 Each document is classified, key fields are extracted, and the values are cross-checked against the application. Any mismatch in name, income, or SSN places the application in review with a loan officer, who makes the final decision. No application is approved or declined by the automated system alone.
+
+## Fixing a flagged or missing document
+
+Every outstanding item — a document not yet uploaded, or one that was uploaded but flagged — appears in a single "Action needed" list with its own upload or re-upload option, so the applicant can fix exactly the item that needs it without restarting the application. Uploading a fix automatically replaces the earlier version for that item; the previous version is kept on file for audit purposes but no longer counts toward requirements or reviews. If the wrong type of document is uploaded while fixing a specific item (for example, a bank statement when a driver's license was requested), this is flagged immediately so the applicant can correct it right away, rather than waiting for a loan officer to notice later. Once every outstanding item is resolved, the application automatically returns to the normal queue — no manual action is required to remove a "needs review" status that no longer applies.

@@ -1,7 +1,7 @@
 import PolicyChunk from '../models/PolicyChunk.js';
 import Document from '../models/Document.js';
 import { anthropic, MODEL, parseJsonResponse } from './anthropicClient.js';
-import { missingDocuments } from './verification.js';
+import { currentDocuments, missingDocuments, openExceptions } from './verification.js';
 
 // POC retrieval: the whole policy corpus (~30 small chunks) fits in Claude's
 // context, so we ground on ALL of it and require citations. The scale-up path
@@ -13,21 +13,27 @@ async function policyContext() {
 }
 
 function applicationStateSummary(application, documents) {
-  const missing = missingDocuments(application, documents);
+  // Only 'current' documents reflect the application's actual state — a
+  // superseded one was already fixed by a later upload, and its old flags
+  // must not leak back into an answer as if they were still open.
+  const current = currentDocuments(documents);
   return {
     applicant: application.applicantName,
     product: application.productType,
     status: application.status,
     statedMonthlyIncome: application.statedMonthlyIncome,
     requiredDocuments: application.requiredDocTypes,
-    receivedDocuments: documents.map((d) => ({
+    receivedDocuments: current.map((d) => ({
       docType: d.docType,
       verificationResult: d.verification?.overall,
       flaggedChecks: (d.verification?.checks || [])
         .filter((c) => c.status !== 'match')
         .map((c) => `${c.field}: ${c.explanation}`),
     })),
-    missingDocuments: missing,
+    missingDocuments: missingDocuments(application, documents),
+    // The same list the UI's "Action needed" card renders — one source of
+    // truth, so the assistant's answer never drifts from what's on screen.
+    openExceptions: openExceptions(application, documents).map((e) => e.message),
   };
 }
 

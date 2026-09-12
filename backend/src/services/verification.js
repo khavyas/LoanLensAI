@@ -20,9 +20,26 @@ function normalizeName(s) {
   return (s || '').toLowerCase().replace(/[^a-z ]/g, '').split(/\s+/).filter(Boolean).sort().join(' ');
 }
 
-export function verifyDocument(application, extracted) {
+export function verifyDocument(application, extracted, options = {}) {
   const f = extracted.fields || {};
   const checks = [];
+
+  // Targeted re-upload: the borrower was fixing one specific required item.
+  // Catch a wrong-file upload immediately instead of leaving it for an
+  // officer to notice — the whole point of a self-service fix is that it
+  // actually needs to fix the right thing.
+  if (options.expectedDocType && extracted.docType && extracted.docType !== 'unknown') {
+    const match = extracted.docType === options.expectedDocType;
+    checks.push({
+      field: 'Document type',
+      expected: options.expectedDocType,
+      found: extracted.docType,
+      status: match ? 'match' : 'mismatch',
+      explanation: match
+        ? 'Uploaded document matches the requested type.'
+        : `This looks like a ${extracted.docType.replace(/-/g, ' ')}, but a ${options.expectedDocType.replace(/-/g, ' ')} was requested. Please upload the correct document.`,
+    });
+  }
 
   if (f.fullName != null) {
     const match = normalizeName(f.fullName) === normalizeName(application.applicantName);
@@ -162,7 +179,45 @@ export function verifyDocument(application, extracted) {
   return { checks, overall };
 }
 
+// Only a 'current' document satisfies a requirement or counts as an open
+// issue — a superseded one is history, not the state of the application.
+export function currentDocuments(documents) {
+  return (documents || []).filter((d) => (d.status || 'current') === 'current');
+}
+
 export function missingDocuments(application, documents) {
-  const received = new Set(documents.map((d) => d.docType));
+  const received = new Set(currentDocuments(documents).map((d) => d.docType));
   return (application.requiredDocTypes || []).filter((t) => !received.has(t));
+}
+
+// The single actionable list behind the "live exception" flow: everything a
+// borrower or officer still needs to act on, in one shape the UI can render
+// directly — a required doc never uploaded, or a current doc with an open
+// flag. Resolving one (uploading the missing doc, or re-uploading a fix for
+// a flagged one) removes it from this list on the next fetch.
+export function openExceptions(application, documents) {
+  const current = currentDocuments(documents);
+  const exceptions = missingDocuments(application, documents).map((docType) => ({
+    type: 'missing',
+    docType,
+    documentId: null,
+    message: `${docType.replace(/-/g, ' ')} has not been uploaded yet.`,
+  }));
+
+  for (const doc of current) {
+    const flagged = (doc.verification?.checks || []).filter(
+      (c) => c.status === 'mismatch' || c.status === 'warning'
+    );
+    if (flagged.length) {
+      exceptions.push({
+        type: 'flagged',
+        docType: doc.docType,
+        documentId: doc._id,
+        message: flagged.map((c) => c.explanation).join(' '),
+        checks: flagged,
+      });
+    }
+  }
+
+  return exceptions;
 }

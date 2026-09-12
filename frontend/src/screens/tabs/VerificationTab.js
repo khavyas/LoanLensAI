@@ -12,7 +12,9 @@ const ACCENT = {
 };
 
 export default function VerificationTab({ app }) {
-  const docs = app.documents || [];
+  // Only the current document of each type is actionable — a superseded
+  // one's checks are history, already resolved by whatever replaced it.
+  const docs = (app.documents || []).filter((d) => (d.status || 'current') === 'current');
   const anyChecks = docs.some((d) => d.verification?.checks?.length);
 
   return (

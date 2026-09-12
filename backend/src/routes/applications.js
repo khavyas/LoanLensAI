@@ -2,7 +2,7 @@ import { Router } from 'express';
 import Application from '../models/Application.js';
 import Document from '../models/Document.js';
 import { requireAuth } from '../middleware/auth.js';
-import { missingDocuments } from '../services/verification.js';
+import { missingDocuments, openExceptions } from '../services/verification.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -26,7 +26,12 @@ router.get('/:id', async (req, res, next) => {
       return res.status(403).json({ error: 'Not your application' });
     }
     const documents = await Document.find({ applicationId: app._id }).lean();
-    res.json({ ...app, documents, missingDocuments: missingDocuments(app, documents) });
+    res.json({
+      ...app,
+      documents,
+      missingDocuments: missingDocuments(app, documents),
+      openExceptions: openExceptions(app, documents),
+    });
   } catch (err) {
     next(err);
   }
