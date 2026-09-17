@@ -56,7 +56,7 @@ function applicationStateSummary(application, documents) {
 }
 
 export async function answerQuestion({ question, application, role }) {
-  const documents = await Document.find({ applicationId: application._id }).lean();
+  const documents = await Document.find({ applicationId: application._id }).select('-fileData').lean();
   if (MOCK_AI) return mockAnswer(application, documents);
 
   const context = await policyContext();

@@ -30,7 +30,7 @@ router.get('/', async (req, res, next) => {
     const apps = await Application.find(filter).sort({ createdAt: -1 }).lean();
 
     const appIds = apps.map((a) => a._id);
-    const allDocs = await Document.find({ applicationId: { $in: appIds } }).lean();
+    const allDocs = await Document.find({ applicationId: { $in: appIds } }).select('-fileData').lean();
     const docsByApp = new Map();
     for (const doc of allDocs) {
       const key = doc.applicationId.toString();
@@ -116,7 +116,9 @@ router.get('/:id', async (req, res, next) => {
     if (req.user.role !== 'officer' && app.applicantEmail !== req.user.email) {
       return res.status(403).json({ error: 'Not your application' });
     }
-    const documents = await Document.find({ applicationId: app._id }).lean();
+    // Never include the raw file bytes here — the frontend fetches those on
+    // demand from GET /documents/:id/file, not inline with the whole app.
+    const documents = await Document.find({ applicationId: app._id }).select('-fileData').lean();
     res.json({
       ...app,
       documents,

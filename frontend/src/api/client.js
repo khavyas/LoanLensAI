@@ -18,6 +18,21 @@ async function request(path, options = {}) {
   return data;
 }
 
+// The file route serves raw bytes, not JSON, and needs the same auth header
+// as everything else — a plain <a href> or window.open can't attach that
+// header, so preview/download goes through an authenticated fetch that
+// returns a Blob the caller turns into an object URL instead.
+async function fetchDocumentBlob(documentId) {
+  const headers = {};
+  if (authToken) headers.Authorization = `Bearer ${authToken}`;
+  const res = await fetch(`${BASE_URL}/documents/${documentId}/file`, { headers });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `Failed to load file (${res.status})`);
+  }
+  return res.blob();
+}
+
 export const api = {
   login: (email, password) => request('/auth/login', { method: 'POST', body: { email, password } }),
   register: (payload) => request('/auth/register', { method: 'POST', body: payload }),
@@ -26,6 +41,8 @@ export const api = {
   createApplication: (payload) => request('/applications', { method: 'POST', body: payload }),
   uploadDocument: (applicationId, formData) =>
     request(`/documents/${applicationId}`, { method: 'POST', body: formData }),
+  deleteDocument: (documentId) => request(`/documents/${documentId}`, { method: 'DELETE' }),
+  fetchDocumentBlob,
   ask: (applicationId, question) =>
     request(`/chat/${applicationId}`, { method: 'POST', body: { question } }),
 };

@@ -5,6 +5,11 @@ const documentSchema = new mongoose.Schema(
     applicationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Application', required: true },
     fileName: String,
     docType: String, // pay-stub | w2 | bank-statement | drivers-license | unknown
+    // The actual uploaded bytes, so the document can be previewed/downloaded
+    // later — without this, there was no way to check which file you'd
+    // actually uploaded once the temp file was cleaned up after extraction.
+    fileData: Buffer,
+    mimeType: String,
     extractedFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     confidence: { type: Number, default: 0 }, // 0..1 from the extraction model
     // When a borrower re-uploads a fix for a flagged document, the old one is

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, Alert } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { api } from '../../api/client';
 import { colors, labelize } from '../../theme';
@@ -20,6 +20,7 @@ export default function DocumentsTab({ app, onChanged }) {
   const [busyDocType, setBusyDocType] = useState(null); // which fix is uploading, or '__generic__'
   const [error, setError] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [busyDocId, setBusyDocId] = useState(null); // which document's preview/delete is in flight
 
   const allDocs = app.documents || [];
   const currentDocs = allDocs.filter((d) => (d.status || 'current') === 'current');
@@ -54,6 +55,60 @@ export default function DocumentsTab({ app, onChanged }) {
       setError(e.message);
     } finally {
       setBusyDocType(null);
+    }
+  }
+
+  async function onPreview(documentId) {
+    setError(null);
+    // Open the tab synchronously, in direct response to the tap, so the
+    // browser doesn't treat the file arriving a moment later (after the
+    // authenticated fetch resolves) as a blocked popup.
+    const win = Platform.OS === 'web' ? window.open('', '_blank') : null;
+    setBusyDocId(documentId);
+    try {
+      const blob = await api.fetchDocumentBlob(documentId);
+      const url = URL.createObjectURL(blob);
+      if (win) win.location.href = url;
+    } catch (e) {
+      if (win) win.close();
+      setError(e.message);
+    } finally {
+      setBusyDocId(null);
+    }
+  }
+
+  // react-native-web's Alert.alert() is a documented no-op on web — using it
+  // directly here would make Delete silently do nothing when clicked in a
+  // browser (no dialog, no callback, no error). window.confirm is the actual
+  // working equivalent on web; Alert.alert works correctly on native.
+  function confirmDelete() {
+    if (Platform.OS === 'web') {
+      return Promise.resolve(window.confirm('Delete this document? This removes it permanently.'));
+    }
+    return new Promise((resolve) => {
+      Alert.alert(
+        'Delete this document?',
+        'This removes it permanently — the item goes back to "missing" if it was required.',
+        [
+          { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+          { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+        ]
+      );
+    });
+  }
+
+  async function onDelete(documentId) {
+    const confirmed = await confirmDelete();
+    if (!confirmed) return;
+    setError(null);
+    setBusyDocId(documentId);
+    try {
+      await api.deleteDocument(documentId);
+      onChanged();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusyDocId(null);
     }
   }
 
@@ -138,27 +193,59 @@ export default function DocumentsTab({ app, onChanged }) {
       {busyDocType && <Text style={styles.busyHint}>AI is classifying and extracting…</Text>}
       {error && <Text style={styles.error}>{error}</Text>}
 
-      {currentDocs.map((doc) => (
-        <Card key={doc._id} style={{ marginTop: 12 }}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.docType}>{labelize(doc.docType || 'unknown')}</Text>
-            <Pill tone={OVERALL_TONE[doc.verification?.overall] || 'neutral'}>
-              {labelize(doc.verification?.overall || 'pending')}
-            </Pill>
-          </View>
-          <Text style={styles.confidence}>
-            Extraction confidence · {Math.round((doc.confidence || 0) * 100)}%
-          </Text>
-          {Object.entries(doc.extractedFields || {})
-            .filter(([, v]) => v != null)
-            .map(([k, v]) => (
-              <View key={k} style={styles.fieldRow}>
-                <Text style={styles.fieldKey}>{labelize(k.replace(/([A-Z])/g, '-$1'))}</Text>
-                <Text style={styles.fieldVal}>{String(v)}</Text>
+      {currentDocs.length > 0 && (
+        <Text style={styles.sectionHeading}>Uploaded Documents</Text>
+      )}
+      {currentDocs.map((doc) => {
+        const isBusy = busyDocId === doc._id;
+        return (
+          <Card key={doc._id} style={{ marginTop: 12 }}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.docType}>{labelize(doc.docType || 'unknown')}</Text>
+              <Pill tone={OVERALL_TONE[doc.verification?.overall] || 'neutral'}>
+                {labelize(doc.verification?.overall || 'pending')}
+              </Pill>
+            </View>
+
+            <View style={styles.fileRow}>
+              <Text style={styles.fileName} numberOfLines={1}>📄 {doc.fileName || 'Untitled file'}</Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity
+                  style={styles.fileActionBtn}
+                  onPress={() => onPreview(doc._id)}
+                  disabled={isBusy}
+                >
+                  {isBusy ? (
+                    <ActivityIndicator color={colors.accent} size="small" />
+                  ) : (
+                    <Text style={styles.fileActionText}>Preview</Text>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.fileActionBtn, styles.fileActionBtnDanger]}
+                  onPress={() => onDelete(doc._id)}
+                  disabled={isBusy}
+                >
+                  <Text style={[styles.fileActionText, { color: colors.danger }]}>Delete</Text>
+                </TouchableOpacity>
               </View>
-            ))}
-        </Card>
-      ))}
+            </View>
+
+            <Text style={styles.confidence}>
+              Extraction confidence · {Math.round((doc.confidence || 0) * 100)}%
+            </Text>
+            <Text style={styles.fieldsHeading}>Extracted fields</Text>
+            {Object.entries(doc.extractedFields || {})
+              .filter(([, v]) => v != null)
+              .map(([k, v]) => (
+                <View key={k} style={styles.fieldRow}>
+                  <Text style={styles.fieldKey}>{labelize(k.replace(/([A-Z])/g, '-$1'))}</Text>
+                  <Text style={styles.fieldVal}>{String(v)}</Text>
+                </View>
+              ))}
+          </Card>
+        );
+      })}
 
       {historyDocs.length > 0 && (
         <View style={{ marginTop: 16 }}>
@@ -169,12 +256,25 @@ export default function DocumentsTab({ app, onChanged }) {
           </TouchableOpacity>
           {showHistory &&
             historyDocs.map((doc) => (
-              <Card key={doc._id} style={{ marginTop: 8, opacity: 0.6 }}>
+              <Card key={doc._id} style={{ marginTop: 8, opacity: 0.75 }}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.docType}>{labelize(doc.docType || 'unknown')}</Text>
                   <Pill tone="neutral">Superseded</Pill>
                 </View>
-                <Text style={styles.confidence}>{doc.fileName}</Text>
+                <View style={styles.fileRow}>
+                  <Text style={styles.fileName} numberOfLines={1}>📄 {doc.fileName || 'Untitled file'}</Text>
+                  <TouchableOpacity
+                    style={styles.fileActionBtn}
+                    onPress={() => onPreview(doc._id)}
+                    disabled={busyDocId === doc._id}
+                  >
+                    {busyDocId === doc._id ? (
+                      <ActivityIndicator color={colors.accent} size="small" />
+                    ) : (
+                      <Text style={styles.fileActionText}>Preview</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
               </Card>
             ))}
         </View>
@@ -184,6 +284,43 @@ export default function DocumentsTab({ app, onChanged }) {
 }
 
 const styles = StyleSheet.create({
+  sectionHeading: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.muted,
+    marginTop: 20,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  fileRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.border,
+  },
+  fileName: { flex: 1, color: colors.text, fontSize: 13, fontWeight: '600', marginRight: 10 },
+  fileActionBtn: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  fileActionBtnDanger: { borderColor: colors.dangerBg },
+  fileActionText: { color: colors.accent, fontWeight: '600', fontSize: 12 },
+  fieldsHeading: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.faint,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: 10,
+  },
   reqRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
   dot: { width: 8, height: 8, borderRadius: 4, marginRight: 10 },
   reqName: { flex: 1, color: colors.text, fontWeight: '600', fontSize: 14 },

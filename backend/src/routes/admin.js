@@ -8,6 +8,8 @@ import Application from '../models/Application.js';
 import Document from '../models/Document.js';
 import PolicyChunk from '../models/PolicyChunk.js';
 import { REQUIRED_DOCS_BY_PRODUCT } from '../config/requiredDocs.js';
+import { mockClassifyAndExtract } from '../services/mockFixtures.js';
+import { verifyDocument } from '../services/verification.js';
 
 // One-time setup endpoints for environments with no shell access (Render free tier).
 // Guarded by SETUP_SECRET; disable by unsetting the env var after setup.
@@ -24,6 +26,37 @@ router.use((req, res, next) => {
 
 const REQUIRED_DOCS = REQUIRED_DOCS_BY_PRODUCT['auto-loan'];
 const SMB_REQUIRED_DOCS = REQUIRED_DOCS_BY_PRODUCT['small-business-loan'];
+
+// Priya Nair is pre-seeded with all three required documents already
+// uploaded and verified clean — a "one perfect application" reference,
+// consistent with the local seed.js script. Reuses the same MOCK_AI
+// fixture data so it's guaranteed to match what a live upload of these
+// same files would produce.
+const PRIYA_FILES = [
+  'priya-nair-pay-stub.png',
+  'priya-nair-drivers-license.png',
+  'priya-nair-bank-statement.png',
+];
+
+async function seedPriyaDocuments(priyaApp) {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const docsDir = path.resolve(__dirname, '../../../data/seed/documents');
+  for (const fileName of PRIYA_FILES) {
+    const extracted = mockClassifyAndExtract(fileName);
+    const verification = verifyDocument(priyaApp, extracted);
+    await Document.create({
+      applicationId: priyaApp._id,
+      fileName,
+      docType: extracted.docType,
+      fileData: fs.readFileSync(path.join(docsDir, fileName)),
+      mimeType: 'image/png',
+      extractedFields: extracted.fields,
+      confidence: extracted.confidence,
+      verification,
+      status: 'current',
+    });
+  }
+}
 
 async function runSeed() {
   await Promise.all([User.deleteMany({}), Application.deleteMany({}), Document.deleteMany({})]);
@@ -84,6 +117,10 @@ async function runSeed() {
       requiredDocTypes: REQUIRED_DOCS,
     },
   ]);
+
+  const priyaApp = apps.find((a) => a.applicantName === 'Priya Nair');
+  await seedPriyaDocuments(priyaApp);
+
   return { users: 5, applications: apps.length };
 }
 
