@@ -8,6 +8,13 @@ import { Pill, Card, Overline } from '../../components/ui';
 const OVERALL_TONE = { pass: 'success', 'needs-review': 'warning', fail: 'danger' };
 const REQ_STATUS_TONE = { pending: 'neutral', received: 'success', 'needs-attention': 'warning' };
 const REQ_STATUS_LABEL = { pending: 'Pending', received: 'Received', 'needs-attention': 'Needs attention' };
+// A flagged document can carry several distinct issues (name mismatch,
+// revenue mismatch, affordability, ...) — each gets its own row instead of
+// being run together into one paragraph, so it reads as a checklist, not a
+// wall of text.
+const ISSUE_TONE = { mismatch: 'danger', warning: 'warning' };
+const ISSUE_LABEL = { mismatch: 'Mismatch', warning: 'Review' };
+const ISSUE_ACCENT = { mismatch: colors.danger, warning: colors.warning };
 
 export default function DocumentsTab({ app, onChanged }) {
   const [busyDocType, setBusyDocType] = useState(null); // which fix is uploading, or '__generic__'
@@ -59,22 +66,38 @@ export default function DocumentsTab({ app, onChanged }) {
             const key = ex.documentId || ex.docType + i;
             const isBusy = busyDocType === ex.docType;
             return (
-              <View key={key} style={styles.exceptionRow}>
-                <View style={{ flex: 1, paddingRight: 12 }}>
-                  <Text style={styles.exceptionTitle}>{labelize(ex.docType)}</Text>
-                  <Text style={styles.exceptionMsg}>{ex.message}</Text>
+              <View key={key} style={styles.exceptionBlock}>
+                <View style={styles.exceptionHeader}>
+                  <Text style={styles.exceptionTitle}>
+                    {labelize(ex.docType)}
+                    {ex.checks?.length > 1 ? ` · ${ex.checks.length} issues` : ''}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.fixBtn}
+                    onPress={() => pickAndUpload(ex.docType)}
+                    disabled={busyDocType != null}
+                  >
+                    {isBusy ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <Text style={styles.fixBtnText}>{ex.type === 'missing' ? 'Upload' : 'Re-upload'}</Text>
+                    )}
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  style={styles.fixBtn}
-                  onPress={() => pickAndUpload(ex.docType)}
-                  disabled={busyDocType != null}
-                >
-                  {isBusy ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <Text style={styles.fixBtnText}>{ex.type === 'missing' ? 'Upload' : 'Re-upload'}</Text>
-                  )}
-                </TouchableOpacity>
+
+                {ex.type === 'missing' ? (
+                  <Text style={styles.exceptionMsg}>{ex.message}</Text>
+                ) : (
+                  (ex.checks || []).map((c, j) => (
+                    <View key={j} style={[styles.issueRow, { borderLeftColor: ISSUE_ACCENT[c.status] }]}>
+                      <View style={styles.issueHeader}>
+                        <Text style={styles.issueField}>{c.field}</Text>
+                        <Pill tone={ISSUE_TONE[c.status]}>{ISSUE_LABEL[c.status]}</Pill>
+                      </View>
+                      <Text style={styles.issueExplain}>{c.explanation}</Text>
+                    </View>
+                  ))
+                )}
               </View>
             );
           })}
@@ -164,16 +187,27 @@ const styles = StyleSheet.create({
   reqRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
   dot: { width: 8, height: 8, borderRadius: 4, marginRight: 10 },
   reqName: { flex: 1, color: colors.text, fontWeight: '600', fontSize: 14 },
-  exceptionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  exceptionBlock: {
     marginTop: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderColor: colors.border,
   },
+  exceptionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   exceptionTitle: { fontWeight: '700', fontSize: 14, color: colors.text },
-  exceptionMsg: { color: colors.muted, fontSize: 12, marginTop: 2, lineHeight: 17 },
+  exceptionMsg: { color: colors.muted, fontSize: 12, marginTop: 6, lineHeight: 17 },
+  issueRow: {
+    borderLeftWidth: 3,
+    paddingLeft: 10,
+    marginTop: 10,
+  },
+  issueHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  issueField: { fontWeight: '700', fontSize: 13, color: colors.text },
+  issueExplain: { color: colors.muted, fontSize: 12, marginTop: 3, lineHeight: 17 },
   fixBtn: {
     backgroundColor: colors.warning,
     borderRadius: 8,
