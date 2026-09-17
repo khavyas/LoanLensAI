@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme';
+import { PasswordField } from '../components/ui';
 
 const ROLES = [
   { value: 'borrower', label: 'Borrower' },
@@ -59,11 +60,8 @@ export default function SignUpScreen({ navigation }) {
         />
 
         <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
+        <PasswordField
           placeholder="At least 8 characters"
-          placeholderTextColor={colors.faint}
-          secureTextEntry
           value={password}
           onChangeText={setPassword}
           onSubmitEditing={onSubmit}

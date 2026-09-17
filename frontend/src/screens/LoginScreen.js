@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme';
+import { PasswordField } from '../components/ui';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
@@ -43,11 +44,8 @@ export default function LoginScreen({ navigation }) {
         />
 
         <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
+        <PasswordField
           placeholder="••••••••"
-          placeholderTextColor={colors.faint}
-          secureTextEntry
           value={password}
           onChangeText={setPassword}
           onSubmitEditing={onLogin}
