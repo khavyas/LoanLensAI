@@ -19,11 +19,31 @@ function ageOnDate(dateOfBirth, on = new Date()) {
 }
 
 // Officers see all applications; borrowers see only their own.
+// 'submitted' only ever meant "the application was filed" — it says nothing
+// about whether required documents are still outstanding, which is exactly
+// why a brand-new application with zero uploads still showed as plain
+// "Submitted" with no hint that anything was needed from the applicant.
+// missingDocumentsCount lets the list view show that at a glance.
 router.get('/', async (req, res, next) => {
   try {
     const filter = req.user.role === 'officer' ? {} : { applicantEmail: req.user.email };
     const apps = await Application.find(filter).sort({ createdAt: -1 }).lean();
-    res.json(apps);
+
+    const appIds = apps.map((a) => a._id);
+    const allDocs = await Document.find({ applicationId: { $in: appIds } }).lean();
+    const docsByApp = new Map();
+    for (const doc of allDocs) {
+      const key = doc.applicationId.toString();
+      if (!docsByApp.has(key)) docsByApp.set(key, []);
+      docsByApp.get(key).push(doc);
+    }
+
+    const withMissing = apps.map((app) => ({
+      ...app,
+      missingDocumentsCount: missingDocuments(app, docsByApp.get(app._id.toString()) || []).length,
+    }));
+
+    res.json(withMissing);
   } catch (err) {
     next(err);
   }

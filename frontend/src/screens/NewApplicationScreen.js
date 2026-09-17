@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { api } from '../api/client';
 import { colors, labelize } from '../theme';
 import { Card, Overline } from '../components/ui';
@@ -18,6 +18,43 @@ function Field({ label, ...inputProps }) {
       <Text style={styles.label}>{label}</Text>
       <TextInput style={styles.input} placeholderTextColor={colors.faint} {...inputProps} />
     </View>
+  );
+}
+
+// A real calendar date picker on web (the browser's native <input type="date">
+// — no extra dependency needed, react-native-web passes lowercase JSX tags
+// straight through to the DOM). Native (iOS/Android) falls back to typed
+// entry, since a proper native picker needs @react-native-community/
+// datetimepicker installed, which this project doesn't currently have.
+function DateField({ value, onChange }) {
+  if (Platform.OS === 'web') {
+    return (
+      <input
+        type="date"
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          border: `1px solid ${colors.border}`,
+          borderRadius: 8,
+          padding: '12px 14px',
+          fontSize: 15,
+          color: colors.text,
+          backgroundColor: '#FCFDFE',
+          width: '100%',
+          boxSizing: 'border-box',
+          fontFamily: 'inherit',
+        }}
+      />
+    );
+  }
+  return (
+    <TextInput
+      style={styles.input}
+      placeholder="YYYY-MM-DD"
+      placeholderTextColor={colors.faint}
+      value={value}
+      onChangeText={onChange}
+    />
   );
 }
 
@@ -143,13 +180,13 @@ export default function NewApplicationScreen({ navigation }) {
               <>
                 <Field
                   label="Legal / DBA business name"
-                  placeholder="Whitfield & Co. Bakery LLC"
+                  placeholder="e.g. Acme Bakery LLC"
                   value={businessName}
                   onChangeText={setBusinessName}
                 />
                 <Field
                   label="Stated annual business revenue ($)"
-                  placeholder="340000"
+                  placeholder="e.g. 250000"
                   keyboardType="numeric"
                   value={statedAnnualBusinessRevenue}
                   onChangeText={setStatedAnnualBusinessRevenue}
@@ -159,13 +196,13 @@ export default function NewApplicationScreen({ navigation }) {
               <>
                 <Field
                   label="Employer name"
-                  placeholder="Brightline Logistics"
+                  placeholder="e.g. Acme Corp"
                   value={employerName}
                   onChangeText={setEmployerName}
                 />
                 <Field
                   label="Stated gross monthly income ($)"
-                  placeholder="5000"
+                  placeholder="e.g. 4500"
                   keyboardType="numeric"
                   value={statedMonthlyIncome}
                   onChangeText={setStatedMonthlyIncome}
@@ -174,7 +211,7 @@ export default function NewApplicationScreen({ navigation }) {
             )}
             <Field
               label="Requested amount ($)"
-              placeholder="28000"
+              placeholder="e.g. 10000"
               keyboardType="numeric"
               value={requestedAmount}
               onChangeText={setRequestedAmount}
@@ -189,24 +226,22 @@ export default function NewApplicationScreen({ navigation }) {
           <View style={{ marginTop: 12 }}>
             <Field
               label="Address"
-              placeholder="412 Maple Court, Springfield"
+              placeholder="e.g. 123 Main St, Anytown, ST"
               value={address}
               onChangeText={setAddress}
             />
             <Field
               label="SSN (last 4)"
-              placeholder="4821"
+              placeholder="e.g. 1234"
               keyboardType="numeric"
               maxLength={4}
               value={ssnLast4}
               onChangeText={setSsnLast4}
             />
-            <Field
-              label="Date of birth (must be 18 or older)"
-              placeholder="YYYY-MM-DD"
-              value={dateOfBirth}
-              onChangeText={setDateOfBirth}
-            />
+            <View style={{ marginBottom: 16 }}>
+              <Text style={styles.label}>Date of birth (must be 18 or older)</Text>
+              <DateField value={dateOfBirth} onChange={setDateOfBirth} />
+            </View>
           </View>
         </Card>
       )}

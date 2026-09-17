@@ -74,23 +74,33 @@ export default function ApplicationsScreen({ navigation }) {
                 : 'No applications yet.'}
             </Text>
           }
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => navigation.navigate('ApplicationDetail', { id: item._id })}
-            >
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{initials(item.applicantName)}</Text>
-              </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.name}>{item.applicantName}</Text>
-                <Text style={styles.meta}>
-                  {labelize(item.productType)} · ${item.requestedAmount?.toLocaleString('en-US')}
-                </Text>
-              </View>
-              <Pill tone={STATUS_TONE[item.status] || 'neutral'}>{labelize(item.status)}</Pill>
-            </TouchableOpacity>
-          )}
+          renderItem={({ item }) => {
+            // 'submitted' only means the form was filed — it says nothing
+            // about outstanding documents, so show that distinctly instead
+            // of a plain "Submitted" that looks finished when it isn't.
+            const needsDocs = item.status === 'submitted' && item.missingDocumentsCount > 0;
+            const displayLabel = needsDocs
+              ? `${item.missingDocumentsCount} Document${item.missingDocumentsCount > 1 ? 's' : ''} Needed`
+              : labelize(item.status);
+            const displayTone = needsDocs ? 'warning' : STATUS_TONE[item.status] || 'neutral';
+            return (
+              <TouchableOpacity
+                style={styles.card}
+                onPress={() => navigation.navigate('ApplicationDetail', { id: item._id })}
+              >
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{initials(item.applicantName)}</Text>
+                </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={styles.name}>{item.applicantName}</Text>
+                  <Text style={styles.meta}>
+                    {labelize(item.productType)} · ${item.requestedAmount?.toLocaleString('en-US')}
+                  </Text>
+                </View>
+                <Pill tone={displayTone}>{displayLabel}</Pill>
+              </TouchableOpacity>
+            );
+          }}
         />
       </View>
     </View>
