@@ -15,6 +15,17 @@ punctuation/formatting than the DBA name on the application — the
 "entity name mismatch" pattern that stalls small-business loan closings
 in production loan-origination systems.
 
+Additional testing scenarios (not part of the primary pitch, for
+QA/breadth):
+- Priya Nair (personal loan) — all three documents clean/matching, for
+  testing the "everything's fine" happy path.
+- Arjun Mehta (auto loan) — income matches exactly, but the pay stub's
+  employer ("Falcon Freight Co.") differs from the application's stated
+  employer ("Ironwood Manufacturing"). Isolates the warning-tier
+  "Employer differs — may be a legitimate job change" check, which no
+  other seeded scenario exercises (every other planted exception is a
+  harder 'mismatch', not a softer 'warning').
+
 Upload them in the Documents tab during a live demo instead of
 hand-drawing something on the spot.
 
@@ -214,6 +225,329 @@ def bank_statement():
     img.save(os.path.join(OUT_DIR, "jordan-rivera-bank-statement.png"))
 
 
+def priya_pay_stub():
+    W, H = 850, 1100
+    img = Image.new("RGB", (W, H), WHITE)
+    d = ImageDraw.Draw(img)
+
+    d.rectangle([0, 0, W, 90], fill=ACCENT)
+    d.text((40, 24), "CEDAR HEALTH SYSTEMS", font=font(26, bold=True), fill=WHITE)
+    d.text((40, 58), "500 Cedar Ave, Springfield", font=font(13), fill=(200, 210, 225))
+    d.text((W - 260, 32), "EARNINGS STATEMENT", font=font(16, bold=True), fill=WHITE)
+
+    y = 130
+    kv_row(d, 40, y, "Employee Name", "Priya Nair")
+    kv_row(d, 440, y, "Employee ID", "CH-11207")
+    y += 60
+    kv_row(d, 40, y, "Pay Period", "07/28/2026 - 08/10/2026")
+    kv_row(d, 440, y, "Pay Date", "08/14/2026")
+    y += 60
+    kv_row(d, 40, y, "Home Address", "88 Lakeview Drive, Springfield")
+    y += 60
+    hline(d, 40, y, W - 40)
+    y += 24
+
+    d.text((40, y), "EARNINGS", font=font(14, bold=True), fill=ACCENT)
+    y += 30
+    d.text((40, y), "Description", font=font(12), fill=MUTED)
+    d.text((420, y), "Rate", font=font(12), fill=MUTED)
+    d.text((560, y), "Hours", font=font(12), fill=MUTED)
+    d.text((680, y), "Amount", font=font(12), fill=MUTED)
+    y += 26
+    hline(d, 40, y, W - 40)
+    y += 16
+    d.text((40, y), "Regular", font=font(14), fill=INK)
+    d.text((420, y), "$41.54 / hr", font=font(14), fill=INK)
+    d.text((560, y), "80.0", font=font(14), fill=INK)
+    d.text((680, y), "$3,323.08", font=font(14, bold=True), fill=INK)
+    y += 50
+    hline(d, 40, y, W - 40)
+    y += 20
+
+    d.text((40, y), "GROSS PAY (this period)", font=font(14, bold=True), fill=ACCENT)
+    d.text((680, y), "$3,323.08", font=font(16, bold=True), fill=ACCENT)
+    y += 34
+    d.text((40, y), "Gross monthly income (biweekly x 26 / 12)", font=font(12), fill=MUTED)
+    d.text((680, y), "$7,200.00", font=font(16, bold=True), fill=ACCENT)
+    y += 60
+    hline(d, 40, y, W - 40)
+    y += 24
+
+    d.text((40, y), "DEDUCTIONS", font=font(14, bold=True), fill=ACCENT)
+    y += 30
+    for label, amt in [("Federal Tax", "$465.23"), ("State Tax", "$149.54"),
+                        ("Social Security", "$206.03"), ("Medicare", "$48.18")]:
+        d.text((40, y), label, font=font(13), fill=INK)
+        d.text((680, y), amt, font=font(13), fill=INK)
+        y += 26
+
+    y += 20
+    hline(d, 40, y, W - 40)
+    y += 24
+    d.text((40, y), "NET PAY", font=font(15, bold=True), fill=ACCENT)
+    d.text((680, y), "$2,454.10", font=font(17, bold=True), fill=ACCENT)
+
+    d.text((40, H - 40), "This is a synthetic document generated for demo purposes only.",
+           font=font(11), fill=MUTED)
+    img.save(os.path.join(OUT_DIR, "priya-nair-pay-stub.png"))
+
+
+def priya_drivers_license():
+    W, H = 900, 560
+    img = Image.new("RGB", (W, H), WHITE)
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle([0, 0, W - 1, H - 1], radius=24, outline=LINE, width=3)
+
+    d.rounded_rectangle([0, 0, W - 1, 110], radius=24, fill=ACCENT)
+    d.rectangle([0, 60, W, 110], fill=ACCENT)
+    d.text((36, 26), "STATE OF SPRINGFIELD", font=font(24, bold=True), fill=WHITE)
+    d.text((36, 60), "DRIVER LICENSE", font=font(15), fill=(200, 210, 225))
+    d.text((W - 180, 40), "CLASS D", font=font(18, bold=True), fill=WHITE)
+
+    d.rounded_rectangle([36, 140, 236, 400], radius=10, outline=LINE, width=2, fill=(240, 243, 247))
+    d.text((70, 250), "PHOTO", font=font(16), fill=MUTED)
+
+    x = 270
+    y = 150
+    kv_row(d, x, y, "License No.", "SP-671482-N")
+    y += 60
+    kv_row(d, x, y, "Full Name", "Priya Nair")
+    y += 60
+    kv_row(d, x, y, "Address", "88 Lakeview Drive, Springfield")
+    y += 60
+    kv_row(d, x, y, "Date of Birth", "11/22/1991")
+    kv_row(d, x + 300, y, "Sex", "F")
+    y += 60
+    kv_row(d, x, y, "Issue Date", "02/15/2023")
+    kv_row(d, x + 300, y, "Expires", "11/22/2031")
+
+    d.text((36, H - 40), "Synthetic document — demo purposes only.", font=font(11), fill=MUTED)
+    img.save(os.path.join(OUT_DIR, "priya-nair-drivers-license.png"))
+
+
+def priya_bank_statement():
+    W, H = 850, 1100
+    img = Image.new("RGB", (W, H), WHITE)
+    d = ImageDraw.Draw(img)
+
+    d.text((40, 36), "FIRST COMMUNITY BANK", font=font(22, bold=True), fill=ACCENT)
+    d.text((40, 68), "Monthly Account Statement", font=font(14), fill=MUTED)
+
+    y = 120
+    kv_row(d, 40, y, "Account Holder", "Priya Nair")
+    kv_row(d, 440, y, "Account Number", "****9034")
+    y += 60
+    kv_row(d, 40, y, "Statement Period", "07/01/2026 - 07/31/2026")
+    kv_row(d, 440, y, "Account Type", "Checking")
+    y += 50
+    hline(d, 40, y, W - 40)
+    y += 24
+
+    d.text((40, y), "ACCOUNT SUMMARY", font=font(14, bold=True), fill=ACCENT)
+    y += 30
+    for label, amt in [("Beginning Balance", "$4,890.10"), ("Total Deposits", "$6,646.16"),
+                        ("Total Withdrawals", "$4,210.55"), ("Ending Balance", "$7,325.71")]:
+        d.text((40, y), label, font=font(14), fill=INK)
+        d.text((680, y), amt, font=font(14, bold=True), fill=INK)
+        y += 30
+
+    y += 20
+    hline(d, 40, y, W - 40)
+    y += 24
+    d.text((40, y), "RECENT TRANSACTIONS", font=font(14, bold=True), fill=ACCENT)
+    y += 30
+    d.text((40, y), "Date", font=font(12), fill=MUTED)
+    d.text((160, y), "Description", font=font(12), fill=MUTED)
+    d.text((620, y), "Amount", font=font(12), fill=MUTED)
+    y += 24
+    hline(d, 40, y, W - 40)
+    y += 14
+
+    rows = [
+        ("07/14/2026", "Cedar Health Systems — Direct Deposit", "+$3,323.08"),
+        ("07/16/2026", "Springfield Utilities", "-$164.20"),
+        ("07/20/2026", "Grocery Mart", "-$132.44"),
+        ("07/28/2026", "Cedar Health Systems — Direct Deposit", "+$3,323.08"),
+        ("07/29/2026", "Auto Insurance Co.", "-$118.00"),
+        ("07/30/2026", "Lakeview Apartments — Rent", "-$1,650.00"),
+    ]
+    for date, desc, amt in rows:
+        d.text((40, y), date, font=font(13), fill=INK)
+        d.text((160, y), desc, font=font(13), fill=INK)
+        color = (2, 122, 72) if amt.startswith("+") else INK
+        d.text((620, y), amt, font=font(13, bold=True), fill=color)
+        y += 32
+        hline(d, 40, y - 6, W - 40)
+
+    d.text((40, H - 40), "This is a synthetic document generated for demo purposes only.",
+           font=font(11), fill=MUTED)
+    img.save(os.path.join(OUT_DIR, "priya-nair-bank-statement.png"))
+
+
+def arjun_pay_stub():
+    # Planted exception: employer on the pay stub differs from the employer
+    # named on the application ("Ironwood Manufacturing") — income matches
+    # exactly, so this isolates the "Employer differs — may be a legitimate
+    # job change" warning-tier check, which no other seeded scenario exercises
+    # (every other planted exception is a harder 'mismatch', not a 'warning').
+    W, H = 850, 1100
+    img = Image.new("RGB", (W, H), WHITE)
+    d = ImageDraw.Draw(img)
+
+    d.rectangle([0, 0, W, 90], fill=ACCENT)
+    d.text((40, 24), "FALCON FREIGHT CO.", font=font(26, bold=True), fill=WHITE)
+    d.text((40, 58), "9 Depot Street, Springfield", font=font(13), fill=(200, 210, 225))
+    d.text((W - 260, 32), "EARNINGS STATEMENT", font=font(16, bold=True), fill=WHITE)
+
+    y = 130
+    kv_row(d, 40, y, "Employee Name", "Arjun Mehta")
+    kv_row(d, 440, y, "Employee ID", "FF-70213")
+    y += 60
+    kv_row(d, 40, y, "Pay Period", "07/28/2026 - 08/10/2026")
+    kv_row(d, 440, y, "Pay Date", "08/14/2026")
+    y += 60
+    kv_row(d, 40, y, "Home Address", "17 Birch Street, Springfield")
+    y += 60
+    hline(d, 40, y, W - 40)
+    y += 24
+
+    d.text((40, y), "EARNINGS", font=font(14, bold=True), fill=ACCENT)
+    y += 30
+    d.text((40, y), "Description", font=font(12), fill=MUTED)
+    d.text((420, y), "Rate", font=font(12), fill=MUTED)
+    d.text((560, y), "Hours", font=font(12), fill=MUTED)
+    d.text((680, y), "Amount", font=font(12), fill=MUTED)
+    y += 26
+    hline(d, 40, y, W - 40)
+    y += 16
+    d.text((40, y), "Regular", font=font(14), fill=INK)
+    d.text((420, y), "$22.50 / hr", font=font(14), fill=INK)
+    d.text((560, y), "80.0", font=font(14), fill=INK)
+    d.text((680, y), "$1,800.00", font=font(14, bold=True), fill=INK)
+    y += 50
+    hline(d, 40, y, W - 40)
+    y += 20
+
+    d.text((40, y), "GROSS PAY (this period)", font=font(14, bold=True), fill=ACCENT)
+    d.text((680, y), "$1,800.00", font=font(16, bold=True), fill=ACCENT)
+    y += 34
+    d.text((40, y), "Gross monthly income (biweekly x 26 / 12)", font=font(12), fill=MUTED)
+    d.text((680, y), "$3,900.00", font=font(16, bold=True), fill=ACCENT)
+    y += 60
+    hline(d, 40, y, W - 40)
+    y += 24
+
+    d.text((40, y), "DEDUCTIONS", font=font(14, bold=True), fill=ACCENT)
+    y += 30
+    for label, amt in [("Federal Tax", "$216.00"), ("State Tax", "$72.00"),
+                        ("Social Security", "$111.60"), ("Medicare", "$26.10")]:
+        d.text((40, y), label, font=font(13), fill=INK)
+        d.text((680, y), amt, font=font(13), fill=INK)
+        y += 26
+
+    y += 20
+    hline(d, 40, y, W - 40)
+    y += 24
+    d.text((40, y), "NET PAY", font=font(15, bold=True), fill=ACCENT)
+    d.text((680, y), "$1,374.30", font=font(17, bold=True), fill=ACCENT)
+
+    d.text((40, H - 40), "This is a synthetic document generated for demo purposes only.",
+           font=font(11), fill=MUTED)
+    img.save(os.path.join(OUT_DIR, "arjun-mehta-pay-stub.png"))
+
+
+def arjun_drivers_license():
+    W, H = 900, 560
+    img = Image.new("RGB", (W, H), WHITE)
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle([0, 0, W - 1, H - 1], radius=24, outline=LINE, width=3)
+
+    d.rounded_rectangle([0, 0, W - 1, 110], radius=24, fill=ACCENT)
+    d.rectangle([0, 60, W, 110], fill=ACCENT)
+    d.text((36, 26), "STATE OF SPRINGFIELD", font=font(24, bold=True), fill=WHITE)
+    d.text((36, 60), "DRIVER LICENSE", font=font(15), fill=(200, 210, 225))
+    d.text((W - 180, 40), "CLASS D", font=font(18, bold=True), fill=WHITE)
+
+    d.rounded_rectangle([36, 140, 236, 400], radius=10, outline=LINE, width=2, fill=(240, 243, 247))
+    d.text((70, 250), "PHOTO", font=font(16), fill=MUTED)
+
+    x = 270
+    y = 150
+    kv_row(d, x, y, "License No.", "SP-902365-M")
+    y += 60
+    kv_row(d, x, y, "Full Name", "Arjun Mehta")
+    y += 60
+    kv_row(d, x, y, "Address", "17 Birch Street, Springfield")
+    y += 60
+    kv_row(d, x, y, "Date of Birth", "05/09/1996")
+    kv_row(d, x + 300, y, "Sex", "M")
+    y += 60
+    kv_row(d, x, y, "Issue Date", "09/01/2022")
+    kv_row(d, x + 300, y, "Expires", "05/09/2030")
+
+    d.text((36, H - 40), "Synthetic document — demo purposes only.", font=font(11), fill=MUTED)
+    img.save(os.path.join(OUT_DIR, "arjun-mehta-drivers-license.png"))
+
+
+def arjun_bank_statement():
+    W, H = 850, 1100
+    img = Image.new("RGB", (W, H), WHITE)
+    d = ImageDraw.Draw(img)
+
+    d.text((40, 36), "FIRST COMMUNITY BANK", font=font(22, bold=True), fill=ACCENT)
+    d.text((40, 68), "Monthly Account Statement", font=font(14), fill=MUTED)
+
+    y = 120
+    kv_row(d, 40, y, "Account Holder", "Arjun Mehta")
+    kv_row(d, 440, y, "Account Number", "****5567")
+    y += 60
+    kv_row(d, 40, y, "Statement Period", "07/01/2026 - 07/31/2026")
+    kv_row(d, 440, y, "Account Type", "Checking")
+    y += 50
+    hline(d, 40, y, W - 40)
+    y += 24
+
+    d.text((40, y), "ACCOUNT SUMMARY", font=font(14, bold=True), fill=ACCENT)
+    y += 30
+    for label, amt in [("Beginning Balance", "$1,560.20"), ("Total Deposits", "$3,600.00"),
+                        ("Total Withdrawals", "$2,890.15"), ("Ending Balance", "$2,270.05")]:
+        d.text((40, y), label, font=font(14), fill=INK)
+        d.text((680, y), amt, font=font(14, bold=True), fill=INK)
+        y += 30
+
+    y += 20
+    hline(d, 40, y, W - 40)
+    y += 24
+    d.text((40, y), "RECENT TRANSACTIONS", font=font(14, bold=True), fill=ACCENT)
+    y += 30
+    d.text((40, y), "Date", font=font(12), fill=MUTED)
+    d.text((160, y), "Description", font=font(12), fill=MUTED)
+    d.text((620, y), "Amount", font=font(12), fill=MUTED)
+    y += 24
+    hline(d, 40, y, W - 40)
+    y += 14
+
+    rows = [
+        ("07/14/2026", "Falcon Freight Co. — Direct Deposit", "+$1,800.00"),
+        ("07/17/2026", "Springfield Electric Co.", "-$96.20"),
+        ("07/21/2026", "Grocery Mart", "-$88.40"),
+        ("07/28/2026", "Falcon Freight Co. — Direct Deposit", "+$1,800.00"),
+        ("07/29/2026", "Auto Insurance Co.", "-$135.55"),
+        ("07/30/2026", "Birch Street Apartments — Rent", "-$970.00"),
+    ]
+    for date, desc, amt in rows:
+        d.text((40, y), date, font=font(13), fill=INK)
+        d.text((160, y), desc, font=font(13), fill=INK)
+        color = (2, 122, 72) if amt.startswith("+") else INK
+        d.text((620, y), amt, font=font(13, bold=True), fill=color)
+        y += 32
+        hline(d, 40, y - 6, W - 40)
+
+    d.text((40, H - 40), "This is a synthetic document generated for demo purposes only.",
+           font=font(11), fill=MUTED)
+    img.save(os.path.join(OUT_DIR, "arjun-mehta-bank-statement.png"))
+
+
 def business_tax_return():
     W, H = 850, 1100
     img = Image.new("RGB", (W, H), WHITE)
@@ -401,4 +735,10 @@ if __name__ == "__main__":
     personal_financial_statement()
     business_license()
     ownership_disclosure()
-    print(f"Wrote 7 demo document images to {OUT_DIR}")
+    priya_pay_stub()
+    priya_drivers_license()
+    priya_bank_statement()
+    arjun_pay_stub()
+    arjun_drivers_license()
+    arjun_bank_statement()
+    print(f"Wrote 13 demo document images to {OUT_DIR}")

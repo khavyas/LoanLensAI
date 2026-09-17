@@ -90,6 +90,16 @@ export default function ApplicationDetailScreen({ route }) {
           {tab === 'Assistant' && <AssistantTab app={app} />}
         </View>
       </View>
+
+      {tab !== 'Assistant' && (
+        <TouchableOpacity
+          style={styles.assistantFab}
+          onPress={() => setTab('Assistant')}
+          accessibilityLabel="Open the LoanLens assistant"
+        >
+          <Text style={styles.assistantFabIcon}>💬</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -121,4 +131,21 @@ const styles = StyleSheet.create({
   tabBtnActive: { borderColor: colors.accent },
   tabText: { color: colors.muted, fontWeight: '600', fontSize: 14 },
   tabTextActive: { color: colors.accent },
+  assistantFab: {
+    position: 'absolute',
+    right: 24,
+    bottom: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#101828',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  assistantFabIcon: { fontSize: 24 },
 });

@@ -16,7 +16,7 @@ function initials(name) {
 }
 
 export default function ApplicationsScreen({ navigation }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [apps, setApps] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -47,19 +47,14 @@ export default function ApplicationsScreen({ navigation }) {
               {user.role === 'officer' ? 'Loan Applications' : 'My Applications'}
             </Text>
           </View>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {user.role === 'borrower' && (
-              <TouchableOpacity
-                style={styles.newBtn}
-                onPress={() => navigation.navigate('NewApplication')}
-              >
-                <Text style={styles.newBtnText}>New application</Text>
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-              <Text style={styles.logout}>Sign out</Text>
+          {user.role === 'borrower' && (
+            <TouchableOpacity
+              style={styles.newBtn}
+              onPress={() => navigation.navigate('NewApplication')}
+            >
+              <Text style={styles.newBtnText}>New application</Text>
             </TouchableOpacity>
-          </View>
+          )}
         </View>
 
         <FlatList
@@ -117,15 +112,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   heading: { fontSize: 24, fontWeight: '800', color: colors.text, marginTop: 2 },
-  logoutBtn: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    backgroundColor: colors.card,
-  },
-  logout: { color: colors.neutral, fontWeight: '600', fontSize: 13 },
   newBtn: {
     borderRadius: 8,
     paddingHorizontal: 12,

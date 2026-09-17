@@ -52,6 +52,8 @@ Demo logins (after seed): `officer@loanlens.demo` / `demo1234`, `borrower@loanle
 Sample documents to upload live — `data/seed/documents/` (regenerate with `python data/seed/generate_documents.py`):
 - **Small business (flagship — Dana Whitfield / Whitfield & Co. Bakery LLC):** `whitfield-bakery-business-tax-return.png` plants a revenue mismatch ($275,400 documented vs. $340,000 stated); `whitfield-bakery-business-license.png` plants an entity-name mismatch ("Whitfield And Co Bakery LLC" vs. "Whitfield & Co. Bakery LLC" on the application); `whitfield-bakery-personal-financial-statement.png` and `whitfield-bakery-ownership-disclosure.png` are clean matches.
 - **Consumer (Jordan Rivera):** `jordan-rivera-pay-stub.png` plants an income mismatch ($4,200 vs. the $5,000 stated on the application); `jordan-rivera-drivers-license.png`, `jordan-rivera-bank-statement.png` are clean matches.
+- **Breadth/QA (Priya Nair, personal loan):** all three documents (`priya-nair-*.png`) are clean — the "everything's fine" happy path.
+- **Breadth/QA (Arjun Mehta, auto loan):** `arjun-mehta-pay-stub.png` plants an employer mismatch only (income matches exactly) — the one seeded scenario that exercises the softer "warning" tier instead of a hard "mismatch". `arjun-mehta-drivers-license.png`, `arjun-mehta-bank-statement.png` are clean.
 
 Full walkthrough: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
 
