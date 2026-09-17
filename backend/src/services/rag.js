@@ -3,6 +3,24 @@ import Document from '../models/Document.js';
 import { anthropic, MODEL, parseJsonResponse } from './anthropicClient.js';
 import { currentDocuments, missingDocuments, openExceptions } from './verification.js';
 
+// Same bypass as extraction.js — set MOCK_AI=true to exercise the Assistant
+// tab without spending Anthropic API credits. The mock answer is a
+// deterministic summary of application state, not a real language-model
+// response — it doesn't attempt to actually answer the free-text question,
+// only to prove the request/response wiring and UI work end to end.
+const MOCK_AI = process.env.MOCK_AI === 'true';
+
+function mockAnswer(application, documents) {
+  const state = applicationStateSummary(application, documents);
+  const lines = [`[MOCK MODE — ANTHROPIC_API_KEY not active, this is not a real AI answer]`];
+  if (state.openExceptions.length) {
+    lines.push(`Open items: ${state.openExceptions.join(' ')}`);
+  } else {
+    lines.push('No open items on this application right now.');
+  }
+  return { answer: lines.join('\n\n'), sources: [{ doc: 'Mock mode — no real retrieval performed' }] };
+}
+
 // POC retrieval: the whole policy corpus (~30 small chunks) fits in Claude's
 // context, so we ground on ALL of it and require citations. The scale-up path
 // (thousands of chunks) swaps this for embeddings + vector search without
@@ -39,6 +57,8 @@ function applicationStateSummary(application, documents) {
 
 export async function answerQuestion({ question, application, role }) {
   const documents = await Document.find({ applicationId: application._id }).lean();
+  if (MOCK_AI) return mockAnswer(application, documents);
+
   const context = await policyContext();
 
   const system = `You are LoanLens, a loan assistant for First Community Bank (a fictional demo bank).

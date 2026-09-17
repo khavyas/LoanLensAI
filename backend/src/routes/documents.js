@@ -26,7 +26,7 @@ router.post('/:applicationId', upload.single('file'), async (req, res, next) => 
     if (!req.file) return res.status(400).json({ error: 'No file uploaded (field name: file)' });
 
     const expectedDocType = req.body.expectedDocType || undefined;
-    const extracted = await classifyAndExtract(req.file.path, req.file.mimetype);
+    const extracted = await classifyAndExtract(req.file.path, req.file.mimetype, req.file.originalname);
     const verification = verifyDocument(application, extracted, { expectedDocType });
 
     // Supersede whatever previously occupied this slot so the fix replaces it

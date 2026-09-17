@@ -1,5 +1,13 @@
 import fs from 'node:fs';
 import { anthropic, MODEL, parseJsonResponse } from './anthropicClient.js';
+import { mockClassifyAndExtract } from './mockFixtures.js';
+
+// Bypass for testing everything downstream of extraction (verification, the
+// live-exception flow, status transitions) without spending Anthropic API
+// credits — set MOCK_AI=true. Returns canned results for the known seed
+// document filenames; anything else comes back as a low-confidence
+// "unknown" so the upload flow still completes, same as a real illegible scan.
+const MOCK_AI = process.env.MOCK_AI === 'true';
 
 const EXTRACTION_PROMPT = `You are a loan document analyst. Look at this document and return STRICT JSON only (no markdown, no commentary) with this shape:
 {
@@ -27,7 +35,9 @@ Rules:
 - Use null for anything not visible or not applicable to this document type. Never guess.
 - confidence reflects how legible/complete the document is, not your certainty about the docType alone.`;
 
-export async function classifyAndExtract(filePath, mimeType) {
+export async function classifyAndExtract(filePath, mimeType, originalFilename) {
+  if (MOCK_AI) return mockClassifyAndExtract(originalFilename);
+
   const data = fs.readFileSync(filePath).toString('base64');
 
   const fileBlock =

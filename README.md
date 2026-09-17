@@ -55,6 +55,8 @@ Sample documents to upload live — `data/seed/documents/` (regenerate with `pyt
 
 Full walkthrough: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
 
+**No Anthropic credits? Set `MOCK_AI=true`** in `backend/.env` (or the Render dashboard) to bypass Claude entirely — document upload returns canned, deterministic extraction results for the known seed document filenames (reproducing the exact planted mismatches), and the Assistant tab returns a plain state summary instead of a real answer. Lets you test verification, the live-exception flow, and status transitions without spending API credits. Turn it back off for the real demo — mock answers are clearly labeled and aren't a substitute for the real AI behavior.
+
 ## No-local-Node workflow 
 
 Local machines with firewall restrictions never run Node — everything runs in the cloud:
