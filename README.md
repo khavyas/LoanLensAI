@@ -45,7 +45,7 @@ cp .env.example .env       # point EXPO_PUBLIC_API_URL at your Render backend
 npx expo start             # press 'w' for web
 ```
 
-Demo logins (after seed): `officer@loanlens.demo` / `demo1234`, `borrower@loanlens.demo` / `demo1234` (Jordan Rivera), `dana.whitfield@example.demo` / `demo1234` (the small-business flagship scenario).
+Demo logins (after seed): `officer@loanlens.demo` / `demo1234`, `borrower@loanlens.demo` / `demo1234` (Jordan Rivera), `dana.whitfield@example.demo` / `demo1234` (the small-business flagship scenario). Two more borrower logins exist for breadth/testing: `priya.nair@example.demo` and `arjun.mehta@example.demo` (both `demo1234`).
 
 **Test accounts:** the login screen has a "Create a test account" link (self-registration, no email verification — this is a synthetic-data demo, not a real bank onboarding flow) for spinning up your own officer or borrower logins. A borrower who signs up can apply for a loan from the Applications screen ("New application") — a real intake form (product type, income/business revenue, requested amount, etc.) that creates a real `Application` record with the right required documents for that product, landing them straight on their new application's Documents tab.
 

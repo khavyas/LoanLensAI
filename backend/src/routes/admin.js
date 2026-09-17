@@ -32,6 +32,8 @@ async function runSeed() {
     { email: 'officer@loanlens.demo', passwordHash, name: 'Olivia Officer', role: 'officer' },
     { email: 'borrower@loanlens.demo', passwordHash, name: 'Jordan Rivera', role: 'borrower' },
     { email: 'dana.whitfield@example.demo', passwordHash, name: 'Dana Whitfield', role: 'borrower' },
+    { email: 'priya.nair@example.demo', passwordHash, name: 'Priya Nair', role: 'borrower' },
+    { email: 'arjun.mehta@example.demo', passwordHash, name: 'Arjun Mehta', role: 'borrower' },
   ]);
   const apps = await Application.create([
     {
@@ -71,8 +73,8 @@ async function runSeed() {
       requiredDocTypes: REQUIRED_DOCS,
     },
     {
-      applicantName: 'Marcus Webb',
-      applicantEmail: 'marcus.webb@example.demo',
+      applicantName: 'Arjun Mehta',
+      applicantEmail: 'arjun.mehta@example.demo',
       productType: 'auto-loan',
       statedMonthlyIncome: 3900,
       employerName: 'Ironwood Manufacturing',
@@ -82,7 +84,7 @@ async function runSeed() {
       requiredDocTypes: REQUIRED_DOCS,
     },
   ]);
-  return { users: 3, applications: apps.length };
+  return { users: 5, applications: apps.length };
 }
 
 async function runIngest() {

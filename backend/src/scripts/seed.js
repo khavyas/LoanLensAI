@@ -18,6 +18,8 @@ async function run() {
     { email: 'officer@loanlens.demo', passwordHash, name: 'Olivia Officer', role: 'officer' },
     { email: 'borrower@loanlens.demo', passwordHash, name: 'Jordan Rivera', role: 'borrower' },
     { email: 'dana.whitfield@example.demo', passwordHash, name: 'Dana Whitfield', role: 'borrower' },
+    { email: 'priya.nair@example.demo', passwordHash, name: 'Priya Nair', role: 'borrower' },
+    { email: 'arjun.mehta@example.demo', passwordHash, name: 'Arjun Mehta', role: 'borrower' },
   ]);
 
   await Application.create([
@@ -59,8 +61,8 @@ async function run() {
       status: 'submitted',
     },
     {
-      applicantName: 'Marcus Webb',
-      applicantEmail: 'marcus.webb@example.demo',
+      applicantName: 'Arjun Mehta',
+      applicantEmail: 'arjun.mehta@example.demo',
       productType: 'auto-loan',
       statedMonthlyIncome: 3900,
       employerName: 'Ironwood Manufacturing',
@@ -72,9 +74,9 @@ async function run() {
     },
   ]);
 
-  console.log('Seeded 3 users and 4 applications.');
+  console.log('Seeded 5 users and 4 applications.');
   console.log(
-    'Logins: officer@loanlens.demo / demo1234  ·  borrower@loanlens.demo / demo1234  ·  dana.whitfield@example.demo / demo1234'
+    'Logins: officer@loanlens.demo / demo1234  ·  borrower@loanlens.demo / demo1234 (Jordan Rivera)  ·  dana.whitfield@example.demo / demo1234  ·  priya.nair@example.demo / demo1234  ·  arjun.mehta@example.demo / demo1234'
   );
   process.exit(0);
 }
