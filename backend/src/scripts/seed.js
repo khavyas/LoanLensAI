@@ -4,14 +4,10 @@ import { connectDb } from '../config/db.js';
 import User from '../models/User.js';
 import Application from '../models/Application.js';
 import Document from '../models/Document.js';
+import { REQUIRED_DOCS_BY_PRODUCT } from '../config/requiredDocs.js';
 
-const REQUIRED_DOCS = ['pay-stub', 'drivers-license', 'bank-statement'];
-const SMB_REQUIRED_DOCS = [
-  'business-tax-return',
-  'personal-financial-statement',
-  'business-license',
-  'ownership-disclosure',
-];
+const REQUIRED_DOCS = REQUIRED_DOCS_BY_PRODUCT['auto-loan'];
+const SMB_REQUIRED_DOCS = REQUIRED_DOCS_BY_PRODUCT['small-business-loan'];
 
 async function run() {
   await connectDb();
@@ -21,6 +17,7 @@ async function run() {
   await User.create([
     { email: 'officer@loanlens.demo', passwordHash, name: 'Olivia Officer', role: 'officer' },
     { email: 'borrower@loanlens.demo', passwordHash, name: 'Jordan Rivera', role: 'borrower' },
+    { email: 'dana.whitfield@example.demo', passwordHash, name: 'Dana Whitfield', role: 'borrower' },
   ]);
 
   await Application.create([
@@ -75,8 +72,10 @@ async function run() {
     },
   ]);
 
-  console.log('Seeded 2 users and 4 applications.');
-  console.log('Logins: officer@loanlens.demo / demo1234  ·  borrower@loanlens.demo / demo1234');
+  console.log('Seeded 3 users and 4 applications.');
+  console.log(
+    'Logins: officer@loanlens.demo / demo1234  ·  borrower@loanlens.demo / demo1234  ·  dana.whitfield@example.demo / demo1234'
+  );
   process.exit(0);
 }
 

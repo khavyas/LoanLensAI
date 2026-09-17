@@ -3,8 +3,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import LoginScreen from './src/screens/LoginScreen';
+import SignUpScreen from './src/screens/SignUpScreen';
 import ApplicationsScreen from './src/screens/ApplicationsScreen';
 import ApplicationDetailScreen from './src/screens/ApplicationDetailScreen';
+import NewApplicationScreen from './src/screens/NewApplicationScreen';
 import { colors } from './src/theme';
 
 const Stack = createNativeStackNavigator();
@@ -20,7 +22,10 @@ function Routes() {
       }}
     >
       {!user ? (
-        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
+        </>
       ) : (
         <>
           <Stack.Screen
@@ -32,6 +37,11 @@ function Routes() {
             name="ApplicationDetail"
             component={ApplicationDetailScreen}
             options={{ title: 'Application' }}
+          />
+          <Stack.Screen
+            name="NewApplication"
+            component={NewApplicationScreen}
+            options={{ title: 'Apply for a Loan' }}
           />
         </>
       )}

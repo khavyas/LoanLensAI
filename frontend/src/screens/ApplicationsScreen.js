@@ -47,9 +47,19 @@ export default function ApplicationsScreen({ navigation }) {
               {user.role === 'officer' ? 'Loan Applications' : 'My Applications'}
             </Text>
           </View>
-          <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-            <Text style={styles.logout}>Sign out</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {user.role === 'borrower' && (
+              <TouchableOpacity
+                style={styles.newBtn}
+                onPress={() => navigation.navigate('NewApplication')}
+              >
+                <Text style={styles.newBtnText}>New application</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+              <Text style={styles.logout}>Sign out</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <FlatList
@@ -57,7 +67,13 @@ export default function ApplicationsScreen({ navigation }) {
           keyExtractor={(item) => item._id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={load} />}
           contentContainerStyle={{ paddingBottom: 24 }}
-          ListEmptyComponent={<Text style={styles.empty}>No applications yet.</Text>}
+          ListEmptyComponent={
+            <Text style={styles.empty}>
+              {user.role === 'borrower'
+                ? "No applications yet — tap \"New application\" to apply."
+                : 'No applications yet.'}
+            </Text>
+          }
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.card}
@@ -100,6 +116,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
   },
   logout: { color: colors.neutral, fontWeight: '600', fontSize: 13 },
+  newBtn: {
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    backgroundColor: colors.accent,
+  },
+  newBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
   card: {
     backgroundColor: colors.card,
     borderRadius: 12,

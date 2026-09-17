@@ -3,18 +3,25 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator 
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme';
 
-export default function LoginScreen({ navigation }) {
-  const { login } = useAuth();
+const ROLES = [
+  { value: 'borrower', label: 'Borrower' },
+  { value: 'officer', label: 'Loan Officer' },
+];
+
+export default function SignUpScreen({ navigation }) {
+  const { register } = useAuth();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('borrower');
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  async function onLogin() {
+  async function onSubmit() {
     setError(null);
     setBusy(true);
     try {
-      await login(email.trim(), password);
+      await register({ name: name.trim(), email: email.trim(), password, role });
     } catch (e) {
       setError(e.message);
     } finally {
@@ -27,9 +34,18 @@ export default function LoginScreen({ navigation }) {
       <View style={styles.card}>
         <Text style={styles.bank}>FIRST COMMUNITY BANK</Text>
         <Text style={styles.logo}>
-          LoanLens <Text style={{ color: colors.accent }}>AI</Text>
+          Create a <Text style={{ color: colors.accent }}>test account</Text>
         </Text>
-        <Text style={styles.tagline}>Intelligent loan document review &amp; assistance</Text>
+        <Text style={styles.tagline}>For trying out LoanLens AI — not a real bank account</Text>
+
+        <Text style={styles.label}>Full name</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Jordan Rivera"
+          placeholderTextColor={colors.faint}
+          value={name}
+          onChangeText={setName}
+        />
 
         <Text style={styles.label}>Email address</Text>
         <TextInput
@@ -45,30 +61,38 @@ export default function LoginScreen({ navigation }) {
         <Text style={styles.label}>Password</Text>
         <TextInput
           style={styles.input}
-          placeholder="••••••••"
+          placeholder="At least 8 characters"
           placeholderTextColor={colors.faint}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
-          onSubmitEditing={onLogin}
+          onSubmitEditing={onSubmit}
         />
+
+        <Text style={styles.label}>I am a</Text>
+        <View style={styles.roleRow}>
+          {ROLES.map((r) => (
+            <TouchableOpacity
+              key={r.value}
+              style={[styles.roleBtn, role === r.value && styles.roleBtnActive]}
+              onPress={() => setRole(r.value)}
+            >
+              <Text style={[styles.roleBtnText, role === r.value && styles.roleBtnTextActive]}>
+                {r.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {error && <Text style={styles.error}>{error}</Text>}
 
-        <TouchableOpacity style={styles.button} onPress={onLogin} disabled={busy}>
-          {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign in</Text>}
+        <TouchableOpacity style={styles.button} onPress={onSubmit} disabled={busy}>
+          {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Create account</Text>}
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.signupLink} onPress={() => navigation.navigate('SignUp')}>
-          <Text style={styles.signupLinkText}>New here? Create a test account</Text>
+        <TouchableOpacity style={styles.backLink} onPress={() => navigation.goBack()}>
+          <Text style={styles.backLinkText}>Already have an account? Sign in</Text>
         </TouchableOpacity>
-
-        <View style={styles.demoBox}>
-          <Text style={styles.demoTitle}>Demo accounts</Text>
-          <Text style={styles.demoLine}>Loan officer · officer@loanlens.demo</Text>
-          <Text style={styles.demoLine}>Borrower · borrower@loanlens.demo</Text>
-          <Text style={styles.demoLine}>Password · demo1234</Text>
-        </View>
       </View>
       <Text style={styles.foot}>Demo environment · synthetic data only · AI answers are cited and human-reviewed</Text>
     </View>
@@ -93,7 +117,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   logo: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: '800',
     color: colors.primary,
     textAlign: 'center',
@@ -112,6 +136,19 @@ const styles = StyleSheet.create({
     color: colors.text,
     backgroundColor: '#FCFDFE',
   },
+  roleRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+  roleBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    paddingVertical: 11,
+    alignItems: 'center',
+    backgroundColor: '#FCFDFE',
+  },
+  roleBtnActive: { borderColor: colors.accent, backgroundColor: colors.infoBg },
+  roleBtnText: { color: colors.muted, fontWeight: '600', fontSize: 13 },
+  roleBtnTextActive: { color: colors.accent },
   button: {
     backgroundColor: colors.accent,
     borderRadius: 8,
@@ -121,18 +158,8 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   error: { color: colors.danger, marginBottom: 10, fontSize: 13 },
-  signupLink: { marginTop: 14, alignItems: 'center' },
-  signupLinkText: { color: colors.accent, fontWeight: '600', fontSize: 13 },
-  demoBox: {
-    marginTop: 24,
-    backgroundColor: colors.bg,
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  demoTitle: { fontSize: 11, fontWeight: '700', color: colors.faint, letterSpacing: 1, marginBottom: 4 },
-  demoLine: { fontSize: 12, color: colors.muted, lineHeight: 18 },
+  backLink: { marginTop: 18, alignItems: 'center' },
+  backLinkText: { color: colors.accent, fontWeight: '600', fontSize: 13 },
   foot: {
     color: 'rgba(255,255,255,0.55)',
     fontSize: 12,

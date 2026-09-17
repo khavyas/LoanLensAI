@@ -20,8 +20,10 @@ async function request(path, options = {}) {
 
 export const api = {
   login: (email, password) => request('/auth/login', { method: 'POST', body: { email, password } }),
+  register: (payload) => request('/auth/register', { method: 'POST', body: payload }),
   applications: () => request('/applications'),
   application: (id) => request(`/applications/${id}`),
+  createApplication: (payload) => request('/applications', { method: 'POST', body: payload }),
   uploadDocument: (applicationId, formData) =>
     request(`/documents/${applicationId}`, { method: 'POST', body: formData }),
   ask: (applicationId, question) =>

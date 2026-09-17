@@ -15,6 +15,7 @@ const applicationSchema = new mongoose.Schema(
     employerName: String,
     address: String,
     ssnLast4: String,
+    dateOfBirth: Date,
     requestedAmount: Number,
     // Small-business loans only: legal/DBA name as stated on the application,
     // cross-checked against the business license and tax return uploads.
@@ -27,6 +28,9 @@ const applicationSchema = new mongoose.Schema(
     },
     // Document types this product requires; verification checks uploads against it.
     requiredDocTypes: [{ type: String }],
+    // E-sign / credit-pull authorization, captured at application submission —
+    // required before an application can be created (see routes/applications.js).
+    consentAcceptedAt: Date,
   },
   { timestamps: true }
 );

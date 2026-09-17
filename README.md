@@ -45,7 +45,9 @@ cp .env.example .env       # point EXPO_PUBLIC_API_URL at your Render backend
 npx expo start             # press 'w' for web
 ```
 
-Demo logins (after seed): `officer@loanlens.demo` / `demo1234`, `borrower@loanlens.demo` / `demo1234`.
+Demo logins (after seed): `officer@loanlens.demo` / `demo1234`, `borrower@loanlens.demo` / `demo1234` (Jordan Rivera), `dana.whitfield@example.demo` / `demo1234` (the small-business flagship scenario).
+
+**Test accounts:** the login screen has a "Create a test account" link (self-registration, no email verification — this is a synthetic-data demo, not a real bank onboarding flow) for spinning up your own officer or borrower logins. A borrower who signs up can apply for a loan from the Applications screen ("New application") — a real intake form (product type, income/business revenue, requested amount, etc.) that creates a real `Application` record with the right required documents for that product, landing them straight on their new application's Documents tab.
 
 Sample documents to upload live — `data/seed/documents/` (regenerate with `python data/seed/generate_documents.py`):
 - **Small business (flagship — Dana Whitfield / Whitfield & Co. Bakery LLC):** `whitfield-bakery-business-tax-return.png` plants a revenue mismatch ($275,400 documented vs. $340,000 stated); `whitfield-bakery-business-license.png` plants an entity-name mismatch ("Whitfield And Co Bakery LLC" vs. "Whitfield & Co. Bakery LLC" on the application); `whitfield-bakery-personal-financial-statement.png` and `whitfield-bakery-ownership-disclosure.png` are clean matches.

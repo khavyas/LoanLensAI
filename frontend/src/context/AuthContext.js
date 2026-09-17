@@ -23,13 +23,20 @@ export function AuthProvider({ children }) {
     await AsyncStorage.setItem('loanlens.session', JSON.stringify({ token, user: u }));
   }
 
+  async function register(payload) {
+    const { token, user: u } = await api.register(payload);
+    setToken(token);
+    setUser(u);
+    await AsyncStorage.setItem('loanlens.session', JSON.stringify({ token, user: u }));
+  }
+
   async function logout() {
     setToken(null);
     setUser(null);
     await AsyncStorage.removeItem('loanlens.session');
   }
 
-  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, login, register, logout }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);

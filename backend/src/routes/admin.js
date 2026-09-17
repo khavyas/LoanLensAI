@@ -7,6 +7,7 @@ import User from '../models/User.js';
 import Application from '../models/Application.js';
 import Document from '../models/Document.js';
 import PolicyChunk from '../models/PolicyChunk.js';
+import { REQUIRED_DOCS_BY_PRODUCT } from '../config/requiredDocs.js';
 
 // One-time setup endpoints for environments with no shell access (Render free tier).
 // Guarded by SETUP_SECRET; disable by unsetting the env var after setup.
@@ -21,13 +22,8 @@ router.use((req, res, next) => {
   next();
 });
 
-const REQUIRED_DOCS = ['pay-stub', 'drivers-license', 'bank-statement'];
-const SMB_REQUIRED_DOCS = [
-  'business-tax-return',
-  'personal-financial-statement',
-  'business-license',
-  'ownership-disclosure',
-];
+const REQUIRED_DOCS = REQUIRED_DOCS_BY_PRODUCT['auto-loan'];
+const SMB_REQUIRED_DOCS = REQUIRED_DOCS_BY_PRODUCT['small-business-loan'];
 
 async function runSeed() {
   await Promise.all([User.deleteMany({}), Application.deleteMany({}), Document.deleteMany({})]);
@@ -35,6 +31,7 @@ async function runSeed() {
   await User.create([
     { email: 'officer@loanlens.demo', passwordHash, name: 'Olivia Officer', role: 'officer' },
     { email: 'borrower@loanlens.demo', passwordHash, name: 'Jordan Rivera', role: 'borrower' },
+    { email: 'dana.whitfield@example.demo', passwordHash, name: 'Dana Whitfield', role: 'borrower' },
   ]);
   const apps = await Application.create([
     {
@@ -85,7 +82,7 @@ async function runSeed() {
       requiredDocTypes: REQUIRED_DOCS,
     },
   ]);
-  return { users: 2, applications: apps.length };
+  return { users: 3, applications: apps.length };
 }
 
 async function runIngest() {
