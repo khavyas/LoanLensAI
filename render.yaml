@@ -2,8 +2,12 @@
 # In Render: New → Blueprint → select this repo, or create the Web Service
 # manually with the same settings.
 services:
+  # Deployed manually (not via this Blueprint) under the name "LoanLensAI" —
+  # live at https://loanlensai.onrender.com. Kept here for reference/re-deploy;
+  # if you ever redeploy this service from scratch via Blueprint, name it to
+  # match so the URL stays the same.
   - type: web
-    name: loanlens-backend
+    name: LoanLensAI
     runtime: node
     plan: free
     rootDir: backend
