@@ -100,7 +100,8 @@ export default function NewApplicationScreen({ navigation }) {
   }
 
   return (
-    <ScrollView style={styles.wrap} contentContainerStyle={{ padding: 20 }}>
+    <ScrollView style={styles.wrap}>
+      <View style={styles.inner}>
       <View style={styles.stepper}>
         {STEPS.map((label, i) => (
           <View key={label} style={styles.stepperItem}>
@@ -257,12 +258,18 @@ export default function NewApplicationScreen({ navigation }) {
           exactly what's still required.
         </Text>
       )}
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: colors.bg },
+  // Every other screen in this app constrains its content to a centered,
+  // max-width column (see ApplicationsScreen, ApplicationDetailScreen) —
+  // this screen was missing that, so on a wide viewport the cards and the
+  // Continue button stretched to the full browser width instead.
+  inner: { width: '100%', maxWidth: 600, alignSelf: 'center', padding: 20 },
   stepper: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, paddingHorizontal: 4 },
   stepperItem: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   stepDot: {
