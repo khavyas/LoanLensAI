@@ -69,10 +69,20 @@ function Shell() {
   );
 }
 
+// Default behavior just uses the focused screen's own title ("Application",
+// "Apply for a Loan", ...) as the raw browser tab title — this is exactly
+// why the tab showed bare "Application" with no branding.
+const documentTitle = {
+  formatter: (options, route) => {
+    const screenTitle = options?.title ?? route?.name;
+    return screenTitle ? `LoanLens AI · ${screenTitle}` : 'LoanLens AI';
+  },
+};
+
 export default function App() {
   return (
     <AuthProvider>
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer ref={navigationRef} documentTitle={documentTitle}>
         <StatusBar style="light" />
         <Shell />
       </NavigationContainer>

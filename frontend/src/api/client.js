@@ -5,6 +5,16 @@ export function setToken(token) {
   authToken = token;
 }
 
+// A 401 (expired/invalid JWT — tokens last 12h) previously just threw an
+// Error that most callers swallowed with a console.warn, leaving the user
+// looking logged-in on a screen where nothing actually works. AuthContext
+// registers its own logout() here so any 401, from anywhere in the app,
+// clears the stale session and drops back to the login screen instead.
+let onUnauthorized = null;
+export function setUnauthorizedHandler(fn) {
+  onUnauthorized = fn;
+}
+
 async function request(path, options = {}) {
   const headers = { ...(options.headers || {}) };
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
@@ -14,7 +24,10 @@ async function request(path, options = {}) {
   }
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  if (!res.ok) {
+    if (res.status === 401) onUnauthorized?.();
+    throw new Error(data.error || `Request failed (${res.status})`);
+  }
   return data;
 }
 
@@ -27,6 +40,7 @@ async function fetchDocumentBlob(documentId) {
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
   const res = await fetch(`${BASE_URL}/documents/${documentId}/file`, { headers });
   if (!res.ok) {
+    if (res.status === 401) onUnauthorized?.();
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error || `Failed to load file (${res.status})`);
   }

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { api, setToken } from '../api/client';
+import { api, setToken, setUnauthorizedHandler } from '../api/client';
 
 const AuthContext = createContext(null);
 
@@ -14,6 +14,12 @@ export function AuthProvider({ children }) {
       setToken(token);
       setUser(savedUser);
     });
+  }, []);
+
+  // Any 401 from anywhere in the app (expired/invalid token) drops back to
+  // the login screen instead of leaving a stale, broken-looking session up.
+  useEffect(() => {
+    setUnauthorizedHandler(() => logout());
   }, []);
 
   async function login(email, password) {
