@@ -27,7 +27,12 @@ const EXTRACTION_PROMPT = `You are a loan document analyst. Look at this documen
     "ownershipPercent": number|null,
     "netPay": number|null,
     "recentDepositAmount": number|null,
-    "recentDepositSource": string|null
+    "recentDepositSource": string|null,
+    "grossPayPeriod": number|null,
+    "socialSecurityWithheld": number|null,
+    "medicareWithheld": number|null,
+    "ytdGrossPay": number|null,
+    "payPeriodNumber": number|null
   }
 }
 Rules:
@@ -37,6 +42,9 @@ Rules:
 - ownershipPercent is the percentage ownership stake shown on an ownership/beneficial-owner disclosure, 0-100.
 - netPay is a pay stub's NET PAY (take-home, after deductions) for the pay period shown, in dollars.
 - recentDepositAmount and recentDepositSource are only for bank statements: the dollar amount and transaction description of the most recent transaction that looks like a recurring payroll/salary direct deposit (not a one-off transfer or refund).
+- grossPayPeriod is a pay stub's GROSS PAY for the current pay period only (not the monthly-converted figure).
+- socialSecurityWithheld and medicareWithheld are the dollar amounts on the DEDUCTIONS lines labeled "Social Security" and "Medicare".
+- ytdGrossPay and payPeriodNumber are only present on a pay stub if it explicitly prints a year-to-date gross figure and a pay period number (e.g. "Period 16 of 26") — leave both null if not shown.
 - Use null for anything not visible or not applicable to this document type. Never guess.
 - confidence reflects how legible/complete the document is, not your certainty about the docType alone.`;
 

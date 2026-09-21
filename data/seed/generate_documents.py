@@ -109,7 +109,10 @@ def pay_stub():
     y += 34
     d.text((40, y), "Gross monthly income (biweekly x 26 / 12)", font=font(12), fill=MUTED)
     d.text((680, y), "$4,200.00", font=font(16, bold=True), fill=(180, 35, 24))
-    y += 60
+    y += 34
+    d.text((40, y), "YTD Gross Pay (Period 16 of 26)", font=font(12), fill=MUTED)
+    d.text((680, y), "$31,015.36", font=font(15, bold=True), fill=INK)
+    y += 46
     hline(d, 40, y, W - 40)
     y += 24
 
@@ -269,7 +272,10 @@ def priya_pay_stub():
     y += 34
     d.text((40, y), "Gross monthly income (biweekly x 26 / 12)", font=font(12), fill=MUTED)
     d.text((680, y), "$7,200.00", font=font(16, bold=True), fill=ACCENT)
-    y += 60
+    y += 34
+    d.text((40, y), "YTD Gross Pay (Period 16 of 26)", font=font(12), fill=MUTED)
+    d.text((680, y), "$53,169.28", font=font(15, bold=True), fill=INK)
+    y += 46
     hline(d, 40, y, W - 40)
     y += 24
 
@@ -433,7 +439,10 @@ def arjun_pay_stub():
     y += 34
     d.text((40, y), "Gross monthly income (biweekly x 26 / 12)", font=font(12), fill=MUTED)
     d.text((680, y), "$3,900.00", font=font(16, bold=True), fill=ACCENT)
-    y += 60
+    y += 34
+    d.text((40, y), "YTD Gross Pay (Period 16 of 26)", font=font(12), fill=MUTED)
+    d.text((680, y), "$28,800.00", font=font(15, bold=True), fill=INK)
+    y += 46
     hline(d, 40, y, W - 40)
     y += 24
 

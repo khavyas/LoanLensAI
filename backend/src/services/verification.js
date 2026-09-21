@@ -16,6 +16,16 @@ const AFFORDABILITY = {
 const SMALL_BUSINESS_REVENUE_CAP_RATIO = 0.3; // rough rule of thumb, not a debt-service-coverage calc
 const SMALL_BUSINESS_PRODUCT_CAP = 250000;
 
+// Fixed federal payroll-tax rates (2024/2025), not brackets — unlike federal/
+// state income tax, these are flat percentages of gross pay, which is exactly
+// what makes them checkable without a full tax-bracket model. We don't model
+// the Social Security wage base cap (~$168k/yr) since it's irrelevant at our
+// seeded income levels.
+const SOCIAL_SECURITY_RATE = 0.062;
+const MEDICARE_RATE = 0.0145;
+const STATUTORY_TOLERANCE = 0.02; // 2% — allows for cent-level rounding only
+const YTD_TOLERANCE = 0.15; // 15% — real YTD varies period to period (OT, raises, unpaid leave)
+
 function normalizeName(s) {
   return (s || '').toLowerCase().replace(/[^a-z ]/g, '').split(/\s+/).filter(Boolean).sort().join(' ');
 }
@@ -67,6 +77,63 @@ export function verifyDocument(application, extracted, options = {}) {
       explanation: ok
         ? `Documented income is within ${INCOME_TOLERANCE * 100}% of the stated income.`
         : `Application states $${stated.toLocaleString('en-US')}/mo but this document shows $${found.toLocaleString('en-US')}/mo (${(diff * 100).toFixed(0)}% difference). Ask the borrower to confirm or provide additional proof of income.`,
+    });
+  }
+
+  // Statutory math: Social Security (6.2%) and Medicare (1.45%) are FIXED
+  // federal percentages of gross pay (not brackets, unlike income tax — we
+  // deliberately don't attempt to re-derive federal/state income tax, which
+  // is progressive and depends on filing status/allowances we don't have).
+  // Someone editing gross pay on a pay stub almost always forgets to also
+  // rescale these two lines to match — a cheap, hard-to-fake tell.
+  if (f.grossPayPeriod != null && f.socialSecurityWithheld != null) {
+    const expected = f.grossPayPeriod * SOCIAL_SECURITY_RATE;
+    const diff = Math.abs(expected - f.socialSecurityWithheld) / expected;
+    const ok = diff <= STATUTORY_TOLERANCE;
+    checks.push({
+      field: 'Social Security withholding (6.2%)',
+      expected: `~$${expected.toFixed(2)}`,
+      found: `$${f.socialSecurityWithheld.toFixed(2)}`,
+      status: ok ? 'match' : 'mismatch',
+      explanation: ok
+        ? 'Social Security withholding matches the statutory 6.2% rate for the gross pay shown.'
+        : `Social Security withholding ($${f.socialSecurityWithheld.toFixed(2)}) doesn't match the statutory 6.2% rate for the gross pay shown (expected ~$${expected.toFixed(2)}). Gross pay edited without recalculating withholding is a common tampering signature — escalate to a human reviewer.`,
+    });
+  }
+
+  if (f.grossPayPeriod != null && f.medicareWithheld != null) {
+    const expected = f.grossPayPeriod * MEDICARE_RATE;
+    const diff = Math.abs(expected - f.medicareWithheld) / expected;
+    const ok = diff <= STATUTORY_TOLERANCE;
+    checks.push({
+      field: 'Medicare withholding (1.45%)',
+      expected: `~$${expected.toFixed(2)}`,
+      found: `$${f.medicareWithheld.toFixed(2)}`,
+      status: ok ? 'match' : 'mismatch',
+      explanation: ok
+        ? 'Medicare withholding matches the statutory 1.45% rate for the gross pay shown.'
+        : `Medicare withholding ($${f.medicareWithheld.toFixed(2)}) doesn't match the statutory 1.45% rate for the gross pay shown (expected ~$${expected.toFixed(2)}). Gross pay edited without recalculating withholding is a common tampering signature — escalate to a human reviewer.`,
+    });
+  }
+
+  // Year-to-date consistency: YTD gross divided by the pay period number
+  // should land close to this period's gross pay. A wider tolerance than
+  // the statutory checks above — real YTD isn't perfectly flat across a
+  // year (raises, unpaid leave, overtime), so this only catches a YTD
+  // figure that's wildly out of step with the current period's pay, not
+  // small legitimate variance.
+  if (f.ytdGrossPay != null && f.payPeriodNumber != null && f.grossPayPeriod != null && f.payPeriodNumber > 0) {
+    const impliedPeriodGross = f.ytdGrossPay / f.payPeriodNumber;
+    const diff = Math.abs(impliedPeriodGross - f.grossPayPeriod) / impliedPeriodGross;
+    const ok = diff <= YTD_TOLERANCE;
+    checks.push({
+      field: 'Year-to-date gross consistency',
+      expected: `~$${impliedPeriodGross.toFixed(2)}/period (from YTD ÷ period ${f.payPeriodNumber})`,
+      found: `$${f.grossPayPeriod.toFixed(2)} this period`,
+      status: ok ? 'match' : 'mismatch',
+      explanation: ok
+        ? 'Year-to-date gross pay is consistent with this period\'s gross pay and the pay period number shown.'
+        : `Year-to-date gross ($${f.ytdGrossPay.toLocaleString('en-US')}) implies an average of ~$${impliedPeriodGross.toFixed(2)}/period through period ${f.payPeriodNumber}, which doesn't line up with this period's gross pay of $${f.grossPayPeriod.toFixed(2)} (${(diff * 100).toFixed(0)}% difference). Confirm this pay stub wasn't edited — a genuinely inflated current-period figure rarely gets the YTD total updated to match.`,
     });
   }
 
@@ -144,6 +211,22 @@ export function verifyDocument(application, extracted, options = {}) {
       explanation: match
         ? 'Employer matches the application.'
         : 'Employer differs from the application — may be a legitimate job change; confirm with borrower.',
+    });
+  }
+
+  // Cheap sanity bound — a single ownership-disclosure document per
+  // application (our current model) can't prove percentages sum to 100%
+  // across multiple owners, only that this one figure is itself plausible.
+  if (f.ownershipPercent != null) {
+    const ok = f.ownershipPercent > 0 && f.ownershipPercent <= 100;
+    checks.push({
+      field: 'Ownership percentage',
+      expected: '0–100%',
+      found: `${f.ownershipPercent}%`,
+      status: ok ? 'match' : 'mismatch',
+      explanation: ok
+        ? 'Ownership percentage is within a valid range.'
+        : `Ownership percentage (${f.ownershipPercent}%) is out of a valid 0–100% range — likely an extraction or data-entry error. Escalate to an officer.`,
     });
   }
 
