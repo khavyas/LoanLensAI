@@ -5,7 +5,7 @@ import Application from '../models/Application.js';
 import Document from '../models/Document.js';
 import { requireAuth } from '../middleware/auth.js';
 import { classifyAndExtract } from '../services/extraction.js';
-import { verifyDocument, openExceptions } from '../services/verification.js';
+import { verifyDocument, openExceptions, withCrossDocumentChecks } from '../services/verification.js';
 
 const upload = multer({ dest: 'uploads/', limits: { fileSize: 10 * 1024 * 1024 } });
 const router = Router();
@@ -81,19 +81,22 @@ router.post('/:applicationId', upload.single('file'), async (req, res, next) => 
     // A 'warning'-level flag (e.g. an affordability check) is just as important
     // for an officer to see in their queue as a hard 'fail' — both mean a human
     // needs to look, so both surface at the application level, not just inside
-    // this document's own verification detail.
-    if (verification.overall === 'fail' || verification.overall === 'needs-review') {
+    // this document's own verification detail. Recomputed from ALL current
+    // documents (not just the one just uploaded) so a cross-document finding —
+    // e.g. a bank deposit that doesn't back up the pay stub's net pay — also
+    // reopens review even though neither document is individually flagged.
+    const allDocs = await Document.find({ applicationId: application._id }).lean();
+    const augmented = withCrossDocumentChecks(application, allDocs);
+    const hasFlaggedDocs = openExceptions(application, augmented).some((e) => e.type === 'flagged');
+    if (hasFlaggedDocs) {
       application.status = 'needs-review';
       await application.save();
     } else if (application.status === 'needs-review') {
       // Self-healing: if this fix cleared every open exception, don't leave
       // the application sitting in the officer's "needs review" queue —
       // that's the whole point of a live, self-service fix.
-      const allDocs = await Document.find({ applicationId: application._id });
-      if (openExceptions(application, allDocs).length === 0) {
-        application.status = 'submitted';
-        await application.save();
-      }
+      application.status = 'submitted';
+      await application.save();
     }
 
     fs.unlink(req.file.path, () => {}); // temp disk copy only — the real copy is fileData above

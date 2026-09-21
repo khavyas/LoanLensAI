@@ -20,6 +20,9 @@ const FIXTURES = {
       ein: null,
       annualBusinessRevenue: null,
       ownershipPercent: null,
+      netPay: 1480.02,
+      recentDepositAmount: null,
+      recentDepositSource: null,
     },
   },
   'jordan-rivera-drivers-license': {
@@ -37,6 +40,9 @@ const FIXTURES = {
       ein: null,
       annualBusinessRevenue: null,
       ownershipPercent: null,
+      netPay: null,
+      recentDepositAmount: null,
+      recentDepositSource: null,
     },
   },
   'jordan-rivera-bank-statement': {
@@ -54,6 +60,9 @@ const FIXTURES = {
       ein: null,
       annualBusinessRevenue: null,
       ownershipPercent: null,
+      netPay: null,
+      recentDepositAmount: 1480.02,
+      recentDepositSource: 'Brightline Logistics — Direct Deposit',
     },
   },
   'priya-nair-pay-stub': {
@@ -71,6 +80,9 @@ const FIXTURES = {
       ein: null,
       annualBusinessRevenue: null,
       ownershipPercent: null,
+      netPay: 2454.10,
+      recentDepositAmount: null,
+      recentDepositSource: null,
     },
   },
   'priya-nair-drivers-license': {
@@ -88,6 +100,9 @@ const FIXTURES = {
       ein: null,
       annualBusinessRevenue: null,
       ownershipPercent: null,
+      netPay: null,
+      recentDepositAmount: null,
+      recentDepositSource: null,
     },
   },
   'priya-nair-bank-statement': {
@@ -105,6 +120,9 @@ const FIXTURES = {
       ein: null,
       annualBusinessRevenue: null,
       ownershipPercent: null,
+      netPay: null,
+      recentDepositAmount: 2454.10,
+      recentDepositSource: 'Cedar Health Systems — Direct Deposit',
     },
   },
   // Planted exception: employer differs from the application's stated
@@ -126,6 +144,9 @@ const FIXTURES = {
       ein: null,
       annualBusinessRevenue: null,
       ownershipPercent: null,
+      netPay: 1374.30,
+      recentDepositAmount: null,
+      recentDepositSource: null,
     },
   },
   'arjun-mehta-drivers-license': {
@@ -143,6 +164,9 @@ const FIXTURES = {
       ein: null,
       annualBusinessRevenue: null,
       ownershipPercent: null,
+      netPay: null,
+      recentDepositAmount: null,
+      recentDepositSource: null,
     },
   },
   'arjun-mehta-bank-statement': {
@@ -160,6 +184,9 @@ const FIXTURES = {
       ein: null,
       annualBusinessRevenue: null,
       ownershipPercent: null,
+      netPay: null,
+      recentDepositAmount: 1374.30,
+      recentDepositSource: 'Falcon Freight Co. — Direct Deposit',
     },
   },
   'whitfield-bakery-business-tax-return': {
@@ -177,6 +204,9 @@ const FIXTURES = {
       ein: '84-1029384',
       annualBusinessRevenue: 275400,
       ownershipPercent: null,
+      netPay: null,
+      recentDepositAmount: null,
+      recentDepositSource: null,
     },
   },
   'whitfield-bakery-business-license': {
@@ -196,6 +226,9 @@ const FIXTURES = {
       ein: null,
       annualBusinessRevenue: null,
       ownershipPercent: null,
+      netPay: null,
+      recentDepositAmount: null,
+      recentDepositSource: null,
     },
   },
   'whitfield-bakery-personal-financial-statement': {
@@ -213,6 +246,9 @@ const FIXTURES = {
       ein: null,
       annualBusinessRevenue: null,
       ownershipPercent: null,
+      netPay: null,
+      recentDepositAmount: null,
+      recentDepositSource: null,
     },
   },
   'whitfield-bakery-ownership-disclosure': {
@@ -230,6 +266,9 @@ const FIXTURES = {
       ein: null,
       annualBusinessRevenue: null,
       ownershipPercent: 100,
+      netPay: null,
+      recentDepositAmount: null,
+      recentDepositSource: null,
     },
   },
 };
@@ -249,6 +288,9 @@ const UNKNOWN_FALLBACK = {
     ein: null,
     annualBusinessRevenue: null,
     ownershipPercent: null,
+    netPay: null,
+    recentDepositAmount: null,
+    recentDepositSource: null,
   },
 };
 

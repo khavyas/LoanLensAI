@@ -2,7 +2,7 @@ import { Router } from 'express';
 import Application from '../models/Application.js';
 import Document from '../models/Document.js';
 import { requireAuth } from '../middleware/auth.js';
-import { missingDocuments, openExceptions } from '../services/verification.js';
+import { missingDocuments, openExceptions, withCrossDocumentChecks } from '../services/verification.js';
 import { REQUIRED_DOCS_BY_PRODUCT, PRODUCT_TYPES } from '../config/requiredDocs.js';
 
 const router = Router();
@@ -118,7 +118,8 @@ router.get('/:id', async (req, res, next) => {
     }
     // Never include the raw file bytes here — the frontend fetches those on
     // demand from GET /documents/:id/file, not inline with the whole app.
-    const documents = await Document.find({ applicationId: app._id }).select('-fileData').lean();
+    const rawDocuments = await Document.find({ applicationId: app._id }).select('-fileData').lean();
+    const documents = withCrossDocumentChecks(app, rawDocuments);
     res.json({
       ...app,
       documents,

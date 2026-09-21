@@ -186,8 +186,8 @@ def bank_statement():
 
     d.text((40, y), "ACCOUNT SUMMARY", font=font(14, bold=True), fill=ACCENT)
     y += 30
-    for label, amt in [("Beginning Balance", "$2,140.55"), ("Total Deposits", "$3,876.92"),
-                        ("Total Withdrawals", "$3,102.10"), ("Ending Balance", "$2,915.37")]:
+    for label, amt in [("Beginning Balance", "$2,140.55"), ("Total Deposits", "$2,960.04"),
+                        ("Total Withdrawals", "$3,102.10"), ("Ending Balance", "$1,998.49")]:
         d.text((40, y), label, font=font(14), fill=INK)
         d.text((680, y), amt, font=font(14, bold=True), fill=INK)
         y += 30
@@ -205,10 +205,10 @@ def bank_statement():
     y += 14
 
     rows = [
-        ("07/14/2026", "Brightline Logistics — Direct Deposit", "+$1,938.46"),
+        ("07/14/2026", "Brightline Logistics — Direct Deposit", "+$1,480.02"),
         ("07/15/2026", "Springfield Electric Co.", "-$118.20"),
         ("07/18/2026", "Grocery Mart", "-$96.44"),
-        ("07/28/2026", "Brightline Logistics — Direct Deposit", "+$1,938.46"),
+        ("07/28/2026", "Brightline Logistics — Direct Deposit", "+$1,480.02"),
         ("07/29/2026", "Auto Insurance Co.", "-$142.00"),
         ("07/30/2026", "Springfield Apartments — Rent", "-$1,150.00"),
     ]
@@ -345,8 +345,8 @@ def priya_bank_statement():
 
     d.text((40, y), "ACCOUNT SUMMARY", font=font(14, bold=True), fill=ACCENT)
     y += 30
-    for label, amt in [("Beginning Balance", "$4,890.10"), ("Total Deposits", "$6,646.16"),
-                        ("Total Withdrawals", "$4,210.55"), ("Ending Balance", "$7,325.71")]:
+    for label, amt in [("Beginning Balance", "$4,890.10"), ("Total Deposits", "$4,908.20"),
+                        ("Total Withdrawals", "$4,210.55"), ("Ending Balance", "$5,587.75")]:
         d.text((40, y), label, font=font(14), fill=INK)
         d.text((680, y), amt, font=font(14, bold=True), fill=INK)
         y += 30
@@ -364,10 +364,10 @@ def priya_bank_statement():
     y += 14
 
     rows = [
-        ("07/14/2026", "Cedar Health Systems — Direct Deposit", "+$3,323.08"),
+        ("07/14/2026", "Cedar Health Systems — Direct Deposit", "+$2,454.10"),
         ("07/16/2026", "Springfield Utilities", "-$164.20"),
         ("07/20/2026", "Grocery Mart", "-$132.44"),
-        ("07/28/2026", "Cedar Health Systems — Direct Deposit", "+$3,323.08"),
+        ("07/28/2026", "Cedar Health Systems — Direct Deposit", "+$2,454.10"),
         ("07/29/2026", "Auto Insurance Co.", "-$118.00"),
         ("07/30/2026", "Lakeview Apartments — Rent", "-$1,650.00"),
     ]
@@ -509,8 +509,8 @@ def arjun_bank_statement():
 
     d.text((40, y), "ACCOUNT SUMMARY", font=font(14, bold=True), fill=ACCENT)
     y += 30
-    for label, amt in [("Beginning Balance", "$1,560.20"), ("Total Deposits", "$3,600.00"),
-                        ("Total Withdrawals", "$2,890.15"), ("Ending Balance", "$2,270.05")]:
+    for label, amt in [("Beginning Balance", "$1,560.20"), ("Total Deposits", "$2,748.60"),
+                        ("Total Withdrawals", "$2,890.15"), ("Ending Balance", "$1,418.65")]:
         d.text((40, y), label, font=font(14), fill=INK)
         d.text((680, y), amt, font=font(14, bold=True), fill=INK)
         y += 30
@@ -528,10 +528,10 @@ def arjun_bank_statement():
     y += 14
 
     rows = [
-        ("07/14/2026", "Falcon Freight Co. — Direct Deposit", "+$1,800.00"),
+        ("07/14/2026", "Falcon Freight Co. — Direct Deposit", "+$1,374.30"),
         ("07/17/2026", "Springfield Electric Co.", "-$96.20"),
         ("07/21/2026", "Grocery Mart", "-$88.40"),
-        ("07/28/2026", "Falcon Freight Co. — Direct Deposit", "+$1,800.00"),
+        ("07/28/2026", "Falcon Freight Co. — Direct Deposit", "+$1,374.30"),
         ("07/29/2026", "Auto Insurance Co.", "-$135.55"),
         ("07/30/2026", "Birch Street Apartments — Rent", "-$970.00"),
     ]

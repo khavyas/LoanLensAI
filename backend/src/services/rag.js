@@ -1,7 +1,7 @@
 import PolicyChunk from '../models/PolicyChunk.js';
 import Document from '../models/Document.js';
 import { anthropic, MODEL, parseJsonResponse } from './anthropicClient.js';
-import { currentDocuments, missingDocuments, openExceptions } from './verification.js';
+import { currentDocuments, missingDocuments, openExceptions, withCrossDocumentChecks } from './verification.js';
 
 // Same bypass as extraction.js — set MOCK_AI=true to exercise the Assistant
 // tab without spending Anthropic API credits. The mock answer is a
@@ -56,7 +56,8 @@ function applicationStateSummary(application, documents) {
 }
 
 export async function answerQuestion({ question, application, role }) {
-  const documents = await Document.find({ applicationId: application._id }).select('-fileData').lean();
+  const rawDocuments = await Document.find({ applicationId: application._id }).select('-fileData').lean();
+  const documents = withCrossDocumentChecks(application, rawDocuments);
   if (MOCK_AI) return mockAnswer(application, documents);
 
   const context = await policyContext();

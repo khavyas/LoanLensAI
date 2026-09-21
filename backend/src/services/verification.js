@@ -185,6 +185,79 @@ export function currentDocuments(documents) {
   return (documents || []).filter((d) => (d.status || 'current') === 'current');
 }
 
+const DEPOSIT_TOLERANCE = 0.1; // 10% — looser than INCOME_TOLERANCE since a single pay period can vary (OT, PTO payout)
+
+// verifyDocument() only ever sees ONE document's own extracted fields against
+// the application — it has no visibility into other documents already on
+// file. This runs separately, across the current pay-stub + bank-statement
+// pair, to answer a question no single-document check can: is the income
+// claimed on the pay stub actually backed by a real deposit, or just a
+// claim? A pay stub is trivial to alter; a matching bank deposit is much
+// harder to fake convincingly.
+export function crossDocumentChecks(application, documents) {
+  const current = currentDocuments(documents);
+  const payStub = current.find((d) => d.docType === 'pay-stub');
+  const bankStatement = current.find((d) => d.docType === 'bank-statement');
+  if (!payStub || !bankStatement) return [];
+
+  const checks = [];
+  const netPay = payStub.extractedFields?.netPay;
+  const depositAmount = bankStatement.extractedFields?.recentDepositAmount;
+  if (netPay != null && depositAmount != null) {
+    const diff = Math.abs(netPay - depositAmount) / netPay;
+    const ok = diff <= DEPOSIT_TOLERANCE;
+    checks.push({
+      field: 'Bank deposit vs. pay stub net pay',
+      expected: `~$${netPay.toLocaleString('en-US')} (pay stub net pay)`,
+      found: `$${depositAmount.toLocaleString('en-US')} (most recent bank deposit)`,
+      status: ok ? 'match' : 'mismatch',
+      explanation: ok
+        ? "The most recent bank deposit is consistent with the pay stub's net pay — the pay stub is corroborated by a real, matching deposit, not just a claim."
+        : `The bank statement's most recent deposit ($${depositAmount.toLocaleString('en-US')}) does not match the pay stub's net pay ($${netPay.toLocaleString('en-US')}, ${(diff * 100).toFixed(0)}% difference). A pay stub not backed by a matching deposit is a document-authenticity red flag — escalate to a human reviewer rather than accepting the document at face value.`,
+    });
+  }
+
+  const stubEmployer = payStub.extractedFields?.employerName;
+  const depositSource = bankStatement.extractedFields?.recentDepositSource;
+  if (stubEmployer && depositSource) {
+    const match = depositSource.toLowerCase().includes(stubEmployer.toLowerCase());
+    checks.push({
+      field: 'Bank deposit source vs. pay stub employer',
+      expected: stubEmployer,
+      found: depositSource,
+      status: match ? 'match' : 'warning',
+      explanation: match
+        ? 'The bank deposit description matches the employer named on the pay stub.'
+        : `The bank statement's deposit description ("${depositSource}") does not clearly match the employer named on the pay stub ("${stubEmployer}") — confirm this is genuinely the same employer.`,
+    });
+  }
+
+  return checks;
+}
+
+// Merges cross-document checks into the bank statement's own checks for
+// display and status purposes, without persisting to the database — every
+// read path (application detail, RAG context, post-upload status decision)
+// calls this on the same fetched documents so the finding never drifts out
+// of sync with whatever is actually on file right now.
+export function withCrossDocumentChecks(application, documents) {
+  const crossChecks = crossDocumentChecks(application, documents);
+  if (!crossChecks.length) return documents;
+  const bankStatement = currentDocuments(documents).find((d) => d.docType === 'bank-statement');
+  if (!bankStatement) return documents;
+
+  return documents.map((d) => {
+    if (d !== bankStatement) return d;
+    const checks = [...(d.verification?.checks || []), ...crossChecks];
+    const hasMismatch = checks.some((c) => c.status === 'mismatch');
+    const hasWarning = checks.some((c) => c.status === 'warning');
+    let overall = 'pass';
+    if (hasMismatch) overall = 'fail';
+    else if (hasWarning) overall = 'needs-review';
+    return { ...d, verification: { checks, overall } };
+  });
+}
+
 export function missingDocuments(application, documents) {
   const received = new Set(currentDocuments(documents).map((d) => d.docType));
   return (application.requiredDocTypes || []).filter((t) => !received.has(t));

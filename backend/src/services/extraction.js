@@ -24,7 +24,10 @@ const EXTRACTION_PROMPT = `You are a loan document analyst. Look at this documen
     "businessName": string|null,
     "ein": string|null,
     "annualBusinessRevenue": number|null,
-    "ownershipPercent": number|null
+    "ownershipPercent": number|null,
+    "netPay": number|null,
+    "recentDepositAmount": number|null,
+    "recentDepositSource": string|null
   }
 }
 Rules:
@@ -32,6 +35,8 @@ Rules:
 - businessName is the legal or DBA business name exactly as printed (e.g. on a business license or tax return) — do not normalize or correct it.
 - annualBusinessRevenue is the business's gross annual revenue or receipts as shown on a business tax return, in dollars.
 - ownershipPercent is the percentage ownership stake shown on an ownership/beneficial-owner disclosure, 0-100.
+- netPay is a pay stub's NET PAY (take-home, after deductions) for the pay period shown, in dollars.
+- recentDepositAmount and recentDepositSource are only for bank statements: the dollar amount and transaction description of the most recent transaction that looks like a recurring payroll/salary direct deposit (not a one-off transfer or refund).
 - Use null for anything not visible or not applicable to this document type. Never guess.
 - confidence reflects how legible/complete the document is, not your certainty about the docType alone.`;
 
