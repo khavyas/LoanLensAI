@@ -1,20 +1,9 @@
 // Deterministic cross-verification rules — intentionally NOT an LLM,
 // so every flag is explainable and auditable.
 
-const INCOME_TOLERANCE = 0.05; // 5%
+import { AFFORDABILITY, SMALL_BUSINESS_REVENUE_CAP_RATIO, maxAffordableAmount, maxAffordableBusinessAmount } from '../config/affordability.js';
 
-// Simplified affordability heuristics — advisory triage only, NOT a real
-// underwriting/credit decision. We deliberately avoid any interest-rate math
-// (the assistant never quotes rates), so these estimate a rough maximum from
-// documented income/revenue alone. maxPaymentRatio/maxTermMonths translate
-// the ratio and term language already in the product policy docs into a
-// single dollar ceiling; a loan officer always makes the real call.
-const AFFORDABILITY = {
-  'auto-loan': { maxPaymentRatio: 1 / 3, maxTermMonths: 72, productCap: 75000 },
-  'personal-loan': { maxPaymentRatio: 0.45, maxTermMonths: 36, productCap: 25000 },
-};
-const SMALL_BUSINESS_REVENUE_CAP_RATIO = 0.3; // rough rule of thumb, not a debt-service-coverage calc
-const SMALL_BUSINESS_PRODUCT_CAP = 250000;
+const INCOME_TOLERANCE = 0.05; // 5%
 
 // Fixed federal payroll-tax rates (2024/2025), not brackets — unlike federal/
 // state income tax, these are flat percentages of gross pay, which is exactly
@@ -167,8 +156,11 @@ export function verifyDocument(application, extracted, options = {}) {
   }
 
   if (application.requestedAmount != null && f.grossMonthlyIncome != null && AFFORDABILITY[application.productType]) {
-    const { maxPaymentRatio, maxTermMonths, productCap } = AFFORDABILITY[application.productType];
-    const maxAffordable = Math.min(productCap, f.grossMonthlyIncome * maxPaymentRatio * maxTermMonths);
+    // Uses the borrower's actual chosen term (captured at application time),
+    // not an assumed fixed term — the same figure applies-time validation
+    // used, so a document-backed re-check never disagrees with the ceiling
+    // the borrower was already shown.
+    const maxAffordable = maxAffordableAmount(application.productType, f.grossMonthlyIncome, application.repaymentTermMonths);
     const requested = application.requestedAmount;
     const ok = requested <= maxAffordable;
     checks.push({
@@ -187,7 +179,7 @@ export function verifyDocument(application, extracted, options = {}) {
     f.annualBusinessRevenue != null &&
     application.productType === 'small-business-loan'
   ) {
-    const maxAffordable = Math.min(SMALL_BUSINESS_PRODUCT_CAP, f.annualBusinessRevenue * SMALL_BUSINESS_REVENUE_CAP_RATIO);
+    const maxAffordable = maxAffordableBusinessAmount(f.annualBusinessRevenue);
     const requested = application.requestedAmount;
     const ok = requested <= maxAffordable;
     checks.push({

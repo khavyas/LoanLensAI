@@ -6,6 +6,14 @@ import { Card, Overline } from '../components/ui';
 
 const PRODUCTS = ['auto-loan', 'personal-loan', 'small-business-loan'];
 
+// Mirrors backend/src/config/affordability.js — the backend is the
+// authoritative check (this is only for showing a live estimate and letting
+// the borrower pick a valid term before they hit submit).
+const AFFORDABILITY = {
+  'auto-loan': { maxPaymentRatio: 0.15, productCap: 75000, termOptions: [36, 48, 60, 72] },
+  'personal-loan': { maxPaymentRatio: 0.2, productCap: 25000, termOptions: [24, 36, 48, 60] },
+};
+
 // Mirrors the real section boundaries found in Apiture's DAO intake flow
 // (Select Account -> Tell Us About Yourself -> Tell Us More About Yourself ->
 // Disclosures & Submit) — a multi-step wizard reads as a real application,
@@ -68,7 +76,10 @@ export default function NewApplicationScreen({ navigation }) {
   const [consentAccepted, setConsentAccepted] = useState(false);
   // auto-loan / personal-loan
   const [employerName, setEmployerName] = useState('');
+  const [employerPhone, setEmployerPhone] = useState('');
   const [statedMonthlyIncome, setStatedMonthlyIncome] = useState('');
+  const [repaymentTermMonths, setRepaymentTermMonths] = useState(null);
+  const [loanReason, setLoanReason] = useState('');
   // small-business-loan
   const [businessName, setBusinessName] = useState('');
   const [statedAnnualBusinessRevenue, setStatedAnnualBusinessRevenue] = useState('');
@@ -79,14 +90,28 @@ export default function NewApplicationScreen({ navigation }) {
   const isSmallBusiness = productType === 'small-business-loan';
   const isLastStep = step === STEPS.length - 1;
 
+  // Live estimate only — the backend re-validates authoritatively at submit
+  // time using the same ratios (backend/src/config/affordability.js), since
+  // this is easily bypassed client-side and must never be trusted alone.
+  const affordabilityCfg = !isSmallBusiness ? AFFORDABILITY[productType] : null;
+  const maxAffordable =
+    affordabilityCfg && statedMonthlyIncome && repaymentTermMonths
+      ? Math.min(affordabilityCfg.productCap, Number(statedMonthlyIncome) * affordabilityCfg.maxPaymentRatio * repaymentTermMonths)
+      : null;
+
   function validateStep() {
     if (step === 1) {
       if (!requestedAmount) return 'Requested amount is required.';
       if (isSmallBusiness && (!businessName || !statedAnnualBusinessRevenue)) {
         return 'Business name and stated annual revenue are required.';
       }
-      if (!isSmallBusiness && (!employerName || !statedMonthlyIncome)) {
-        return 'Employer name and stated monthly income are required.';
+      if (!isSmallBusiness) {
+        if (!employerName || !employerPhone || !statedMonthlyIncome || !repaymentTermMonths || !loanReason) {
+          return 'Employer name, employer phone, stated monthly income, repayment term, and loan reason are all required.';
+        }
+        if (maxAffordable != null && Number(requestedAmount) > maxAffordable) {
+          return `Based on your stated income and a ${repaymentTermMonths}-month term, the maximum you can request is ~$${Math.round(maxAffordable).toLocaleString('en-US')}. Lower the amount or choose a longer term.`;
+        }
       }
     }
     if (step === 2) {
@@ -123,9 +148,10 @@ export default function NewApplicationScreen({ navigation }) {
         ssnLast4,
         dateOfBirth,
         consentAccepted,
+        loanReason,
         ...(isSmallBusiness
           ? { businessName, statedAnnualBusinessRevenue: Number(statedAnnualBusinessRevenue) }
-          : { employerName, statedMonthlyIncome: Number(statedMonthlyIncome) }),
+          : { employerName, employerPhone, statedMonthlyIncome: Number(statedMonthlyIncome), repaymentTermMonths }),
       };
       const app = await api.createApplication(payload);
       navigation.replace('ApplicationDetail', { id: app._id });
@@ -161,7 +187,10 @@ export default function NewApplicationScreen({ navigation }) {
               <TouchableOpacity
                 key={p}
                 style={[styles.productBtn, productType === p && styles.productBtnActive]}
-                onPress={() => setProductType(p)}
+                onPress={() => {
+                  setProductType(p);
+                  setRepaymentTermMonths(null); // term options differ per product — don't carry over an invalid one
+                }}
               >
                 <Text style={[styles.productBtnText, productType === p && styles.productBtnTextActive]}>
                   {labelize(p)}
@@ -201,11 +230,42 @@ export default function NewApplicationScreen({ navigation }) {
                   onChangeText={setEmployerName}
                 />
                 <Field
+                  label="Employer phone"
+                  placeholder="e.g. (555) 123-4567"
+                  keyboardType="phone-pad"
+                  value={employerPhone}
+                  onChangeText={setEmployerPhone}
+                />
+                <Field
                   label="Stated gross monthly income ($)"
                   placeholder="e.g. 4500"
                   keyboardType="numeric"
                   value={statedMonthlyIncome}
                   onChangeText={setStatedMonthlyIncome}
+                />
+                <View style={{ marginBottom: 16 }}>
+                  <Text style={styles.label}>Repayment term</Text>
+                  <View style={styles.productRow}>
+                    {affordabilityCfg.termOptions.map((months) => (
+                      <TouchableOpacity
+                        key={months}
+                        style={[styles.productBtn, repaymentTermMonths === months && styles.productBtnActive]}
+                        onPress={() => setRepaymentTermMonths(months)}
+                      >
+                        <Text
+                          style={[styles.productBtnText, repaymentTermMonths === months && styles.productBtnTextActive]}
+                        >
+                          {months} mo
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+                <Field
+                  label="Reason for loan"
+                  placeholder="e.g. Debt consolidation, home improvement, vehicle purchase"
+                  value={loanReason}
+                  onChangeText={setLoanReason}
                 />
               </>
             )}
@@ -216,6 +276,12 @@ export default function NewApplicationScreen({ navigation }) {
               value={requestedAmount}
               onChangeText={setRequestedAmount}
             />
+            {maxAffordable != null && (
+              <Text style={styles.affordabilityHint}>
+                Based on your stated income and a {repaymentTermMonths}-month term, you can request up to{' '}
+                <Text style={{ fontWeight: '700' }}>${Math.round(maxAffordable).toLocaleString('en-US')}</Text>.
+              </Text>
+            )}
           </View>
         </Card>
       )}
@@ -337,6 +403,7 @@ const styles = StyleSheet.create({
   productBtnActive: { borderColor: colors.accent, backgroundColor: colors.infoBg },
   productBtnText: { color: colors.muted, fontWeight: '600', fontSize: 12, textAlign: 'center' },
   productBtnTextActive: { color: colors.accent },
+  affordabilityHint: { color: colors.muted, fontSize: 12, marginTop: -8, marginBottom: 8, lineHeight: 17 },
   label: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
   input: {
     borderWidth: 1,

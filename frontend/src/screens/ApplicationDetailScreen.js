@@ -47,8 +47,11 @@ export default function ApplicationDetailScreen({ route }) {
       : [
           { label: 'Product', value: labelize(app.productType) },
           { label: 'Requested', value: `$${app.requestedAmount?.toLocaleString('en-US')}` },
+          { label: 'Term', value: app.repaymentTermMonths ? `${app.repaymentTermMonths} mo` : '—' },
           { label: 'Stated income', value: `$${app.statedMonthlyIncome?.toLocaleString('en-US')}/mo` },
           { label: 'Employer', value: app.employerName || '—' },
+          { label: 'Employer phone', value: app.employerPhone || '—' },
+          { label: 'Reason', value: app.loanReason || '—' },
         ];
 
   return (

@@ -4,6 +4,7 @@ import Document from '../models/Document.js';
 import { requireAuth } from '../middleware/auth.js';
 import { missingDocuments, openExceptions, withCrossDocumentChecks } from '../services/verification.js';
 import { REQUIRED_DOCS_BY_PRODUCT, PRODUCT_TYPES } from '../config/requiredDocs.js';
+import { AFFORDABILITY, maxAffordableAmount, maxAffordableBusinessAmount } from '../config/affordability.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -57,7 +58,7 @@ router.post('/', async (req, res, next) => {
     if (req.user.role !== 'borrower') {
       return res.status(403).json({ error: 'Only borrowers can apply for a loan' });
     }
-    const { productType, requestedAmount, employerName, address, ssnLast4, dateOfBirth, consentAccepted } = req.body;
+    const { productType, requestedAmount, employerName, employerPhone, loanReason, repaymentTermMonths, address, ssnLast4, dateOfBirth, consentAccepted } = req.body;
     if (!PRODUCT_TYPES.includes(productType)) {
       return res.status(400).json({ error: `productType must be one of: ${PRODUCT_TYPES.join(', ')}` });
     }
@@ -86,13 +87,33 @@ router.post('/', async (req, res, next) => {
       if (!businessName || !statedAnnualBusinessRevenue) {
         return res.status(400).json({ error: 'businessName and statedAnnualBusinessRevenue are required for a small business loan' });
       }
+      // Real-time ceiling from the self-reported figure — previously this
+      // was only checked AFTER a tax-return document was uploaded and
+      // extracted, so a borrower could request an unaffordable amount and
+      // not find out until well into the application.
+      const maxAffordable = maxAffordableBusinessAmount(statedAnnualBusinessRevenue);
+      if (requestedAmount > maxAffordable) {
+        return res.status(400).json({
+          error: `Based on a stated annual revenue of $${Number(statedAnnualBusinessRevenue).toLocaleString('en-US')}, the maximum you can request is ~$${Math.round(maxAffordable).toLocaleString('en-US')}. Lower the requested amount.`,
+        });
+      }
       Object.assign(application, { businessName, statedAnnualBusinessRevenue });
     } else {
       const { statedMonthlyIncome } = req.body;
       if (!statedMonthlyIncome) {
         return res.status(400).json({ error: 'statedMonthlyIncome is required for this product' });
       }
-      Object.assign(application, { statedMonthlyIncome, employerName });
+      const termOptions = AFFORDABILITY[productType].termOptions;
+      if (!termOptions.includes(Number(repaymentTermMonths))) {
+        return res.status(400).json({ error: `repaymentTermMonths must be one of: ${termOptions.join(', ')}` });
+      }
+      const maxAffordable = maxAffordableAmount(productType, statedMonthlyIncome, Number(repaymentTermMonths));
+      if (requestedAmount > maxAffordable) {
+        return res.status(400).json({
+          error: `Based on a stated monthly income of $${Number(statedMonthlyIncome).toLocaleString('en-US')} and a ${repaymentTermMonths}-month term, the maximum you can request is ~$${Math.round(maxAffordable).toLocaleString('en-US')}. Lower the amount or choose a longer term.`,
+        });
+      }
+      Object.assign(application, { statedMonthlyIncome, employerName, employerPhone, repaymentTermMonths: Number(repaymentTermMonths) });
     }
 
     const app = await Application.create({
@@ -100,6 +121,7 @@ router.post('/', async (req, res, next) => {
       address,
       ssnLast4,
       requestedAmount,
+      loanReason,
       requiredDocTypes: REQUIRED_DOCS_BY_PRODUCT[productType],
       status: 'submitted',
     });

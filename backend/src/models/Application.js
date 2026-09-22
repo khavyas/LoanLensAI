@@ -13,10 +13,21 @@ const applicationSchema = new mongoose.Schema(
     // statedAnnualBusinessRevenue instead.
     statedMonthlyIncome: Number,
     employerName: String,
+    // Auto-loan/personal-loan only — used for employment verification calls,
+    // a standard field on a real loan application (URLA-style).
+    employerPhone: String,
     address: String,
     ssnLast4: String,
     dateOfBirth: Date,
     requestedAmount: Number,
+    // Borrower-chosen term, from the product's fixed set of offered terms
+    // (see config/affordability.js) — drives both the displayed monthly
+    // payment estimate and the affordability ceiling, instead of assuming a
+    // single fixed term for everyone.
+    repaymentTermMonths: Number,
+    // Free-text purpose of the loan — standard on a real application, and
+    // useful context for an officer reviewing the file.
+    loanReason: String,
     // Small-business loans only: legal/DBA name as stated on the application,
     // cross-checked against the business license and tax return uploads.
     businessName: String,
