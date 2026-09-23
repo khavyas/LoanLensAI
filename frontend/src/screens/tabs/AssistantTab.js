@@ -44,7 +44,14 @@ export default function AssistantTab({ app }) {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    // Capped independently of the shared page width (ApplicationDetailScreen
+    // widened to 1200 for the Documents/Verification tabs) — long chat
+    // bubbles stretched across a very wide screen are harder to read, not
+    // better, so this tab deliberately stays narrower.
+    <KeyboardAvoidingView
+      style={{ flex: 1, width: '100%', maxWidth: 800, alignSelf: 'center' }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <ScrollView ref={scrollRef} contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
         {messages.length === 0 && (
           <View>

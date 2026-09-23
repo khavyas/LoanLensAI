@@ -109,7 +109,10 @@ export default function ApplicationDetailScreen({ route }) {
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: colors.bg },
-  inner: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center' },
+  // Widened from 760 — on a real desktop monitor a single 760px column left
+  // huge dead space left/right. Individual tabs that read better narrow
+  // (the Assistant chat) cap their own width instead of inheriting this.
+  inner: { flex: 1, width: '100%', maxWidth: 1200, alignSelf: 'center' },
   loading: { margin: 24, color: colors.muted },
   header: {
     backgroundColor: colors.card,

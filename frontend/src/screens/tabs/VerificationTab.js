@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { colors, labelize } from '../../theme';
 import { Pill, Card, Overline } from '../../components/ui';
 
@@ -16,6 +16,10 @@ export default function VerificationTab({ app }) {
   // one's checks are history, already resolved by whatever replaced it.
   const docs = (app.documents || []).filter((d) => (d.status || 'current') === 'current');
   const anyChecks = docs.some((d) => d.verification?.checks?.length);
+  // Two document cards side by side on a wide screen instead of one long
+  // stacked column — same breakpoint convention as elsewhere (App.js).
+  const { width } = useWindowDimensions();
+  const isWide = width >= 900;
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>
@@ -25,9 +29,10 @@ export default function VerificationTab({ app }) {
         </Text>
       )}
 
+      <View style={isWide ? styles.grid : null}>
       {docs.map((doc) =>
         (doc.verification?.checks || []).length ? (
-          <Card key={doc._id} style={{ marginBottom: 12 }}>
+          <Card key={doc._id} style={[{ marginBottom: 12 }, isWide && styles.gridItem]}>
             <Overline>{labelize(doc.docType || 'document')}</Overline>
             {doc.verification.checks.map((c, i) => (
               <View key={i} style={[styles.check, { borderLeftColor: ACCENT[c.status] }]}>
@@ -51,6 +56,7 @@ export default function VerificationTab({ app }) {
           </Card>
         ) : null
       )}
+      </View>
 
       {app.missingDocuments?.length > 0 && (
         <Card>
@@ -69,6 +75,8 @@ export default function VerificationTab({ app }) {
 
 const styles = StyleSheet.create({
   empty: { color: colors.muted, textAlign: 'center', marginTop: 32 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+  gridItem: { flexBasis: '48%', flexGrow: 1, minWidth: 380 },
   check: {
     borderLeftWidth: 3,
     paddingLeft: 12,

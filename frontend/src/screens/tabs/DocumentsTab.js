@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, Alert, useWindowDimensions } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { api } from '../../api/client';
 import { colors, labelize } from '../../theme';
@@ -21,6 +21,11 @@ export default function DocumentsTab({ app, onChanged }) {
   const [error, setError] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [busyDocId, setBusyDocId] = useState(null); // which document's preview/delete is in flight
+  // On a wide screen, action items and uploaded documents sit side by side
+  // instead of one long stacked column — matches the SIDEBAR_BREAKPOINT
+  // convention used elsewhere in the app (App.js).
+  const { width } = useWindowDimensions();
+  const isWide = width >= 900;
 
   const allDocs = app.documents || [];
   const currentDocs = allDocs.filter((d) => (d.status || 'current') === 'current');
@@ -114,6 +119,8 @@ export default function DocumentsTab({ app, onChanged }) {
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <View style={isWide ? styles.columns : null}>
+      <View style={isWide ? styles.leftCol : null}>
       {exceptions.length > 0 && (
         <Card style={{ marginBottom: 12, borderColor: colors.warning, borderWidth: 1 }}>
           <Overline>Action needed · {exceptions.length}</Overline>
@@ -192,9 +199,11 @@ export default function DocumentsTab({ app, onChanged }) {
       </TouchableOpacity>
       {busyDocType && <Text style={styles.busyHint}>AI is classifying and extracting…</Text>}
       {error && <Text style={styles.error}>{error}</Text>}
+      </View>
 
+      <View style={isWide ? styles.rightCol : null}>
       {currentDocs.length > 0 && (
-        <Text style={styles.sectionHeading}>Uploaded Documents</Text>
+        <Text style={[styles.sectionHeading, { marginTop: 0 }]}>Uploaded Documents</Text>
       )}
       {currentDocs.map((doc) => {
         const isBusy = busyDocId === doc._id;
@@ -235,14 +244,16 @@ export default function DocumentsTab({ app, onChanged }) {
               Extraction confidence · {Math.round((doc.confidence || 0) * 100)}%
             </Text>
             <Text style={styles.fieldsHeading}>Extracted fields</Text>
-            {Object.entries(doc.extractedFields || {})
-              .filter(([, v]) => v != null)
-              .map(([k, v]) => (
-                <View key={k} style={styles.fieldRow}>
-                  <Text style={styles.fieldKey}>{labelize(k.replace(/([A-Z])/g, '-$1'))}</Text>
-                  <Text style={styles.fieldVal}>{String(v)}</Text>
-                </View>
-              ))}
+            <View style={styles.fieldsGrid}>
+              {Object.entries(doc.extractedFields || {})
+                .filter(([, v]) => v != null)
+                .map(([k, v]) => (
+                  <View key={k} style={styles.fieldItem}>
+                    <Text style={styles.fieldKey}>{labelize(k.replace(/([A-Z])/g, '-$1'))}</Text>
+                    <Text style={styles.fieldVal}>{String(v)}</Text>
+                  </View>
+                ))}
+            </View>
           </Card>
         );
       })}
@@ -279,11 +290,16 @@ export default function DocumentsTab({ app, onChanged }) {
             ))}
         </View>
       )}
+      </View>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  columns: { flexDirection: 'row', alignItems: 'flex-start', gap: 20 },
+  leftCol: { width: 380, flexShrink: 0 },
+  rightCol: { flex: 1, minWidth: 0 },
   sectionHeading: {
     fontSize: 13,
     fontWeight: '700',
@@ -366,14 +382,18 @@ const styles = StyleSheet.create({
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   docType: { fontWeight: '800', fontSize: 16, color: colors.text },
   confidence: { color: colors.faint, fontSize: 12, marginTop: 4, marginBottom: 8 },
-  fieldRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
+  // A 2-up grid instead of one long label/value-per-row list — a document
+  // can have a dozen extracted fields, and on a wide screen that made for a
+  // tall, sparse single column when the page itself already had room to spare.
+  fieldsGrid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 },
+  fieldItem: {
+    width: '50%',
+    paddingVertical: 8,
+    paddingRight: 12,
     borderTopWidth: 1,
     borderColor: colors.border,
   },
-  fieldKey: { color: colors.muted, fontSize: 13 },
-  fieldVal: { color: colors.text, fontWeight: '600', fontSize: 13, flexShrink: 1, textAlign: 'right' },
+  fieldKey: { color: colors.faint, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4 },
+  fieldVal: { color: colors.text, fontWeight: '600', fontSize: 13, marginTop: 2 },
   historyToggle: { color: colors.accent, fontWeight: '600', fontSize: 13, textAlign: 'center' },
 });
