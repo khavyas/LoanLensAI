@@ -30,6 +30,39 @@ const FIXTURES = {
       payPeriodNumber: 16,
     },
   },
+  // Demo asset: a second-attempt forgery after the genuine pay stub above
+  // gets flagged for the planted $4,200-vs-$5,000 income mismatch. Gross pay
+  // and the converted monthly income are bumped to exactly match the
+  // application's stated $5,000/mo (so the basic income-match check now
+  // reports 'match' — a naive fraud attempt that would sail past a
+  // simple OCR-and-compare tool). YTD gross and the withholding lines are
+  // left at their real, untouched values, which is exactly what the
+  // statutory-math and YTD-consistency checks catch.
+  'jordan-rivera-pay-stub-tampered': {
+    docType: 'pay-stub',
+    confidence: 0.94,
+    fields: {
+      fullName: 'Jordan Rivera',
+      employerName: 'Brightline Logistics',
+      grossMonthlyIncome: 5000,
+      payPeriod: 'bi-weekly (07/28/2026 - 08/10/2026)',
+      address: '412 Maple Court, Springfield',
+      ssnLast4: null,
+      documentDate: '08/14/2026',
+      businessName: null,
+      ein: null,
+      annualBusinessRevenue: null,
+      ownershipPercent: null,
+      netPay: 1849.25,
+      recentDepositAmount: null,
+      recentDepositSource: null,
+      grossPayPeriod: 2307.69,
+      socialSecurityWithheld: 120.18,
+      medicareWithheld: 28.11,
+      ytdGrossPay: 31015.36,
+      payPeriodNumber: 16,
+    },
+  },
   'jordan-rivera-drivers-license': {
     docType: 'drivers-license',
     confidence: 0.97,

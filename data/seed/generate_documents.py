@@ -135,6 +135,96 @@ def pay_stub():
     img.save(os.path.join(OUT_DIR, "jordan-rivera-pay-stub.png"))
 
 
+def jordan_pay_stub_tampered():
+    # Demo asset for the live "fail" moment: a second-attempt forgery after
+    # Jordan's genuine pay stub (above) gets flagged for the simple $4,200-
+    # vs-$5,000 income mismatch. A borrower who wants to beat that ONE check
+    # only needs to edit two headline numbers — gross pay this period and
+    # the converted monthly income, bumped to exactly match the $5,000/mo
+    # stated on the application — and get the on-paper arithmetic to still
+    # foot (gross minus deductions still equals net pay, so a human skimming
+    # the page finds nothing wrong).
+    #
+    # What they can't easily redo: the YTD figure (still the real historical
+    # total, now wildly inconsistent with the new higher per-period gross)
+    # and the Social Security/Medicare withholding (still computed off the
+    # REAL old gross, not the fake new one — statutory withholding is a
+    # fixed federal percentage, not something you can eyeball). Those are
+    # exactly the checks that don't exist in a basic OCR-and-match tool.
+    W, H = 850, 1100
+    img = Image.new("RGB", (W, H), WHITE)
+    d = ImageDraw.Draw(img)
+
+    d.rectangle([0, 0, W, 90], fill=ACCENT)
+    d.text((40, 24), "BRIGHTLINE LOGISTICS", font=font(26, bold=True), fill=WHITE)
+    d.text((40, 58), "412 Industrial Pkwy, Springfield", font=font(13), fill=(200, 210, 225))
+    d.text((W - 260, 32), "EARNINGS STATEMENT", font=font(16, bold=True), fill=WHITE)
+
+    y = 130
+    kv_row(d, 40, y, "Employee Name", "Jordan Rivera")
+    kv_row(d, 440, y, "Employee ID", "BL-30421")
+    y += 60
+    kv_row(d, 40, y, "Pay Period", "07/28/2026 - 08/10/2026")
+    kv_row(d, 440, y, "Pay Date", "08/14/2026")
+    y += 60
+    kv_row(d, 40, y, "Home Address", "412 Maple Court, Springfield")
+    y += 60
+    hline(d, 40, y, W - 40)
+    y += 24
+
+    d.text((40, y), "EARNINGS", font=font(14, bold=True), fill=ACCENT)
+    y += 30
+    d.text((40, y), "Description", font=font(12), fill=MUTED)
+    d.text((420, y), "Rate", font=font(12), fill=MUTED)
+    d.text((560, y), "Hours", font=font(12), fill=MUTED)
+    d.text((680, y), "Amount", font=font(12), fill=MUTED)
+    y += 26
+    hline(d, 40, y, W - 40)
+    y += 16
+    d.text((40, y), "Regular", font=font(14), fill=INK)
+    d.text((420, y), "$28.85 / hr", font=font(14), fill=INK)
+    d.text((560, y), "80.0", font=font(14), fill=INK)
+    d.text((680, y), "$2,307.69", font=font(14, bold=True), fill=INK)
+    y += 50
+    hline(d, 40, y, W - 40)
+    y += 20
+
+    d.text((40, y), "GROSS PAY (this period)", font=font(14, bold=True), fill=ACCENT)
+    d.text((680, y), "$2,307.69", font=font(16, bold=True), fill=ACCENT)
+    y += 34
+    d.text((40, y), "Gross monthly income (biweekly x 26 / 12)", font=font(12), fill=MUTED)
+    d.text((680, y), "$5,000.00", font=font(16, bold=True), fill=ACCENT)
+    y += 34
+    # Left untouched — the real historical YTD total, now inconsistent with
+    # the bumped-up per-period gross above.
+    d.text((40, y), "YTD Gross Pay (Period 16 of 26)", font=font(12), fill=MUTED)
+    d.text((680, y), "$31,015.36", font=font(15, bold=True), fill=INK)
+    y += 46
+    hline(d, 40, y, W - 40)
+    y += 24
+
+    d.text((40, y), "DEDUCTIONS", font=font(14, bold=True), fill=ACCENT)
+    y += 30
+    # Left untouched — still computed off the real $1,938.46 gross, not the
+    # fake $2,307.69, so the statutory-rate check catches it even though
+    # the arithmetic on this page still foots.
+    for label, amt in [("Federal Tax", "$232.61"), ("State Tax", "$77.54"),
+                        ("Social Security", "$120.18"), ("Medicare", "$28.11")]:
+        d.text((40, y), label, font=font(13), fill=INK)
+        d.text((680, y), amt, font=font(13), fill=INK)
+        y += 26
+
+    y += 20
+    hline(d, 40, y, W - 40)
+    y += 24
+    d.text((40, y), "NET PAY", font=font(15, bold=True), fill=ACCENT)
+    d.text((680, y), "$1,849.25", font=font(17, bold=True), fill=ACCENT)
+
+    d.text((40, H - 40), "This is a synthetic document generated for demo purposes only.",
+           font=font(11), fill=MUTED)
+    img.save(os.path.join(OUT_DIR, "jordan-rivera-pay-stub-tampered.png"))
+
+
 def drivers_license():
     W, H = 900, 560
     img = Image.new("RGB", (W, H), WHITE)
@@ -738,6 +828,7 @@ def ownership_disclosure():
 
 if __name__ == "__main__":
     pay_stub()
+    jordan_pay_stub_tampered()
     drivers_license()
     bank_statement()
     business_tax_return()
@@ -750,4 +841,4 @@ if __name__ == "__main__":
     arjun_pay_stub()
     arjun_drivers_license()
     arjun_bank_statement()
-    print(f"Wrote 13 demo document images to {OUT_DIR}")
+    print(f"Wrote 14 demo document images to {OUT_DIR}")
