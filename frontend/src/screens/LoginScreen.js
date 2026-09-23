@@ -64,8 +64,11 @@ export default function LoginScreen({ navigation }) {
         <View style={styles.demoBox}>
           <Text style={styles.demoTitle}>Demo accounts</Text>
           <Text style={styles.demoLine}>Loan officer · officer@loanlens.demo</Text>
-          <Text style={styles.demoLine}>Borrower · borrower@loanlens.demo</Text>
-          <Text style={styles.demoLine}>Password · demo1234</Text>
+          <Text style={styles.demoLine}>Jordan Rivera (auto-loan) · borrower@loanlens.demo</Text>
+          <Text style={styles.demoLine}>Priya Nair (personal-loan, clean) · priya.nair@example.demo</Text>
+          <Text style={styles.demoLine}>Arjun Mehta (auto-loan) · arjun.mehta@example.demo</Text>
+          <Text style={styles.demoLine}>Dana Whitfield (small-business) · dana.whitfield@example.demo</Text>
+          <Text style={styles.demoLine}>Password (all accounts) · demo1234</Text>
         </View>
       </View>
       <Text style={styles.foot}>Demo environment · synthetic data only · AI answers are cited and human-reviewed</Text>
