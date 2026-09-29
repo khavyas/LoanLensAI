@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import Application from '../models/Application.js';
 import Document from '../models/Document.js';
 import { requireAuth } from '../middleware/auth.js';
-import { classifyAndExtract } from '../services/extraction.js';
+import { classifyAndExtract } from '../services/extractionProvider.js';
 import { verifyDocument, openExceptions, withCrossDocumentChecks } from '../services/verification.js';
 
 const upload = multer({ dest: 'uploads/', limits: { fileSize: 10 * 1024 * 1024 } });

@@ -19,6 +19,10 @@ services:
         sync: false # paste in dashboard
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: GROQ_API_KEY
+        sync: false # optional — only read when EXTRACTION_PROVIDER=groq
+      - key: EXTRACTION_PROVIDER
+        value: anthropic # set to "groq" to run document extraction on Groq's free tier instead
       - key: JWT_SECRET
         generateValue: true
       - key: SETUP_SECRET
