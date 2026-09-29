@@ -7,7 +7,23 @@ import { requireAuth } from '../middleware/auth.js';
 import { classifyAndExtract } from '../services/extractionProvider.js';
 import { verifyDocument, openExceptions, withCrossDocumentChecks } from '../services/verification.js';
 
-const upload = multer({ dest: 'uploads/', limits: { fileSize: 10 * 1024 * 1024 } });
+// Server-side allowlist — the frontend picker already only offers image/PDF,
+// but that's a UI convenience, not a security boundary. Without this, a
+// direct API call (bypassing the picker entirely) could push any file type
+// through to extraction, where it would silently misbehave (e.g. a .docx
+// getting misread as an image) instead of being rejected cleanly here.
+const ACCEPTED_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'application/pdf']);
+
+const upload = multer({
+  dest: 'uploads/',
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (ACCEPTED_MIME_TYPES.has(file.mimetype)) return cb(null, true);
+    const err = new Error(`Unsupported file type "${file.mimetype}" — upload an image (PNG/JPEG/WEBP) or PDF.`);
+    err.status = 400;
+    cb(err);
+  },
+});
 const router = Router();
 router.use(requireAuth);
 
