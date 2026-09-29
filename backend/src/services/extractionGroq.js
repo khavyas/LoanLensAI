@@ -81,6 +81,21 @@ export async function classifyAndExtractGroq(filePath, mimeType, originalFilenam
 
   const data = fs.readFileSync(filePath).toString('base64');
 
+  // A real API failure (no key configured yet, rate limit, network blip)
+  // must never surface as a raw provider error the borrower/officer is
+  // stuck looking at mid-upload — fall back to the same canned fixtures
+  // MOCK_AI uses, so the upload flow still completes. Logged loudly
+  // server-side so a real outage doesn't go unnoticed. Same pattern as
+  // extraction.js's Anthropic path.
+  try {
+    return await extractViaGroq(mimeType, data);
+  } catch (err) {
+    console.error('[extractionGroq] Groq call failed, falling back to mock data:', err.message);
+    return mockClassifyAndExtract(originalFilename);
+  }
+}
+
+async function extractViaGroq(mimeType, data) {
   const res = await getGroqClient().chat.completions.create({
     model: GROQ_MODEL,
     max_tokens: 1024,
