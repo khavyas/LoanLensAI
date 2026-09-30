@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { pdfToPng } from 'pdf-to-png-converter';
 import { getGroqClient, GROQ_MODEL, parseJsonResponse } from './groqClient.js';
 import { mockClassifyAndExtract } from './mockFixtures.js';
 
@@ -70,29 +71,34 @@ Rules:
 export async function classifyAndExtractGroq(filePath, mimeType, originalFilename) {
   if (MOCK_AI) return mockClassifyAndExtract(originalFilename);
 
-  // Groq's vision models take images (PNG/JPEG/etc via image_url), not raw
-  // PDF bytes the way Anthropic's client does — unlike extraction.js, there
-  // is no PDF branch here. Every seeded demo document is a PNG, so this
-  // isn't a gap for this project, but a real PDF upload would need
-  // rasterizing to an image first.
-  if (mimeType === 'application/pdf') {
-    throw new Error('Groq extraction does not support PDF input directly — convert to an image first.');
-  }
-
-  const data = fs.readFileSync(filePath).toString('base64');
-
-  // A real API failure (no key configured yet, rate limit, network blip)
-  // must never surface as a raw provider error the borrower/officer is
-  // stuck looking at mid-upload — fall back to the same canned fixtures
-  // MOCK_AI uses, so the upload flow still completes. Logged loudly
-  // server-side so a real outage doesn't go unnoticed. Same pattern as
-  // extraction.js's Anthropic path.
+  // A real failure — rasterization, API call, no key configured, rate
+  // limit, network blip — must never surface as a raw provider error the
+  // borrower/officer is stuck looking at mid-upload — fall back to the same
+  // canned fixtures MOCK_AI uses, so the upload flow still completes.
+  // Logged loudly server-side so a real outage doesn't go unnoticed. Same
+  // pattern as extraction.js's Anthropic path.
   try {
-    return await extractViaGroq(mimeType, data);
+    const { data, imageMimeType } = await toImageBase64(filePath, mimeType);
+    return await extractViaGroq(imageMimeType, data);
   } catch (err) {
-    console.error('[extractionGroq] Groq call failed, falling back to mock data:', err.message);
+    console.error('[extractionGroq] Groq extraction failed, falling back to mock data:', err.message);
     return mockClassifyAndExtract(originalFilename);
   }
+}
+
+// Groq's vision model takes images (PNG/JPEG/etc via image_url), not raw PDF
+// bytes the way Anthropic's client does — a PDF gets rasterized to a PNG
+// first via pdf-to-png-converter (bundles @napi-rs/canvas, no native compile
+// step, verified working on this host). Only the first page is converted —
+// every document type this app handles (pay stub, license, bank statement,
+// etc.) is a single logical page.
+async function toImageBase64(filePath, mimeType) {
+  if (mimeType !== 'application/pdf') {
+    return { data: fs.readFileSync(filePath).toString('base64'), imageMimeType: mimeType };
+  }
+  const [page] = await pdfToPng(filePath, { pagesToProcess: [1], viewportScale: 2.0 });
+  if (!page?.content) throw new Error('PDF rasterization produced no page content');
+  return { data: page.content.toString('base64'), imageMimeType: 'image/png' };
 }
 
 async function extractViaGroq(mimeType, data) {
