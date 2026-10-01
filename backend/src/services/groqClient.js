@@ -13,12 +13,16 @@ export function getGroqClient() {
   return _groq;
 }
 
-// Llama 4 Scout is the vision-capable model on Groq's free developer tier
-// (image inputs up to 20MB) — verified against console.groq.com/docs/vision
-// on 2026-09-29, since Groq's model lineup and free-tier availability change
-// over time. If this model is ever deprecated, check that page before
-// swapping to a replacement — not every Groq model accepts image input.
-export const GROQ_MODEL = process.env.GROQ_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct';
+// Llama 4 Scout (docs' advertised vision model) turned out NOT to be
+// enabled on this account in practice — a live call returned 404
+// model_not_found. Confirmed the actual available model list directly via
+// GET https://api.groq.com/openai/v1/models with the real key on
+// 2026-10-01: qwen/qwen3.8-27b was the ONLY model in that account-specific
+// list with "image" in input_modalities (also supports json_mode, which
+// this code relies on). Docs describe the general catalog; this endpoint
+// is the one source of truth for what a specific account can actually call
+// — re-check it before ever changing this default.
+export const GROQ_MODEL = process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
 
 // Same defensive parse as anthropicClient.js — open-weight models wrap JSON
 // in markdown fences just as often as Claude does.
