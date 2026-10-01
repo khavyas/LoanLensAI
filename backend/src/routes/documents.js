@@ -88,6 +88,7 @@ router.post('/:applicationId', upload.single('file'), async (req, res, next) => 
       mimeType: req.file.mimetype,
       extractedFields: extracted.fields,
       confidence: extracted.confidence,
+      extractionSource: extracted.extractionSource || 'live',
       verification,
       status: 'current',
       supersedes: priorCurrent[0]?._id || null,

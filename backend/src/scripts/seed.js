@@ -42,6 +42,7 @@ async function seedPriyaDocuments(priyaApp) {
       mimeType: 'image/png',
       extractedFields: extracted.fields,
       confidence: extracted.confidence,
+      extractionSource: 'mock',
       verification,
       status: 'current',
     });

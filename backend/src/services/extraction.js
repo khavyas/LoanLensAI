@@ -49,7 +49,7 @@ Rules:
 - confidence reflects how legible/complete the document is, not your certainty about the docType alone.`;
 
 export async function classifyAndExtract(filePath, mimeType, originalFilename) {
-  if (MOCK_AI) return mockClassifyAndExtract(originalFilename);
+  if (MOCK_AI) return { ...mockClassifyAndExtract(originalFilename), extractionSource: 'mock' };
 
   try {
     const data = fs.readFileSync(filePath).toString('base64');
@@ -65,14 +65,16 @@ export async function classifyAndExtract(filePath, mimeType, originalFilename) {
       messages: [{ role: 'user', content: [fileBlock, { type: 'text', text: EXTRACTION_PROMPT }] }],
     });
 
-    return parseJsonResponse(res.content[0].text);
+    return { ...parseJsonResponse(res.content[0].text), extractionSource: 'live' };
   } catch (err) {
     // A real API failure (no credit, rate limit, network blip) must never
     // surface as a raw provider error the borrower/officer is stuck looking
     // at mid-upload — fall back to the same canned fixtures MOCK_AI uses, so
     // the upload flow still completes instead of dead-ending. Logged loudly
-    // server-side so a real outage doesn't go unnoticed.
+    // server-side so a real outage doesn't go unnoticed, and tagged
+    // 'fallback' so the UI can tell this apart from a genuinely illegible
+    // document instead of just showing a mysterious low-confidence "unknown".
     console.error('[extraction] Anthropic call failed, falling back to mock data:', err.message);
-    return mockClassifyAndExtract(originalFilename);
+    return { ...mockClassifyAndExtract(originalFilename), extractionSource: 'fallback' };
   }
 }

@@ -12,6 +12,13 @@ const documentSchema = new mongoose.Schema(
     mimeType: String,
     extractedFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     confidence: { type: Number, default: 0 }, // 0..1 from the extraction model
+    // 'live' = a real vision-model call succeeded; 'mock' = MOCK_AI=true
+    // deliberately bypassed it; 'fallback' = a real call was attempted and
+    // FAILED (no credit, rate limit, bad key, etc.), degrading to the same
+    // canned data MOCK_AI uses so the upload still completes. Surfaced in
+    // the UI specifically for 'fallback' — low confidence + no fields is
+    // otherwise indistinguishable from a genuinely illegible document.
+    extractionSource: { type: String, enum: ['live', 'mock', 'fallback'], default: 'live' },
     // When a borrower re-uploads a fix for a flagged document, the old one is
     // marked 'superseded' rather than deleted — keeps a full audit trail while
     // only the 'current' document of each docType counts toward requirements

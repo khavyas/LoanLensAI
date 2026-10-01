@@ -69,20 +69,22 @@ Rules:
 - Return ONLY the JSON object above — no markdown fences, no explanation before or after it.`;
 
 export async function classifyAndExtractGroq(filePath, mimeType, originalFilename) {
-  if (MOCK_AI) return mockClassifyAndExtract(originalFilename);
+  if (MOCK_AI) return { ...mockClassifyAndExtract(originalFilename), extractionSource: 'mock' };
 
   // A real failure — rasterization, API call, no key configured, rate
   // limit, network blip — must never surface as a raw provider error the
   // borrower/officer is stuck looking at mid-upload — fall back to the same
   // canned fixtures MOCK_AI uses, so the upload flow still completes.
-  // Logged loudly server-side so a real outage doesn't go unnoticed. Same
-  // pattern as extraction.js's Anthropic path.
+  // Logged loudly server-side so a real outage doesn't go unnoticed, and
+  // tagged 'fallback' so the UI can tell this apart from a genuinely
+  // illegible document instead of just showing a mysterious low-confidence
+  // "unknown". Same pattern as extraction.js's Anthropic path.
   try {
     const { data, imageMimeType } = await toImageBase64(filePath, mimeType);
-    return await extractViaGroq(imageMimeType, data);
+    return { ...(await extractViaGroq(imageMimeType, data)), extractionSource: 'live' };
   } catch (err) {
     console.error('[extractionGroq] Groq extraction failed, falling back to mock data:', err.message);
-    return mockClassifyAndExtract(originalFilename);
+    return { ...mockClassifyAndExtract(originalFilename), extractionSource: 'fallback' };
   }
 }
 
