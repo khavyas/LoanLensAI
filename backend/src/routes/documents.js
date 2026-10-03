@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import multer from 'multer';
 import fs from 'node:fs';
+import mongoose from 'mongoose';
 import Application from '../models/Application.js';
 import Document from '../models/Document.js';
 import { requireAuth } from '../middleware/auth.js';
 import { classifyAndExtract } from '../services/extractionProvider.js';
+import { storeFile, readStoredFile, deleteStoredFile } from '../services/storage.js';
 import { verifyDocument, openExceptions, withCrossDocumentChecks } from '../services/verification.js';
 
 // Server-side allowlist — the frontend picker already only offers image/PDF,
@@ -56,9 +58,10 @@ router.post('/:applicationId', upload.single('file'), async (req, res, next) => 
     const expectedDocType = req.body.expectedDocType || undefined;
     const extracted = await classifyAndExtract(req.file.path, req.file.mimetype, req.file.originalname);
     const verification = verifyDocument(application, extracted, { expectedDocType });
-    // Read the bytes into Mongo so the document can be previewed/downloaded
-    // later — read before the temp file is cleaned up below.
-    const fileData = fs.readFileSync(req.file.path);
+    // Keep the bytes so the document can be previewed/downloaded later —
+    // read before the temp file is cleaned up below. Where they end up
+    // (MongoDB or the private R2 bucket) is storage.js's decision.
+    const fileBytes = fs.readFileSync(req.file.path);
 
     // Supersede whatever previously occupied this slot so the fix replaces it
     // instead of sitting alongside it. A targeted re-upload (expectedDocType
@@ -80,20 +83,37 @@ router.post('/:applicationId', upload.single('file'), async (req, res, next) => 
       );
     }
 
-    const doc = await Document.create({
+    // The object-storage key contains the document id, so the id is minted
+    // here instead of by Mongo on insert.
+    const documentId = new mongoose.Types.ObjectId();
+    const stored = await storeFile({
       applicationId: application._id,
-      fileName: req.file.originalname,
-      docType: extracted.docType,
-      fileData,
+      documentId,
       mimeType: req.file.mimetype,
-      extractedFields: extracted.fields,
-      confidence: extracted.confidence,
-      extractionSource: extracted.extractionSource || 'live',
-      verification,
-      status: 'current',
-      supersedes: priorCurrent[0]?._id || null,
-      expectedDocType,
+      bytes: fileBytes,
     });
+
+    let doc;
+    try {
+      doc = await Document.create({
+        _id: documentId,
+        applicationId: application._id,
+        fileName: req.file.originalname,
+        docType: extracted.docType,
+        ...stored,
+        mimeType: req.file.mimetype,
+        extractedFields: extracted.fields,
+        confidence: extracted.confidence,
+        extractionSource: extracted.extractionSource || 'live',
+        verification,
+        status: 'current',
+        supersedes: priorCurrent[0]?._id || null,
+        expectedDocType,
+      });
+    } catch (err) {
+      await deleteStoredFile(stored); // don't leave an orphan object if the record failed to save
+      throw err;
+    }
 
     // A 'warning'-level flag (e.g. an affordability check) is just as important
     // for an officer to see in their queue as a hard 'fail' — both mean a human
@@ -116,10 +136,10 @@ router.post('/:applicationId', upload.single('file'), async (req, res, next) => 
       await application.save();
     }
 
-    fs.unlink(req.file.path, () => {}); // temp disk copy only — the real copy is fileData above
-    // Don't echo fileData back in the create response — the frontend never
-    // needs the raw bytes inline, only the dedicated file route below.
-    const { fileData: _omit, ...docWithoutBytes } = doc.toObject();
+    fs.unlink(req.file.path, () => {}); // temp disk copy only — the real copy is in storage
+    // Don't echo the raw bytes or the internal storage key back — the
+    // frontend only ever needs the dedicated file route below.
+    const { fileData: _omit, storageKey: _key, ...docWithoutBytes } = doc.toObject();
     res.status(201).json(docWithoutBytes);
   } catch (err) {
     next(err);
@@ -135,11 +155,21 @@ router.get('/:documentId/file', async (req, res, next) => {
     if (!doc) return res.status(404).json({ error: 'Document not found' });
     const owned = await loadOwnedApplication(doc.applicationId, req.user);
     if (owned.error) return res.status(owned.error).json({ error: owned.message });
-    if (!doc.fileData) return res.status(404).json({ error: 'No file stored for this document' });
+    // Proxied through the server (not a redirect to a storage URL) so the
+    // browser's authenticated fetch keeps working with no CORS setup and the
+    // bucket never needs a public address.
+    let bytes;
+    try {
+      bytes = await readStoredFile(doc);
+    } catch (err) {
+      console.error('[documents] could not read stored file', req.params.documentId, err.message);
+      return res.status(502).json({ error: 'File storage is temporarily unavailable. Please try again.' });
+    }
+    if (!bytes) return res.status(404).json({ error: 'No file stored for this document' });
 
     res.set('Content-Type', doc.mimeType || 'application/octet-stream');
     res.set('Content-Disposition', `inline; filename="${(doc.fileName || 'document').replace(/"/g, '')}"`);
-    res.send(doc.fileData);
+    res.send(bytes);
   } catch (err) {
     next(err);
   }
@@ -156,6 +186,7 @@ router.delete('/:documentId', async (req, res, next) => {
     if (owned.error) return res.status(owned.error).json({ error: owned.message });
 
     await Document.deleteOne({ _id: doc._id });
+    await deleteStoredFile(doc); // best effort; never fails the request
     res.json({ ok: true });
   } catch (err) {
     next(err);

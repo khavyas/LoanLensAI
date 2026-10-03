@@ -10,6 +10,7 @@ import PolicyChunk from '../models/PolicyChunk.js';
 import { REQUIRED_DOCS_BY_PRODUCT } from '../config/requiredDocs.js';
 import { mockClassifyAndExtract } from '../services/mockFixtures.js';
 import { verifyDocument } from '../services/verification.js';
+import { checkStorage } from '../services/storage.js';
 
 // One-time setup endpoints for environments with no shell access (Render free tier).
 // Guarded by SETUP_SECRET; disable by unsetting the env var after setup.
@@ -168,6 +169,18 @@ router.all('/reset', async (_req, res, next) => {
     const seeded = await runSeed();
     const ingested = await runIngest();
     res.json({ ok: true, ...seeded, ...ingested });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Proves file storage works from THIS server, with its real env vars: a tiny
+// write -> read -> delete round trip against the configured bucket. Open
+//   /admin/storage-check?secret=<SETUP_SECRET>
+// after deploying; ok:true means uploads will really go to R2.
+router.all('/storage-check', async (_req, res, next) => {
+  try {
+    res.json(await checkStorage());
   } catch (err) {
     next(err);
   }

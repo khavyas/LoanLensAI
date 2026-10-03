@@ -56,7 +56,7 @@ function applicationStateSummary(application, documents) {
 }
 
 export async function answerQuestion({ question, application, role }) {
-  const rawDocuments = await Document.find({ applicationId: application._id }).select('-fileData').lean();
+  const rawDocuments = await Document.find({ applicationId: application._id }).select('-fileData -storageKey').lean();
   const documents = withCrossDocumentChecks(application, rawDocuments);
   if (MOCK_AI) return mockAnswer(application, documents);
 

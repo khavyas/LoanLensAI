@@ -31,7 +31,7 @@ router.get('/', async (req, res, next) => {
     const apps = await Application.find(filter).sort({ createdAt: -1 }).lean();
 
     const appIds = apps.map((a) => a._id);
-    const allDocs = await Document.find({ applicationId: { $in: appIds } }).select('-fileData').lean();
+    const allDocs = await Document.find({ applicationId: { $in: appIds } }).select('-fileData -storageKey').lean();
     const docsByApp = new Map();
     for (const doc of allDocs) {
       const key = doc.applicationId.toString();
@@ -140,7 +140,7 @@ router.get('/:id', async (req, res, next) => {
     }
     // Never include the raw file bytes here — the frontend fetches those on
     // demand from GET /documents/:id/file, not inline with the whole app.
-    const rawDocuments = await Document.find({ applicationId: app._id }).select('-fileData').lean();
+    const rawDocuments = await Document.find({ applicationId: app._id }).select('-fileData -storageKey').lean();
     const documents = withCrossDocumentChecks(app, rawDocuments);
     res.json({
       ...app,

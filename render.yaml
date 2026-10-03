@@ -23,6 +23,16 @@ services:
         sync: false # optional — only read when EXTRACTION_PROVIDER=groq
       - key: EXTRACTION_PROVIDER
         value: anthropic # set to "groq" to run document extraction on Groq's free tier instead
+      - key: STORAGE_PROVIDER
+        value: mongo # set to "r2" to store uploaded files in the private Cloudflare R2 bucket
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: SETUP_SECRET

@@ -9,6 +9,14 @@ const documentSchema = new mongoose.Schema(
     // later — without this, there was no way to check which file you'd
     // actually uploaded once the temp file was cleaned up after extraction.
     fileData: Buffer,
+    // 'mongo' = bytes are in fileData (original behaviour, also the fallback
+    // if object storage is down); 'r2' = bytes live in the private R2 bucket
+    // under storageKey and fileData is empty. Existing documents default to
+    // 'mongo', so nothing needs migrating for them to keep working.
+    storageProvider: { type: String, enum: ['mongo', 'r2'], default: 'mongo' },
+    storageKey: String,
+    size: Number,
+    sha256: String,
     mimeType: String,
     extractedFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     confidence: { type: Number, default: 0 }, // 0..1 from the extraction model
