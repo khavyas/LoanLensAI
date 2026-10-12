@@ -483,6 +483,8 @@ The Expo frontend lets borrowers and officers sign in and work with loan applica
 
 ## Optional Ollama + Chroma assistant path
 
+For the end-to-end document upload, credentials, vector indexing, retrieval, and chatbot flow, see [RAG_END_TO_END_GUIDE.md](RAG_END_TO_END_GUIDE.md).
+
 The implementation includes a local Ollama assistant path with Chroma policy retrieval. Set `CHAT_PROVIDER=ollama` to use it; the default remains `CHAT_PROVIDER=anthropic`, and `MOCK_AI=true` bypasses live AI.
 
 - `backend/src/services/loanQuestionRouter.js` separates application-status, policy, mixed, clarification, and unsupported questions. Short follow-ups use up to four prior user questions.
