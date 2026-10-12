@@ -29,11 +29,16 @@ export default function AssistantTab({ app }) {
   async function send(text) {
     const question = (text || input).trim();
     if (!question || busy) return;
+    // NEW: Send only prior user turns for follow-up context; assistant answers are never trusted as evidence.
+    const history = messages
+      .filter((message) => message.from === 'user')
+      .slice(-4)
+      .map((message) => ({ role: 'user', content: message.text }));
     setInput('');
     setMessages((m) => [...m, { from: 'user', text: question }]);
     setBusy(true);
     try {
-      const { answer, sources } = await api.ask(app._id, question);
+      const { answer, sources } = await api.ask(app._id, question, history);
       setMessages((m) => [...m, { from: 'ai', text: answer, sources }]);
     } catch (e) {
       setMessages((m) => [...m, { from: 'ai', text: `Sorry — ${e.message}`, sources: [] }]);

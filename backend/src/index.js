@@ -7,6 +7,7 @@ import applicationRoutes from './routes/applications.js';
 import documentRoutes from './routes/documents.js';
 import chatRoutes from './routes/chat.js';
 import adminRoutes from './routes/admin.js';
+import ragAdminRoutes from './routes/ragAdmin.js';
 
 const app = express();
 app.use(cors());
@@ -19,6 +20,7 @@ app.use('/applications', applicationRoutes);
 app.use('/documents', documentRoutes);
 app.use('/chat', chatRoutes);
 app.use('/admin', adminRoutes);
+app.use('/rag-admin', ragAdminRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

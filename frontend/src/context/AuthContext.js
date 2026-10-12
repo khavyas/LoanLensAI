@@ -22,11 +22,19 @@ export function AuthProvider({ children }) {
     setUnauthorizedHandler(() => logout());
   }, []);
 
-  async function login(email, password) {
-    const { token, user: u } = await api.login(email, password);
+  async function saveSession(loginRequest) {
+    const { token, user: u } = await loginRequest;
     setToken(token);
     setUser(u);
     await AsyncStorage.setItem('loanlens.session', JSON.stringify({ token, user: u }));
+  }
+
+  async function login(email, password) {
+    await saveSession(api.login(email, password));
+  }
+
+  async function adminLogin(email, password) {
+    await saveSession(api.adminLogin(email, password));
   }
 
   async function register(payload) {
@@ -42,7 +50,7 @@ export function AuthProvider({ children }) {
     await AsyncStorage.removeItem('loanlens.session');
   }
 
-  return <AuthContext.Provider value={{ user, login, register, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, login, adminLogin, register, logout }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);

@@ -8,6 +8,7 @@ import SignUpScreen from './src/screens/SignUpScreen';
 import ApplicationsScreen from './src/screens/ApplicationsScreen';
 import ApplicationDetailScreen from './src/screens/ApplicationDetailScreen';
 import NewApplicationScreen from './src/screens/NewApplicationScreen';
+import RagAdminScreen from './src/screens/RagAdminScreen';
 import BrandHeader from './src/components/BrandHeader';
 import Sidebar from './src/components/Sidebar';
 import { navigationRef } from './src/navigationRef';
@@ -32,6 +33,12 @@ function Routes() {
           <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
           <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
         </>
+      ) : user.role === 'admin' ? (
+        <Stack.Screen
+          name="RagAdmin"
+          component={RagAdminScreen}
+          options={{ title: 'RAG Policy Documents' }}
+        />
       ) : (
         <>
           <Stack.Screen

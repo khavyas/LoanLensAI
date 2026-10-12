@@ -34,7 +34,7 @@ export default function BrandHeader({ navigation, options, back }) {
         )}
         <TouchableOpacity
           style={styles.brand}
-          onPress={() => navigation.navigate('Applications')}
+          onPress={() => navigation.navigate(user?.role === 'admin' ? 'RagAdmin' : 'Applications')}
         >
           <View style={styles.logoMark}>
             <Text style={styles.logoMarkText}>L</Text>

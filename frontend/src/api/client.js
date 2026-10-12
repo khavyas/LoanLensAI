@@ -49,6 +49,7 @@ async function fetchDocumentBlob(documentId) {
 
 export const api = {
   login: (email, password) => request('/auth/login', { method: 'POST', body: { email, password } }),
+  adminLogin: (email, password) => request('/auth/admin/login', { method: 'POST', body: { email, password } }),
   register: (payload) => request('/auth/register', { method: 'POST', body: payload }),
   applications: () => request('/applications'),
   application: (id) => request(`/applications/${id}`),
@@ -57,6 +58,10 @@ export const api = {
     request(`/documents/${applicationId}`, { method: 'POST', body: formData }),
   deleteDocument: (documentId) => request(`/documents/${documentId}`, { method: 'DELETE' }),
   fetchDocumentBlob,
-  ask: (applicationId, question) =>
-    request(`/chat/${applicationId}`, { method: 'POST', body: { question } }),
+  ragDocuments: () => request('/rag-admin/documents'),
+  uploadRagDocuments: (formData) => request('/rag-admin/documents', { method: 'POST', body: formData }),
+  deleteRagDocument: (documentId) => request('/rag-admin/documents/' + encodeURIComponent(documentId), { method: 'DELETE' }),
+  // NEW: Optional user-only history is additive; older callers can continue to send only a question.
+  ask: (applicationId, question, history = []) =>
+    request(`/chat/${applicationId}`, { method: 'POST', body: { question, history } }),
 };

@@ -2,6 +2,8 @@ import PolicyChunk from '../models/PolicyChunk.js';
 import Document from '../models/Document.js';
 import { anthropic, MODEL, parseJsonResponse } from './anthropicClient.js';
 import { currentDocuments, missingDocuments, openExceptions, withCrossDocumentChecks } from './verification.js';
+import { answerQuestionWithGroq } from './ragGroq.js';
+import { answerQuestionWithOllama } from './ragOllama.js';
 
 // Same bypass as extraction.js — set MOCK_AI=true to exercise the Assistant
 // tab without spending Anthropic API credits. The mock answer is a
@@ -55,10 +57,17 @@ function applicationStateSummary(application, documents) {
   };
 }
 
-export async function answerQuestion({ question, application, role }) {
+export async function answerQuestion({ question, application, role, history = [], signal }) {
   const rawDocuments = await Document.find({ applicationId: application._id }).select('-fileData -storageKey').lean();
   const documents = withCrossDocumentChecks(application, rawDocuments);
   if (MOCK_AI) return mockAnswer(application, documents);
+  // NEW: Opt-in Ollama/Chroma path; the existing Groq and Anthropic branches remain the defaults/fallbacks.
+  if ((process.env.CHAT_PROVIDER || 'anthropic').toLowerCase() === 'ollama') {
+    return answerQuestionWithOllama({ question, application, role, history, documents, signal });
+  }
+  if ((process.env.CHAT_PROVIDER || 'anthropic').toLowerCase() === 'groq') {
+    return answerQuestionWithGroq({ question, application, role, documents });
+  }
 
   const context = await policyContext();
 

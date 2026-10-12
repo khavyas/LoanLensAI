@@ -5,7 +5,7 @@ import User from '../models/User.js';
 
 const router = Router();
 
-function issueSession(user) {
+export function issueSession(user) {
   const token = jwt.sign(
     { sub: user._id.toString(), role: user.role, name: user.name, email: user.email },
     process.env.JWT_SECRET,
@@ -14,18 +14,27 @@ function issueSession(user) {
   return { token, user: { name: user.name, email: user.email, role: user.role } };
 }
 
-router.post('/login', async (req, res, next) => {
+async function login(req, res, next, requiredRole = null) {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email: (email || '').toLowerCase() });
     if (!user || !(await bcrypt.compare(password || '', user.passwordHash))) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
+    if (requiredRole && user.role !== requiredRole) {
+      return res.status(403).json({ error: 'This account cannot use the administrator sign-in' });
+    }
+    if (!requiredRole && user.role === 'admin') {
+      return res.status(403).json({ error: 'Use the administrator sign-in option for this account' });
+    }
     res.json(issueSession(user));
   } catch (err) {
     next(err);
   }
-});
+}
+
+router.post('/login', (req, res, next) => login(req, res, next));
+router.post('/admin/login', (req, res, next) => login(req, res, next, 'admin'));
 
 // Self-registration — a POC/demo convenience so teammates can spin up their
 // own test accounts without a DB console. No email verification: this is a

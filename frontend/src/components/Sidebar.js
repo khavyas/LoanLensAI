@@ -6,6 +6,7 @@ import { navigationRef } from '../navigationRef';
 const NAV_ITEMS = [
   { route: 'Applications', label: 'Applications', icon: '⌂', roles: ['officer', 'borrower'] },
   { route: 'NewApplication', label: 'Apply for a Loan', icon: '+', roles: ['borrower'] },
+  { route: 'RagAdmin', label: 'RAG Documents', icon: '▤', roles: ['admin'] },
 ];
 
 // Persistent left nav, shown only on wide viewports (App.js) — real content

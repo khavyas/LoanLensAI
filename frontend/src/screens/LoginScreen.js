@@ -4,18 +4,30 @@ import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme';
 import { PasswordField } from '../components/ui';
 
+const ADMIN_DEMO_EMAIL = 'admin@loanlens.demo';
+const ADMIN_DEMO_PASSWORD = 'demo@12345678';
+
 export default function LoginScreen({ navigation }) {
-  const { login } = useAuth();
+  const { login, adminLogin } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [adminMode, setAdminMode] = useState(false);
+
+  function toggleAdminMode() {
+    const nextAdminMode = !adminMode;
+    setAdminMode(nextAdminMode);
+    setError(null);
+    setEmail('');
+    setPassword('');
+  }
 
   async function onLogin() {
     setError(null);
     setBusy(true);
     try {
-      await login(email.trim(), password);
+      await (adminMode ? adminLogin(email.trim(), password) : login(email.trim(), password));
     } catch (e) {
       setError(e.message);
     } finally {
@@ -30,7 +42,9 @@ export default function LoginScreen({ navigation }) {
         <Text style={styles.logo}>
           LoanLens <Text style={{ color: colors.accent }}>AI</Text>
         </Text>
-        <Text style={styles.tagline}>Intelligent loan document review &amp; assistance</Text>
+        <Text style={styles.tagline}>
+          {adminMode ? 'Administrator access to policy knowledge and RAG documents' : 'Intelligent loan document review & assistance'}
+        </Text>
 
         <Text style={styles.label}>Email address</Text>
         <TextInput
@@ -51,17 +65,31 @@ export default function LoginScreen({ navigation }) {
           onSubmitEditing={onLogin}
         />
 
+        {adminMode && (
+          <View style={styles.demoBox}>
+            <Text style={styles.demoTitle}>Admin demo credentials</Text>
+            <Text style={styles.demoLine}>Email · {ADMIN_DEMO_EMAIL}</Text>
+            <Text style={styles.demoLine}>Password · {ADMIN_DEMO_PASSWORD}</Text>
+          </View>
+        )}
+
         {error && <Text style={styles.error}>{error}</Text>}
 
         <TouchableOpacity style={styles.button} onPress={onLogin} disabled={busy}>
-          {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign in</Text>}
+          {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{adminMode ? 'Administrator sign in' : 'Sign in'}</Text>}
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.signupLink} onPress={() => navigation.navigate('SignUp')}>
-          <Text style={styles.signupLinkText}>New here? Create a test account</Text>
+        {!adminMode && (
+          <TouchableOpacity style={styles.signupLink} onPress={() => navigation.navigate('SignUp')}>
+            <Text style={styles.signupLinkText}>New here? Create a test account</Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity style={styles.signupLink} onPress={toggleAdminMode}>
+          <Text style={styles.signupLinkText}>{adminMode ? 'Back to borrower / officer sign in' : 'Administrator sign in'}</Text>
         </TouchableOpacity>
 
-        <View style={styles.demoBox}>
+        {!adminMode && <View style={styles.demoBox}>
           <Text style={styles.demoTitle}>Demo accounts</Text>
           <Text style={styles.demoLine}>Loan officer · officer@loanlens.demo</Text>
           <Text style={styles.demoLine}>Jordan Rivera (auto-loan) · borrower@loanlens.demo</Text>
@@ -69,7 +97,7 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.demoLine}>Arjun Mehta (auto-loan) · arjun.mehta@example.demo</Text>
           <Text style={styles.demoLine}>Dana Whitfield (small-business) · dana.whitfield@example.demo</Text>
           <Text style={styles.demoLine}>Password (all accounts) · demo1234</Text>
-        </View>
+        </View>}
       </View>
       <Text style={styles.foot}>Demo environment · synthetic data only · AI answers are cited and human-reviewed</Text>
     </View>

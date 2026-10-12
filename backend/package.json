@@ -11,6 +11,9 @@
     "start": "node src/index.js",
     "seed": "node src/scripts/seed.js",
     "ingest": "node src/scripts/ingestPolicies.js",
+    "ingest:chroma": "node src/scripts/ingestPoliciesChroma.js",
+    "admin:create": "node src/scripts/createAdmin.js",
+    "test": "node --test --test-isolation=none",
     "reset": "npm run seed && npm run ingest"
   },
   "dependencies": {
@@ -24,6 +27,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.0",
     "multer": "^1.4.5-lts.1",
-    "pdf-to-png-converter": "^4.2.1"
+    "pdf-to-png-converter": "^4.2.1",
+    "pdfjs-dist": "~6.2.108"
   }
 }
