@@ -47,3 +47,4 @@ Grounding checks (must refuse / say not available):
 16. What's the bank's routing number? → not in corpus, must say unavailable
 17. Can I get a mortgage? → not in corpus, must say unavailable
 18. What was the applicant's credit score? → not in corpus/state, must say unavailable
+19.
