@@ -1,7 +1,8 @@
 import Document from '../models/Document.js';
 import { RAG_CONFIG } from '../config/rag.js';
 import { missingDocuments, withCrossDocumentChecks } from './verification.js';
-import { embedTexts, generateChatJson } from './ollamaClient.js';
+import { embedTexts } from './embeddingClient.js';
+import { generateChatJson } from './ollamaClient.js';
 import { getOrCreatePolicyCollection, queryPolicyRecords } from './chromaService.js';
 import { classifyLoanQuestion } from './loanQuestionRouter.js';
 import { buildRagMessages, parseGroundedAnswer } from './ragPromptBuilder.js';
@@ -92,7 +93,9 @@ export async function answerQuestionWithOllama({ question, application, role, hi
 
   const messages = buildRagMessages({
     question: route.effectiveQuestion,
-    history: priorUserQuestions,
+    // Keep unrelated earlier turns out of a self-contained policy question.
+    // The classifier marks history only when the current turn needs context.
+    history: route.usedHistory ? priorUserQuestions : [],
     role,
     route,
     evidence,
@@ -128,6 +131,6 @@ export async function answerQuestionWithOllama({ question, application, role, hi
     return answer;
   } catch (error) {
     console.error('[ragOllama] request failed:', error.message);
-    throw new Error('The loan assistant is temporarily unavailable. Check that Ollama and Chroma are running and their configured models are installed.');
+    throw new Error('The loan assistant is temporarily unavailable. Check the configured Ollama endpoint, API key, model access, and Chroma Cloud settings.');
   }
 }

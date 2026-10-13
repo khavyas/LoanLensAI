@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { RAG_CONFIG } from '../config/rag.js';
-import { embedTexts } from './ollamaClient.js';
+import { embedTexts } from './embeddingClient.js';
 import { deletePolicyRecords, getCollectionRecords, getOrCreatePolicyCollection, upsertPolicyRecords } from './chromaService.js';
 import { chunkPolicyMarkdown } from './policyChunker.js';
 
@@ -67,7 +67,8 @@ export async function ingestApprovedPolicies() {
   return {
     ok: true,
     collection: RAG_CONFIG.chromaCollection,
-    embeddingModel: RAG_CONFIG.ollamaEmbeddingModel,
+    embeddingProvider: RAG_CONFIG.embeddingProvider,
+    embeddingModel: RAG_CONFIG.embeddingModel,
     files: indexedFiles,
     chunks: indexedChunks,
   };

@@ -11,6 +11,7 @@ import { REQUIRED_DOCS_BY_PRODUCT } from '../config/requiredDocs.js';
 import { mockClassifyAndExtract } from '../services/mockFixtures.js';
 import { verifyDocument } from '../services/verification.js';
 import { checkStorage } from '../services/storage.js';
+import { ingestApprovedPolicies } from '../services/policyIngestion.js';
 
 // One-time setup endpoints for environments with no shell access (Render free tier).
 // Guarded by SETUP_SECRET; disable by unsetting the env var after setup.
@@ -158,6 +159,16 @@ router.all('/seed', async (_req, res, next) => {
 router.all('/ingest', async (_req, res, next) => {
   try {
     res.json({ ok: true, ...(await runIngest()) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Initial/reindex action for Chroma Cloud, usable on Render without a shell.
+// Protected by the same SETUP_SECRET guard as the seed and Mongo policy routes.
+router.all('/ingest-chroma', async (_req, res, next) => {
+  try {
+    res.json(await ingestApprovedPolicies());
   } catch (err) {
     next(err);
   }

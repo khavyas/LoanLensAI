@@ -23,6 +23,34 @@ services:
         sync: false # optional — only read when EXTRACTION_PROVIDER=groq
       - key: EXTRACTION_PROVIDER
         value: anthropic # set to "groq" to run document extraction on Groq's free tier instead
+      # RAG assistant: Ollama Cloud for chat and Chroma Cloud for embeddings/vector search.
+      # Set API keys and account-specific Chroma tenant/database values in Render.
+      - key: CHAT_PROVIDER
+        value: ollama
+      - key: OLLAMA_BASE_URL
+        value: https://ollama.com
+      - key: OLLAMA_API_KEY
+        sync: false
+      - key: OLLAMA_CHAT_MODEL
+        value: gemma4:31b
+      - key: EMBEDDING_PROVIDER
+        value: chroma-cloud
+      - key: CHROMA_BASE_URL
+        value: https://api.trychroma.com
+      - key: CHROMA_EMBEDDING_URL
+        value: https://embed.trychroma.com/embed
+      - key: CHROMA_EMBEDDING_MODEL
+        value: Qwen/Qwen3-Embedding-0.6B
+      - key: CHROMA_EMBEDDING_TIMEOUT_MS
+        value: "120000"
+      - key: CHROMA_API_KEY
+        sync: false
+      - key: CHROMA_TENANT
+        sync: false
+      - key: CHROMA_DATABASE
+        sync: false
+      - key: CHROMA_COLLECTION
+        value: loan-knowledge-qwen
       - key: STORAGE_PROVIDER
         value: mongo # set to "r2" to store uploaded files in the private Cloudflare R2 bucket
       - key: R2_ACCOUNT_ID

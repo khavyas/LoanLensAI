@@ -25,13 +25,19 @@ export function classifyLoanQuestion(question, history = []) {
     ? history.filter((turn) => turn?.role === 'user' && typeof turn.content === 'string')
       .map((turn) => turn.content.trim()).filter(Boolean).slice(-4)
     : [];
-  const shortFollowUp = current.split(/\s+/).length <= 7 || FOLLOW_UP_PATTERN.test(current);
-  const usedHistory = shortFollowUp && priorUserQuestions.length > 0;
+  // Carry context only for an actual follow-up or an otherwise ambiguous
+  // fragment. Short, self-contained questions (for example, "documents
+  // required for a personal loan") must stand on their own so an earlier
+  // application-status question cannot override their intent or retrieval.
+  const currentKind = rawKind(current);
+  const needsContext = currentKind === 'clarification'
+    && (current.split(/\s+/).length <= 7 || FOLLOW_UP_PATTERN.test(current));
+  const usedHistory = needsContext && priorUserQuestions.length > 0;
   const effectiveQuestion = usedHistory
     ? `${priorUserQuestions.slice(-2).join('\n')}\n${current}`.slice(-2000)
     : current;
 
-  let kind = rawKind(current);
+  let kind = currentKind;
   if (kind === 'clarification' && usedHistory) kind = rawKind(effectiveQuestion);
   if (kind === 'clarification' && !usedHistory && current.split(/\s+/).length < 3) {
     return { kind: 'clarification', effectiveQuestion, usedHistory };

@@ -5,6 +5,13 @@ export const RAG_CONFIG = Object.freeze({
   ollamaChatModel: process.env.OLLAMA_CHAT_MODEL || 'gemma4',
   ollamaEmbeddingModel: process.env.OLLAMA_EMBEDDING_MODEL || 'embeddinggemma',
   ollamaTimeoutMs: Number(process.env.OLLAMA_TIMEOUT_MS || 120000),
+  embeddingProvider: (process.env.EMBEDDING_PROVIDER || 'ollama').toLowerCase(),
+  chromaEmbeddingUrl: (process.env.CHROMA_EMBEDDING_URL || 'https://embed.trychroma.com/embed').replace(/\/$/, ''),
+  chromaEmbeddingModel: process.env.CHROMA_EMBEDDING_MODEL || 'Qwen/Qwen3-Embedding-0.6B',
+  chromaEmbeddingTimeoutMs: Number(process.env.CHROMA_EMBEDDING_TIMEOUT_MS || 120000),
+  embeddingModel: (process.env.EMBEDDING_PROVIDER || 'ollama').toLowerCase() === 'chroma-cloud'
+    ? (process.env.CHROMA_EMBEDDING_MODEL || 'Qwen/Qwen3-Embedding-0.6B')
+    : (process.env.OLLAMA_EMBEDDING_MODEL || 'embeddinggemma'),
   chromaBaseUrl: (process.env.CHROMA_BASE_URL || 'http://localhost:8000').replace(/\/$/, ''),
   chromaApiKey: process.env.CHROMA_API_KEY || '',
   chromaTenant: process.env.CHROMA_TENANT || 'default_tenant',

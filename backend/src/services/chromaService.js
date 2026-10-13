@@ -34,11 +34,18 @@ export async function getOrCreatePolicyCollection(signal) {
   const payload = await chromaRequest('/collections', {
     name: RAG_CONFIG.chromaCollection,
     get_or_create: true,
-    metadata: { purpose: 'approved-loan-policy-knowledge', embedding_model: RAG_CONFIG.ollamaEmbeddingModel },
+    metadata: {
+      purpose: 'approved-loan-policy-knowledge',
+      embedding_provider: RAG_CONFIG.embeddingProvider,
+      embedding_model: RAG_CONFIG.embeddingModel,
+    },
   }, 'POST', signal);
   if (!payload.id) throw new Error('Chroma did not return a collection ID.');
-  if (payload.metadata?.embedding_model && payload.metadata.embedding_model !== RAG_CONFIG.ollamaEmbeddingModel) {
-    throw new Error('This Chroma collection uses a different embedding model. Set a new CHROMA_COLLECTION name and ingest the policies again.');
+  if (
+    (payload.metadata?.embedding_model && payload.metadata.embedding_model !== RAG_CONFIG.embeddingModel) ||
+    (payload.metadata?.embedding_provider && payload.metadata.embedding_provider !== RAG_CONFIG.embeddingProvider)
+  ) {
+    throw new Error('This Chroma collection uses a different embedding setup. Set a new CHROMA_COLLECTION name and ingest the policies again.');
   }
   return payload.id;
 }

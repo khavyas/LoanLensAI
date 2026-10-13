@@ -1,6 +1,6 @@
 import { RAG_CONFIG } from '../config/rag.js';
 
-// NEW: Small native-fetch client for Ollama's current /api/embed and /api/chat APIs.
+// Small native-fetch client for Ollama's /api/chat API.
 async function postJson(url, body, timeoutMs, label, externalSignal) {
   let response;
   try {
@@ -28,39 +28,6 @@ async function postJson(url, body, timeoutMs, label, externalSignal) {
     throw new Error(`${label} failed: ${message}`);
   }
   return payload;
-}
-
-export async function embedTexts(texts, signal) {
-  if (!Array.isArray(texts) || texts.some((text) => typeof text !== 'string' || !text.trim())) {
-    throw new TypeError('Ollama embedding input must be a non-empty array of text strings.');
-  }
-
-  const vectors = [];
-  const batchSize = Math.max(1, RAG_CONFIG.embeddingBatchSize);
-  for (let offset = 0; offset < texts.length; offset += batchSize) {
-    const batch = texts.slice(offset, offset + batchSize);
-    const result = await postJson(
-      `${RAG_CONFIG.ollamaBaseUrl}/api/embed`,
-      { model: RAG_CONFIG.ollamaEmbeddingModel, input: batch, truncate: false },
-      RAG_CONFIG.ollamaTimeoutMs,
-      'Ollama embeddings',
-      signal
-    );
-    if (!Array.isArray(result.embeddings) || result.embeddings.length !== batch.length) {
-      throw new Error('Ollama returned an invalid number of embedding vectors.');
-    }
-    for (const vector of result.embeddings) {
-      if (!Array.isArray(vector) || vector.length === 0 || vector.some((value) => !Number.isFinite(value))) {
-        throw new Error('Ollama returned an invalid embedding vector.');
-      }
-      vectors.push(vector);
-    }
-  }
-  const dimensions = vectors[0]?.length;
-  if (vectors.some((vector) => vector.length !== dimensions)) {
-    throw new Error('Ollama returned embedding vectors with inconsistent dimensions.');
-  }
-  return vectors;
 }
 
 export async function generateChatJson(messages, signal) {
