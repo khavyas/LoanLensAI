@@ -1,14 +1,13 @@
 import { useCallback, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
 import { colors, labelize, STATUS_TONE } from '../theme';
 import { Pill, Overline } from '../components/ui';
 import DocumentsTab from './tabs/DocumentsTab';
 import VerificationTab from './tabs/VerificationTab';
-import AssistantTab from './tabs/AssistantTab';
 
-const TABS = ['Documents', 'Verification', 'Assistant'];
+const TABS = ['Documents', 'Verification'];
 
 export default function ApplicationDetailScreen({ route }) {
   const { id } = route.params;
@@ -90,19 +89,8 @@ export default function ApplicationDetailScreen({ route }) {
         <View style={{ flex: 1 }}>
           {tab === 'Documents' && <DocumentsTab app={app} onChanged={load} />}
           {tab === 'Verification' && <VerificationTab app={app} />}
-          {tab === 'Assistant' && <AssistantTab app={app} />}
         </View>
       </View>
-
-      {tab !== 'Assistant' && (
-        <TouchableOpacity
-          style={styles.assistantFab}
-          onPress={() => setTab('Assistant')}
-          accessibilityLabel="Open the LoanLens assistant"
-        >
-          <Text style={styles.assistantFabIcon}>💬</Text>
-        </TouchableOpacity>
-      )}
     </View>
   );
 }
@@ -110,8 +98,7 @@ export default function ApplicationDetailScreen({ route }) {
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: colors.bg },
   // Widened from 760 — on a real desktop monitor a single 760px column left
-  // huge dead space left/right. Individual tabs that read better narrow
-  // (the Assistant chat) cap their own width instead of inheriting this.
+  // huge dead space left/right.
   inner: { flex: 1, width: '100%', maxWidth: 1200, alignSelf: 'center' },
   loading: { margin: 24, color: colors.muted },
   header: {
@@ -137,21 +124,4 @@ const styles = StyleSheet.create({
   tabBtnActive: { borderColor: colors.accent },
   tabText: { color: colors.muted, fontWeight: '600', fontSize: 14 },
   tabTextActive: { color: colors.accent },
-  assistantFab: {
-    position: 'absolute',
-    right: 24,
-    bottom: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#101828',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  assistantFabIcon: { fontSize: 24 },
 });

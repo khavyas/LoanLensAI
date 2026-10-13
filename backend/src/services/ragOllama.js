@@ -11,10 +11,13 @@ import { buildRagMessages, parseGroundedAnswer } from './ragPromptBuilder.js';
 // deterministic from authorized database state; only general loan questions
 // invoke retrieval and the language model.
 
-function statusAnswer(application, documents) {
+function statusAnswer(application, documents, role = 'borrower') {
   const status = String(application.status || "unknown").replace(/[-_]/g, " ");
   const missing = missingDocuments(application, documents);
-  let answer = "The status recorded for your application is " + status + ".";
+  const subject = role === 'officer'
+    ? `${application.applicantName}'s application`
+    : 'your application';
+  let answer = `The status recorded for ${subject} is ${status}.`;
   if (missing.length) {
     answer += " Our records show these required documents are still missing: " +
       missing.map((type) => type.replace(/[-_]/g, " ")).join(", ") + ".";
@@ -188,7 +191,7 @@ export async function answerQuestionWithOllama({ question, application, role, hi
 
   const needsStatus = route.kind === 'status' || route.kind === 'mixed';
   const needsPolicy = route.kind === 'general' || route.kind === 'mixed';
-  if (route.kind === "status") return statusAnswer(application, documents);
+  if (route.kind === "status") return statusAnswer(application, documents, role);
   let evidence = [];
   if (needsPolicy) {
     const [queryEmbedding] = await embedTexts([route.effectiveQuestion], signal);
@@ -204,7 +207,7 @@ export async function answerQuestionWithOllama({ question, application, role, hi
     });
     const unavailable = 'I could not find relevant information in the approved loan policies. Please contact your loan officer for help.';
     if (needsStatus) {
-      const status = statusAnswer(application, documents);
+      const status = statusAnswer(application, documents, role);
       return { answer: status.answer + '\n\n' + unavailable, sources: status.sources };
     }
     return { answer: unavailable, sources: [] };
@@ -250,10 +253,10 @@ export async function answerQuestionWithOllama({ question, application, role, hi
     }
     if (needsPolicy && evidence.length > 0 && answer.sources.length === 0 && needsStatus) {
       // Status remains authoritative; policy explanation is omitted if the model cites invalid source IDs.
-      return statusAnswer(application, documents);
+      return statusAnswer(application, documents, role);
     }
     if (needsStatus) {
-      const status = statusAnswer(application, documents);
+      const status = statusAnswer(application, documents, role);
       return {
         answer: status.answer + "\n\n" + answer.answer,
         sources: [...status.sources, ...answer.sources],

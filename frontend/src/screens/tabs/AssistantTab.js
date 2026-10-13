@@ -49,24 +49,20 @@ export default function AssistantTab({ app }) {
   }
 
   return (
-    // Capped independently of the shared page width (ApplicationDetailScreen
-    // widened to 1200 for the Documents/Verification tabs) — long chat
-    // bubbles stretched across a very wide screen are harder to read, not
-    // better, so this tab deliberately stays narrower.
+    // The persistent chat panel owns the width; let the conversation fill its
+    // available space so the composer and messages do not collapse on web.
     <KeyboardAvoidingView
-      style={{ flex: 1, width: '100%', maxWidth: 800, alignSelf: 'center' }}
+      style={{ flex: 1, minHeight: 0, width: '100%', alignSelf: 'stretch' }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView ref={scrollRef} contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
+      <ScrollView
+        ref={scrollRef}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1, padding: 14, paddingBottom: 18 }}
+        keyboardShouldPersistTaps="handled"
+      >
         {messages.length === 0 && (
           <View>
-            <View style={styles.introCard}>
-              <Text style={styles.introTitle}>LoanLens Assistant</Text>
-              <Text style={styles.intro}>
-                Every answer is grounded in First Community Bank policy documents and this loan file,
-                with sources cited. A loan officer always makes the final decision.
-              </Text>
-            </View>
             <Text style={styles.suggestLabel}>Try asking</Text>
             {SUGGESTIONS[user.role].map((s) => (
               <TouchableOpacity key={s} style={styles.suggestion} onPress={() => send(s)}>
@@ -106,6 +102,7 @@ export default function AssistantTab({ app }) {
           value={input}
           onChangeText={setInput}
           onSubmitEditing={() => send()}
+          returnKeyType="send"
         />
         <TouchableOpacity style={styles.sendBtn} onPress={() => send()} disabled={busy}>
           <Text style={styles.sendText}>Send</Text>
@@ -116,16 +113,6 @@ export default function AssistantTab({ app }) {
 }
 
 const styles = StyleSheet.create({
-  introCard: {
-    backgroundColor: colors.infoBg,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#D1E4FF',
-  },
-  introTitle: { fontWeight: '800', color: colors.info, marginBottom: 4, fontSize: 15 },
-  intro: { color: colors.info, fontSize: 13, lineHeight: 19 },
   suggestLabel: {
     fontSize: 11,
     fontWeight: '700',
@@ -167,6 +154,7 @@ const styles = StyleSheet.create({
   typing: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   typingText: { color: colors.muted, fontSize: 13 },
   inputRow: {
+    flexShrink: 0,
     flexDirection: 'row',
     padding: 12,
     backgroundColor: colors.card,

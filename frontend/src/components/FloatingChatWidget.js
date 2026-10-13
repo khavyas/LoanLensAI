@@ -1,0 +1,126 @@
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import { api } from '../api/client';
+import AssistantTab from '../screens/tabs/AssistantTab';
+import { colors, shadow } from '../theme';
+
+export default function FloatingChatWidget({ user, activeApplicationId }) {
+  const { width, height } = useWindowDimensions();
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [applications, setApplications] = useState([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!open || !user) return undefined;
+    let active = true;
+    setLoading(true);
+    setError('');
+    api.applications()
+      .then((items) => { if (active) setApplications(items); })
+      .catch((err) => { if (active) setError(err.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [open, user?.email]);
+
+  if (!user) return null;
+
+  const app = applications.find((item) => item._id === activeApplicationId) || applications[0];
+  const panelStyle = {
+    width: Math.min(420, Math.max(280, width - 32)),
+    height: Math.min(620, Math.max(360, height - 96)),
+  };
+
+  return (
+    <View pointerEvents="box-none" style={styles.anchor}>
+      {open ? (
+        <View style={[styles.panel, panelStyle]}>
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.title}>LoanLens Assistant</Text>
+              <Text style={styles.subtitle}>Questions about loans, policies, and your application</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setOpen(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Close chat"
+            >
+              <Text style={styles.closeText}>×</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.body}>
+            {loading ? (
+              <ActivityIndicator style={styles.loading} color={colors.accent} />
+            ) : error ? (
+              <Text style={styles.message}>{error}</Text>
+            ) : app ? (
+              <AssistantTab app={app} />
+            ) : (
+              <Text style={styles.message}>A loan application is needed before I can answer application questions.</Text>
+            )}
+          </View>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={styles.launcher}
+          onPress={() => setOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Open LoanLens chat"
+        >
+          <Text style={styles.launcherIcon}>💬</Text>
+          <Text style={styles.launcherText}>Ask LoanLens</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  anchor: { position: 'absolute', right: 20, bottom: 20, zIndex: 1000, elevation: 30 },
+  launcher: {
+    minHeight: 54,
+    borderRadius: 28,
+    paddingHorizontal: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.accent,
+    ...shadow,
+  },
+  launcherIcon: { fontSize: 20 },
+  launcherText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  panel: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+    ...shadow,
+  },
+  header: {
+    minHeight: 66,
+    paddingLeft: 16,
+    paddingRight: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+  },
+  title: { color: colors.text, fontSize: 16, fontWeight: '800' },
+  subtitle: { color: colors.muted, fontSize: 11, marginTop: 3 },
+  closeButton: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 19 },
+  closeText: { color: colors.muted, fontSize: 28, lineHeight: 30 },
+  body: { flex: 1, minHeight: 0, backgroundColor: colors.bg },
+  loading: { marginTop: 36 },
+  message: { color: colors.muted, padding: 20, fontSize: 14, lineHeight: 21 },
+});

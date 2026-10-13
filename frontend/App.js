@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -9,6 +10,7 @@ import ApplicationsScreen from './src/screens/ApplicationsScreen';
 import ApplicationDetailScreen from './src/screens/ApplicationDetailScreen';
 import NewApplicationScreen from './src/screens/NewApplicationScreen';
 import RagAdminScreen from './src/screens/RagAdminScreen';
+import FloatingChatWidget from './src/components/FloatingChatWidget';
 import BrandHeader from './src/components/BrandHeader';
 import Sidebar from './src/components/Sidebar';
 import { navigationRef } from './src/navigationRef';
@@ -65,13 +67,28 @@ function Routes() {
 function Shell() {
   const { width } = useWindowDimensions();
   const { user } = useAuth();
+  const [activeApplicationId, setActiveApplicationId] = useState(null);
   const showSidebar = !!user && width >= SIDEBAR_BREAKPOINT;
+
+  useEffect(() => {
+    const syncRoute = () => {
+      const route = navigationRef.getCurrentRoute();
+      setActiveApplicationId(route?.name === 'ApplicationDetail' ? route.params?.id : null);
+    };
+    syncRoute();
+    const unsubscribe = navigationRef.addListener('state', syncRoute);
+    return unsubscribe;
+  }, []);
+
   return (
     <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.bg }}>
       {showSidebar && <Sidebar />}
       <View style={{ flex: 1 }}>
         <Routes />
       </View>
+      {user && user.role !== 'admin' && (
+        <FloatingChatWidget user={user} activeApplicationId={activeApplicationId} />
+      )}
     </View>
   );
 }
