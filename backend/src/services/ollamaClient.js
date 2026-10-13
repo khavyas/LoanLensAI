@@ -30,14 +30,13 @@ async function postJson(url, body, timeoutMs, label, externalSignal) {
   return payload;
 }
 
-export async function generateChatJson(messages, signal) {
+export async function generateChatText(messages, signal) {
   const result = await postJson(
     `${RAG_CONFIG.ollamaBaseUrl}/api/chat`,
     {
       model: RAG_CONFIG.ollamaChatModel,
       messages,
       stream: false,
-      format: 'json',
       options: { temperature: 0, num_predict: 768 },
     },
     RAG_CONFIG.ollamaTimeoutMs,

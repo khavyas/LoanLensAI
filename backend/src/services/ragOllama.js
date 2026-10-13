@@ -2,7 +2,7 @@ import Document from '../models/Document.js';
 import { RAG_CONFIG } from '../config/rag.js';
 import { missingDocuments, withCrossDocumentChecks } from './verification.js';
 import { embedTexts } from './embeddingClient.js';
-import { generateChatJson } from './ollamaClient.js';
+import { generateChatText } from './ollamaClient.js';
 import { getOrCreatePolicyCollection, queryPolicyRecords } from './chromaService.js';
 import { classifyLoanQuestion } from './loanQuestionRouter.js';
 import { buildRagMessages, parseGroundedAnswer } from './ragPromptBuilder.js';
@@ -83,6 +83,11 @@ export async function answerQuestionWithOllama({ question, application, role, hi
     evidence = selectEvidence(result);
   }
   if (needsPolicy && evidence.length === 0) {
+    console.warn('[ragOllama] retrieval returned no usable policy evidence', {
+      collection: RAG_CONFIG.chromaCollection,
+      embeddingProvider: RAG_CONFIG.embeddingProvider,
+      embeddingModel: RAG_CONFIG.embeddingModel,
+    });
     const unavailable = 'I could not find relevant information in the approved loan policies. Please contact your loan officer for help.';
     if (needsStatus) {
       const status = statusAnswer(application, documents);
@@ -105,17 +110,29 @@ export async function answerQuestionWithOllama({ question, application, role, hi
   });
 
   try {
-    let raw = await generateChatJson(messages, signal);
+    let raw = await generateChatText(messages, signal);
     let answer = parseGroundedAnswer(raw, evidence, { citationsRequired: needsPolicy && evidence.length > 0 });
     if (needsPolicy && evidence.length > 0 && answer.sources.length === 0) {
-      // Small local models sometimes omit otherwise valid P1/P2 evidence labels.
-      // Give one constrained correction attempt, then keep the safe fallback.
-      raw = await generateChatJson([
+      console.warn('[ragOllama] answer validation failed; requesting one citation correction', {
+        reason: answer.validationError,
+        evidenceCount: evidence.length,
+        model: RAG_CONFIG.ollamaChatModel,
+      });
+      // Ask for plain text plus exact evidence labels. Ollama Cloud currently
+      // does not support structured outputs, so JSON mode is not reliable there.
+      raw = await generateChatText([
         ...messages,
         { role: 'assistant', content: raw },
-        { role: 'user', content: 'Correct the citations. Return the same grounded answer as JSON, citing one or more exact evidence labels such as P1 or P2 from the supplied evidence. Do not invent labels.' },
+        { role: 'user', content: 'Keep the same evidence-grounded answer, but return plain text and add one or more exact evidence labels in square brackets, such as [P1] or [P2]. Use only labels from the supplied evidence. Do not return JSON.' },
       ], signal);
       answer = parseGroundedAnswer(raw, evidence, { citationsRequired: true });
+    }
+    if (needsPolicy && evidence.length > 0 && answer.validationError) {
+      console.warn('[ragOllama] answer rejected after citation correction', {
+        reason: answer.validationError,
+        evidenceCount: evidence.length,
+        model: RAG_CONFIG.ollamaChatModel,
+      });
     }
     if (needsPolicy && evidence.length > 0 && answer.sources.length === 0 && needsStatus) {
       // Status remains authoritative; policy explanation is omitted if the model cites invalid source IDs.
@@ -128,7 +145,8 @@ export async function answerQuestionWithOllama({ question, application, role, hi
         sources: [...status.sources, ...answer.sources],
       };
     }
-    return answer;
+    const { validationError: _validationError, ...verifiedAnswer } = answer;
+    return verifiedAnswer;
   } catch (error) {
     console.error('[ragOllama] request failed:', error.message);
     throw new Error('The loan assistant is temporarily unavailable. Check the configured Ollama endpoint, API key, model access, and Chroma Cloud settings.');

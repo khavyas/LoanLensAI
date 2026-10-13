@@ -148,8 +148,8 @@ For a policy or mixed question:
 1. Ollama's embedding model turns the question into a numeric vector. A vector represents meaning numerically, allowing related wording to match even when it does not use identical words.
 2. The backend queries the loanlens-policies Chroma collection with that question vector. Chroma compares it with stored chunk vectors using the collection distance metric and returns up to 15 candidates (three times the configured top-five).
 3. The backend rejects candidates whose distance exceeds RAG_MAX_DISTANCE, removes duplicate text, and keeps at most five chunks. A lower distance means closer according to the metric. The cutoff is a tuning value, not a confidence score or guarantee of correctness.
-4. The backend builds a prompt containing the question, selected policy text, and temporary labels P1, P2, etc. It tells the model to answer only from the evidence and return JSON with citations.
-5. Ollama's chat model writes the answer. The backend accepts citations only if they map to chunks retrieved for that question. If the model omits valid citations, the backend makes one correction attempt. If citation validation still fails, it returns an insufficient-evidence response.
+4. The backend builds a prompt containing the question, selected policy text, and temporary labels P1, P2, etc. It asks the model for plain text with exact inline citations such as [P1]. Ollama Cloud currently does not support structured outputs, so the chat request does not depend on JSON mode.
+5. Ollama's chat model writes the answer. The backend accepts citations only if they map to chunks retrieved for that question. If the model omits valid citations, the backend makes one correction attempt. If citation validation still fails, it returns an insufficient-evidence response and logs the validation reason without logging the question or policy text.
 6. The API returns the answer and source titles/sections. The Assistant screen displays the answer and source chips.
 
 For mixed questions, the status text comes from MongoDB and the policy explanation comes from Chroma plus Ollama. If policy cannot be grounded, the database status remains authoritative and the unsupported policy claim is omitted.
@@ -178,7 +178,7 @@ For **“What is my application status?”**:
 | --- | --- |
 | Supported-topics message for a loan question | The wording may not match a router rule. Inspect backend/src/services/loanQuestionRouter.js and confirm the backend restarted after changes. |
 | “Could not find relevant information” | Confirm the document is listed in the admin console, has readable text/chunks, and is in the configured Chroma tenant/database/collection. Review RAG_MAX_DISTANCE and try another wording. |
-| “Could not verify a relevant policy source” | Retrieval found evidence but the model returned no usable citation. Check OLLAMA_CHAT_MODEL; small models may omit required JSON citations. The answer is blocked until validation succeeds. |
+| “Could not verify a relevant policy source” | Retrieval found evidence but the model returned no usable citation. Check backend runtime logs for `[ragOllama] answer validation failed` and `[ragOllama] answer rejected after citation correction`. |
 | Ollama connection error | Ensure Ollama is running, both configured models are installed, and OLLAMA_BASE_URL is reachable from the backend host. |
 | Chroma connection/authentication error | Check CHROMA_BASE_URL, tenant/database/collection, and the rotated CHROMA_API_KEY in the backend environment. |
 | Admin console returns 401 | Sign in again; the JWT expires after 12 hours. |
