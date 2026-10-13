@@ -22,6 +22,118 @@ function statusAnswer(application, documents) {
   return { answer, sources: [{ doc: "Application status" }] };
 }
 
+const PRODUCT_LABELS = {
+  'auto-loan': 'auto loan',
+  'personal-loan': 'personal loan',
+  'small-business-loan': 'small business loan',
+};
+const DOCUMENT_LABELS = {
+  'pay-stub': 'Pay stub',
+  w2: 'W-2',
+  'bank-statement': 'Bank statement',
+  'drivers-license': "Driver's license",
+  'business-tax-return': 'Business tax return',
+  'personal-financial-statement': 'Personal financial statement',
+  'business-license': 'Business license',
+  'ownership-disclosure': 'Ownership disclosure',
+  unknown: 'Unclassified document',
+};
+
+function mentionedProduct(question) {
+  const text = question.toLowerCase();
+  if (/\b(?:personal[- ]loan)\b/.test(text)) return 'personal-loan';
+  if (/\b(?:auto[- ]loan|car[- ]loan|vehicle[- ]loan)\b/.test(text)) return 'auto-loan';
+  if (/\b(?:small[- ]business[- ]loan|business[- ]loan)\b/.test(text)) return 'small-business-loan';
+  return null;
+}
+
+function applicationQuestionAnswer(question, application, documents) {
+  const text = question.toLowerCase().replace(/[\u2019']/g, ' ');
+  const currentDocuments = (documents || []).filter((doc) => (doc.status || 'current') === 'current');
+  const product = application.productType;
+  const productLabel = PRODUCT_LABELS[product] || String(product || 'loan').replace(/-/g, ' ');
+  const requestedProduct = mentionedProduct(text);
+  const mismatch = requestedProduct && requestedProduct !== product;
+  const requestedArticle = requestedProduct === 'auto-loan' ? 'an' : 'a';
+  const mismatchPrefix = mismatch
+    ? `This chat is for your ${productLabel} application, not ${requestedArticle} ${PRODUCT_LABELS[requestedProduct]} application. `
+    : '';
+  const source = (doc = 'Application record') => [{ doc }];
+  const money = (value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+
+  const asksNetPay = /\bnet\s*pay\b|\btake[- ]home pay\b/.test(text)
+    && /\b(?:pay\s*stub|stub|paycheck|monthly)\b/.test(text);
+  if (asksNetPay) {
+    const payStub = currentDocuments
+      .filter((doc) => doc.docType === 'pay-stub')
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))[0];
+    const netPay = payStub?.extractedFields?.netPay;
+    if (netPay == null) {
+      return {
+        answer: mismatchPrefix + (payStub
+          ? 'A current pay stub is on file, but its net-pay amount is not available in the extracted records.'
+          : 'I do not see a current pay stub on this application, so I cannot report a net-pay amount.'),
+        sources: source('Pay stub / application records'),
+      };
+    }
+    const period = payStub.extractedFields?.payPeriod;
+    return {
+      answer: `${mismatchPrefix}The current pay stub shows net pay of ${money(netPay)}${period ? ` for the pay period ${period}` : ' for the listed pay period'}. This is the pay-stub period amount, not necessarily a monthly amount.`,
+      sources: source('Pay stub'),
+    };
+  }
+
+  const asksSubmittedDocuments = /\b(?:submit(?:ted)?|uploaded|provided)\b/.test(text)
+    && /\b(?:documents?|paperwork|bank statement|pay\s*stub|license)\b/.test(text);
+  if (asksSubmittedDocuments) {
+    const specificType = /\bbank statement\b/.test(text) ? 'bank-statement'
+      : /\bpay\s*stub|paycheck\b/.test(text) ? 'pay-stub'
+        : /\b(?:driver'?s? license|license)\b/.test(text) ? 'drivers-license' : null;
+    const found = specificType
+      ? currentDocuments.some((doc) => doc.docType === specificType)
+      : currentDocuments.length > 0;
+    if (specificType) {
+      const label = DOCUMENT_LABELS[specificType];
+      return {
+        answer: mismatchPrefix + (found
+          ? `Yes, a ${label.toLowerCase()} is recorded as submitted for this ${productLabel} application.`
+          : `No, I do not see a ${label.toLowerCase()} recorded as submitted for this ${productLabel} application.`),
+        sources: source('Application documents'),
+      };
+    }
+    const labels = [...new Set(currentDocuments.map((doc) => DOCUMENT_LABELS[doc.docType] || String(doc.docType || 'Document').replace(/-/g, ' ')))];
+    return {
+      answer: mismatchPrefix + (labels.length
+        ? `The documents currently recorded for this ${productLabel} application are: ${labels.join(', ')}.`
+        : `I do not see any current documents submitted for this ${productLabel} application.`),
+      sources: source('Application documents'),
+    };
+  }
+
+  const asksAmount = /\b(?:how much|what(?:'s| is))\b/.test(text)
+    && /\b(?:loan\s+)?amount\b/.test(text)
+    && /\b(?:claimed|requested|applied|account|loan|borrow)\b/.test(text);
+  if (asksAmount) {
+    return {
+      answer: mismatchPrefix + (application.requestedAmount != null
+        ? `The requested amount on this ${productLabel} application is ${money(application.requestedAmount)}.`
+        : `I do not see a requested amount recorded for this ${productLabel} application.`),
+      sources: source(),
+    };
+  }
+
+  const asksAppliedProduct = /\b(?:did i apply|have i applied|what (?:is|was) (?:the )?(?:loan )?(?:type|product)|which (?:loan|product))\b/.test(text)
+    && /\b(?:apply|applied|application|loan|product)\b/.test(text);
+  if (asksAppliedProduct) {
+    const answer = mismatch
+      ? `${mismatchPrefix}The application open here is for a ${productLabel}. I can only confirm the application currently selected in this chat.`
+      : `Yes. The application open here is for a ${productLabel}.`;
+    return { answer, sources: source() };
+  }
+
+  return null;
+}
+
 function flattenResults(result) {
   const ids = result.ids?.[0] || [];
   const documents = result.documents?.[0] || [];
@@ -63,6 +175,10 @@ export async function answerQuestionWithOllama({ question, application, role, hi
       .map((turn) => ({ role: 'user', content: turn.content.slice(0, 1000) })).slice(-4)
     : [];
   const route = classifyLoanQuestion(safeQuestion, priorUserQuestions);
+  const rawDocuments = existingDocuments || await Document.find({ applicationId: application._id }).select('-fileData -storageKey').lean();
+  const documents = existingDocuments ? rawDocuments : withCrossDocumentChecks(application, rawDocuments);
+  const recordAnswer = applicationQuestionAnswer(safeQuestion, application, documents);
+  if (recordAnswer) return recordAnswer;
   if (route.kind === 'clarification') {
     return { answer: 'Could you clarify what you would like to know about your loan or application?', sources: [] };
   }
@@ -70,8 +186,6 @@ export async function answerQuestionWithOllama({ question, application, role, hi
     return { answer: 'I can help with loan products, application steps, required documents, eligibility, repayment, and your current application status.', sources: [] };
   }
 
-  const rawDocuments = existingDocuments || await Document.find({ applicationId: application._id }).select('-fileData -storageKey').lean();
-  const documents = existingDocuments ? rawDocuments : withCrossDocumentChecks(application, rawDocuments);
   const needsStatus = route.kind === 'status' || route.kind === 'mixed';
   const needsPolicy = route.kind === 'general' || route.kind === 'mixed';
   if (route.kind === "status") return statusAnswer(application, documents);
