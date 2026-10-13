@@ -1,10 +1,12 @@
 ﻿# LoanLens RAG: End-to-End Guide
 
-This guide explains where policy documents are uploaded, how an administrator is authenticated, where credentials and data are stored, and how chatbot questions are retrieved and answered.
+This guide documents the complete chatbot flow: the UI, backend routing, role checks, MongoDB lookups, policy retrieval, AI models, deployment configuration, and troubleshooting.
 
 ## 1. Current RAG setup
 
-The active local configuration in backend/.env uses:
+The local and Render configurations use different model endpoints. These are the intended settings from the local environment and `render.yaml`; Render dashboard overrides may change the deployed values.
+
+### Local development (`backend/.env`)
 
 | Setting | Current value or purpose |
 | --- | --- |
@@ -14,12 +16,27 @@ The active local configuration in backend/.env uses:
 | Chat model | qwen2.5:7b |
 | Embedding model | nomic-embed-text:latest |
 | Chroma URL | https://api.trychroma.com |
-| Chroma database | LoanLensRAG |
+| Chroma database | Read from the configured `CHROMA_DATABASE` environment value |
 | Chroma collection | loanlens-policies |
+| Embedding provider | Ollama (`EMBEDDING_PROVIDER=ollama`) |
 | Retrieval limit | 5 final policy chunks |
 | Initial distance cutoff | 1.0 L2 distance; not a confidence percentage |
 
-The tenant and Chroma API key are read from backend/.env. The key is intentionally not written in this guide. The repository sample policy set was indexed into this collection as seven files and 47 chunks.
+The tenant and Chroma API key are read from `backend/.env`; secrets are intentionally omitted. The repository sample policy set was indexed into this collection as seven files and 47 chunks.
+
+### Render deployment (`render.yaml` defaults)
+
+| Setting | Intended value or purpose |
+| --- | --- |
+| Chat provider | `ollama` |
+| Ollama URL | `https://ollama.com` (cloud endpoint) |
+| Chat model | `gemma4:31b` |
+| Embedding provider | `chroma-cloud` |
+| Chroma embedding URL | `https://embed.trychroma.com/embed` |
+| Chroma embedding model | `Qwen/Qwen3-Embedding-0.6B` |
+| Chroma collection | `loan-knowledge-qwen` |
+
+Render dashboard environment values can override repository defaults. Check the deployed backend service's Environment page and Logs to confirm the live settings; `render.yaml` alone does not prove what is running.
 
 The Ollama + Chroma path is active only when MOCK_AI=false and CHAT_PROVIDER=ollama. The frontend sends requests to the backend URL configured by EXPO_PUBLIC_API_URL; locally it defaults to http://localhost:4000.
 
@@ -42,7 +59,7 @@ The relevant implementation is frontend/src/screens/LoginScreen.js, frontend/src
 
 ### Borrower and loan officer
 
-Borrowers and officers use the regular login option. They open an application and use its Assistant tab to ask policy or application questions. A borrower can chat only about their own application. Officers can chat about applications they are authorized to review.
+Borrowers and officers use the regular login option. The common floating chat widget is available across the signed-in app while navigating tabs. Borrowers can ask about their own application only. Officers can ask about any application by naming the applicant, provided the name resolves unambiguously in MongoDB. The backend enforces these rules; hiding a control in the frontend is not the security boundary.
 
 Admins see the policy console instead of borrower/officer application screens. The backend checks the admin role too; hiding a screen in the frontend is not the security boundary.
 
@@ -56,8 +73,9 @@ Admins see the policy console instead of borrower/officer application screens. T
 | Login session | A signed JWT is returned after login. Its signing secret is backend-only JWT_SECRET. The app/browser session is stored in AsyncStorage as loanlens.session. The token expires after 12 hours. |
 | Mongo connection credential | backend/.env under MONGODB_URI; this connects to application/account data |
 | Chroma Cloud credential | backend/.env under CHROMA_API_KEY; the backend sends it as x-chroma-token. Never put it in frontend code, EXPO_PUBLIC variables, or committed files. |
-| Chroma target | backend/.env settings CHROMA_BASE_URL, CHROMA_TENANT, CHROMA_DATABASE, and CHROMA_COLLECTION. Current database and collection are LoanLensRAG and loanlens-policies. |
-| Ollama settings | backend/.env settings OLLAMA_BASE_URL, OLLAMA_CHAT_MODEL, OLLAMA_EMBEDDING_MODEL, and optional OLLAMA_API_KEY |
+| Chroma target | Backend settings `CHROMA_BASE_URL`, `CHROMA_TENANT`, `CHROMA_DATABASE`, and `CHROMA_COLLECTION` identify the remote Chroma instance and collection. Local and Render use different collection names. |
+| Chat model settings | Backend settings `CHAT_PROVIDER`, `OLLAMA_BASE_URL`, `OLLAMA_CHAT_MODEL`, and optional `OLLAMA_API_KEY`. The chat model generates policy answers; it does not create application facts. |
+| Embedding settings | `EMBEDDING_PROVIDER` selects the embedding service. Local defaults to Ollama; Render is configured for Chroma Cloud embeddings. Embeddings represent policy text and questions as vectors; they do not write answers. |
 | Borrower uploaded files | Stored through the application document flow, normally MongoDB unless STORAGE_PROVIDER selects R2. These files are separate from the RAG policy collection. |
 | Admin-uploaded policy file | File bytes stay in backend memory while processing. Extracted text, chunks, vectors, and source metadata are written to Chroma. The original PDF/text file is not retained by this admin upload flow. |
 
@@ -84,7 +102,7 @@ The ingestion service then:
 1. Normalizes text and splits it around Markdown headings and paragraphs.
 2. Builds chunks around 1,200 characters. Very long paragraphs are split with a 120-character overlap so a boundary does not discard all context.
 3. Gives each chunk a stable ID and metadata: document ID, filename, title, section, category, chunk index, content hash, and modified time. Borrower/application data is not added.
-4. Sends chunk text to the configured Ollama embedding model in batches of up to 32.
+4. Sends chunk text to the configured embedding provider in batches of up to 32. Locally this is Ollama; Render is configured for Chroma Cloud embeddings.
 5. Sends chunk text, metadata, IDs, and vectors to Chroma using its HTTP API.
 6. Removes old chunk IDs for the same document when a re-upload results in a different chunk set.
 
@@ -114,7 +132,7 @@ This reads Markdown files in data/policies and uses the same chunking, embedding
 
 ## 5. What happens when someone asks the chatbot a question
 
-The Assistant tab sends the application ID, question, and up to four previous user questions to POST /chat/:applicationId. The backend requires a valid login and checks that the borrower owns the application, or that the user is an officer.
+The signed-in app's floating chat widget sends the question, current application context when available, and recent user turns to `POST /chat/:applicationId`. The backend requires a valid JWT, then checks borrower ownership or officer role before accessing application records. Officers can identify a target applicant in their question. A missing name match must not silently fall back to a different open application. Borrowers asking about another person receive a privacy response.
 
 The chat service first loads application and document state from MongoDB. Then:
 
@@ -126,18 +144,19 @@ The active local configuration is CHAT_PROVIDER=ollama and MOCK_AI=false.
 
 ### A. Route the question
 
-Deterministic rules classify the question before a model is called:
+Deterministic rules classify the question before a model is called. Officer-provided applicant names are also resolved against MongoDB. The active path distinguishes:
 
 - Status question: asks only about the applicant's current status or missing documents.
 - Policy question: asks a general loan/policy question, such as required personal-loan documents or income verification.
 - Mixed question: asks for both application status and policy information.
+- Applicant-specific structured question (loan amount, product, or submitted documents): read from MongoDB.
 - Unsupported or ambiguous question: returns a supported-topics message or a clarification.
 
-The router, not the language model, decides whether applicant database status is needed. Only user turns from recent history are used for follow-up interpretation; the chat route does not save a transcript.
+The router and backend rules, not the language model, decide which source is needed. Recent user turns may be used for follow-up interpretation; the chat route does not save a transcript.
 
 ### B. Status-only questions use MongoDB
 
-For a status-only question, the backend reads the authorized application and its documents from MongoDB. It calculates status and missing document types from current records and returns a deterministic answer. It does not call Ollama or query Chroma.
+For status and other structured application questions, the backend reads the authorized application and its documents from MongoDB. It calculates status and missing document types or formats stored fields such as product and requested amount. It returns a deterministic answer without calling Ollama or querying Chroma.
 
 Applicant-specific facts, such as whether an application is pending, are kept separate from general policy knowledge.
 
@@ -145,12 +164,12 @@ Applicant-specific facts, such as whether an application is pending, are kept se
 
 For a policy or mixed question:
 
-1. Ollama's embedding model turns the question into a numeric vector. A vector represents meaning numerically, allowing related wording to match even when it does not use identical words.
-2. The backend queries the loanlens-policies Chroma collection with that question vector. Chroma compares it with stored chunk vectors using the collection distance metric and returns up to 15 candidates (three times the configured top-five).
+1. The configured embedding provider turns the question into a numeric vector: Ollama locally or Chroma Cloud in the Render defaults. A vector represents meaning numerically, allowing related wording to match even when it does not use identical words. Policy chunks and questions must use compatible embedding models and vector dimensions.
+2. The backend queries the collection named by `CHROMA_COLLECTION` with that question vector. Chroma compares it with stored chunk vectors using the collection distance metric and returns up to 15 candidates (three times the configured top-five).
 3. The backend rejects candidates whose distance exceeds RAG_MAX_DISTANCE, removes duplicate text, and keeps at most five chunks. A lower distance means closer according to the metric. The cutoff is a tuning value, not a confidence score or guarantee of correctness.
-4. The backend builds a prompt containing the question, selected policy text, and temporary labels P1, P2, etc. It asks the model for plain text with exact inline citations such as [P1]. Ollama Cloud currently does not support structured outputs, so the chat request does not depend on JSON mode.
-5. Ollama's chat model writes the answer. The backend accepts citations only if they map to chunks retrieved for that question. If the model omits valid citations, the backend makes one correction attempt. If citation validation still fails, it returns an insufficient-evidence response and logs the validation reason without logging the question or policy text.
-6. The API returns the answer and source titles/sections. The Assistant screen displays the answer and source chips.
+4. The backend builds a prompt containing the question, selected policy text, and temporary labels P1, P2, etc. It asks the configured Ollama chat model for plain text with citations such as [P1]. The chat model generates the answer; it is separate from the embedding model.
+5. The configured Ollama chat model writes the answer. The backend accepts citations only if they map to chunks retrieved for that question. If the model omits valid citations, the backend makes one correction attempt. If citation validation still fails, it returns an insufficient-evidence response and logs the validation reason without logging the question or policy text.
+6. The API returns the answer and source titles/sections. The floating chat widget displays the answer and source chips.
 
 For mixed questions, the status text comes from MongoDB and the policy explanation comes from Chroma plus Ollama. If policy cannot be grounded, the database status remains authoritative and the unsupported policy claim is omitted.
 
@@ -172,6 +191,41 @@ For **“What is my application status?”**:
 - A deterministic status answer is returned.
 - Chroma and Ollama are not needed.
 
+For an officer asking **“How much did Priya Nair request?”**, the backend confirms the officer role, resolves Priya Nair in MongoDB, reads `requestedAmount` from the matching application, and returns that stored value. Chroma and the language model are not needed for this structured fact. A borrower asking about Priya receives a privacy response; mentioning a name does not grant access.
+
+### E. Complete request flow
+
+```mermaid
+flowchart TD
+    A[User asks in floating chat widget] --> B[Frontend sends question with JWT]
+    B --> C[POST /chat/:applicationId]
+    C --> D[Verify JWT and role scope]
+    D --> E{What information is requested?}
+    E -->|Applicant status, amount, product, submitted docs| F[Read authorized application and docs from MongoDB]
+    F --> G[Build deterministic factual answer]
+    E -->|Approved policy or general loan rules| H[Embed question with configured embedding service]
+    H --> I[Search policy vectors in Chroma]
+    I --> J[Filter and select policy passages]
+    J --> K[Ollama chat model drafts answer with citations]
+    K --> L[Validate citations against retrieved passages]
+    G --> M[Return answer and optional sources]
+    L --> M
+    M --> N[Widget displays answer and source chips]
+```
+
+Tools used: React Native/Expo for the frontend, Node.js/Express for the API, JWT for identity, MongoDB Atlas with Mongoose for user/application/document data, Chroma Cloud for policy vectors, and Ollama for policy answer generation. Embeddings use local Ollama or Chroma Cloud according to configuration. Routing, access control, structured fact formatting, and citation validation are application code, not AI models.
+
+### F. What each database stores
+
+| MongoDB collection | Chat responsibility |
+| --- | --- |
+| `users` | Login identity, password hash, and role. |
+| `applications` | Applicant name/email, loan product, requested amount, status, and required document types. Applicant email is a soft link in this design, not a database-enforced foreign key. |
+| `documents` | Borrower uploads and extracted/verification data, associated with an application using `applicationId`. |
+| `policychunks` | Legacy Mongo-backed policy text used by older Anthropic/Groq paths; not the active Ollama + Chroma policy search. |
+
+Chroma stores approved policy text chunks, metadata, and embeddings. Borrower records and borrower uploads should not be placed in this policy collection. Application questions read MongoDB; general policy questions search Chroma.
+
 ## 6. Troubleshooting
 
 | Symptom | Checks |
@@ -187,7 +241,7 @@ For **“What is my application status?”**:
 
 ## 7. Local versus Render deployment
 
-The current local OLLAMA_BASE_URL is http://localhost:11434. This works when the backend and Ollama run on the same computer. In a Render backend container, localhost means the Render container; it does not point to your laptop. General Chroma + Ollama questions will fail from Render unless the backend has a secure, reachable Ollama endpoint, or the app uses another configured chat/embedding provider.
+The local `OLLAMA_BASE_URL` is `http://localhost:11434`, which works when the backend can reach Ollama on the same computer. In a Render container, localhost means that container, not your laptop. The checked-in Render defaults instead use Ollama Cloud for chat and Chroma Cloud for embeddings. Configure `OLLAMA_API_KEY`, `CHROMA_API_KEY`, and the Chroma target settings in the Render backend environment. Confirm effective settings and runtime errors in the Render backend logs. Never commit secrets or include them in this guide.
 
 Chroma Cloud is remote and can be reached from local or Render when the backend has the correct endpoint, tenant, database, collection, and API key. Set the secret in the backend service environment, never in the static frontend. A URL mentioned elsewhere in project docs is not proof that a deployment currently uses Ollama or that its health has been verified.
 
@@ -195,8 +249,9 @@ Chroma Cloud is remote and can be reached from local or Render when the backend 
 
 - frontend/src/screens/LoginScreen.js — separate admin sign-in and demo credential reference
 - frontend/src/screens/RagAdminScreen.js — upload, list, refresh, and remove policy documents
+- frontend/src/components/FloatingChatWidget.js — common signed-in chat UI
 - frontend/src/api/client.js — admin and chat HTTP requests
-- frontend/App.js — routes admins to the RAG console
+- frontend/App.js — app navigation and role-specific routes
 - backend/src/routes/auth.js — login, admin role restriction, and session token
 - backend/src/scripts/createAdmin.js — interactive admin creation
 - backend/src/routes/ragAdmin.js — admin-only upload/list/delete/status endpoints
@@ -210,3 +265,4 @@ Chroma Cloud is remote and can be reached from local or Render when the backend 
 - backend/src/services/ragPromptBuilder.js — prompt format and citation checks
 - backend/src/services/rag.js — selects mock, Anthropic, Groq, or Ollama assistant path
 - backend/src/routes/chat.js — JWT check, application authorization, and chat request handling
+- backend/src/models/User.js, backend/src/models/Application.js, backend/src/models/Document.js, and backend/src/models/PolicyChunk.js — MongoDB schemas

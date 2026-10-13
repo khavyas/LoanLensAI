@@ -11,12 +11,23 @@ import { api } from '../api/client';
 import AssistantTab from '../screens/tabs/AssistantTab';
 import { colors, shadow } from '../theme';
 
-export default function FloatingChatWidget({ user, activeApplicationId }) {
+export default function FloatingChatWidget({ user, activeApplicationId, onOpenChange }) {
   const { width, height } = useWindowDimensions();
   const [open, setOpen] = useState(false);
+  const [minimized, setMinimized] = useState(false);
   const [loading, setLoading] = useState(false);
   const [applications, setApplications] = useState([]);
   const [error, setError] = useState('');
+
+  function toggleOpen(nextOpen) {
+    setOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  }
+
+  function minimizeChat() {
+    setMinimized(true);
+    onOpenChange?.(false);
+  }
 
   useEffect(() => {
     if (!open || !user) return undefined;
@@ -40,16 +51,24 @@ export default function FloatingChatWidget({ user, activeApplicationId }) {
 
   return (
     <View pointerEvents="box-none" style={styles.anchor}>
-      {open ? (
-        <View style={[styles.panel, panelStyle]}>
+      {open && (
+        <View style={[styles.panel, panelStyle, minimized && styles.hiddenPanel]}>
           <View style={styles.header}>
-            <View>
+            <View style={styles.headerTitle}>
               <Text style={styles.title}>LoanLens Assistant</Text>
               <Text style={styles.subtitle}>Questions about loans, policies, and your application</Text>
             </View>
             <TouchableOpacity
+              style={styles.minimizeButton}
+              onPress={minimizeChat}
+              accessibilityRole="button"
+              accessibilityLabel="Minimize chat"
+            >
+              <Text style={styles.minimizeText}>{'\u2212'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={styles.closeButton}
-              onPress={() => setOpen(false)}
+              onPress={() => { setMinimized(false); toggleOpen(false); }}
               accessibilityRole="button"
               accessibilityLabel="Close chat"
             >
@@ -68,10 +87,18 @@ export default function FloatingChatWidget({ user, activeApplicationId }) {
             )}
           </View>
         </View>
-      ) : (
+      )}
+      {(!open || minimized) && (
         <TouchableOpacity
           style={styles.launcher}
-          onPress={() => setOpen(true)}
+          onPress={() => {
+            if (minimized) {
+              setMinimized(false);
+              onOpenChange?.(true);
+            } else {
+              toggleOpen(true);
+            }
+          }}
           accessibilityRole="button"
           accessibilityLabel="Open LoanLens chat"
         >
@@ -105,6 +132,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...shadow,
   },
+  hiddenPanel: { display: 'none' },
   header: {
     minHeight: 66,
     paddingLeft: 16,
@@ -117,8 +145,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
   },
   title: { color: colors.text, fontSize: 16, fontWeight: '800' },
+  headerTitle: { flex: 1, marginRight: 8 },
   subtitle: { color: colors.muted, fontSize: 11, marginTop: 3 },
   closeButton: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 19 },
+  minimizeButton: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 19,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bg,
+  },
+  minimizeText: { color: colors.primary, fontSize: 26, lineHeight: 30, fontWeight: '700' },
   closeText: { color: colors.muted, fontSize: 28, lineHeight: 30 },
   body: { flex: 1, minHeight: 0, backgroundColor: colors.bg },
   loading: { marginTop: 36 },

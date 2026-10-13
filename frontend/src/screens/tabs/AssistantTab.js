@@ -19,6 +19,58 @@ const SUGGESTIONS = {
   officer: ['Why is this application flagged?', 'What is the income tolerance policy?', 'What has been submitted so far?'],
 };
 
+const STATUS_VALUE_PATTERN = /^(?:unknown|submitted|under review|in review|needs review|approved|rejected|declined|failed|pending|denied|cancelled|canceled|funded)$/i;
+
+function getHighlightIntent(question) {
+  return {
+    status: /\b(?:status|approved|approval|rejected|declined|failed|pending|under review|needs review|progress)\b/i.test(question),
+    missingDocuments: /\b(?:missing|still need|documents? do i need|documents? needed|outstanding documents?)\b/i.test(question),
+  };
+}
+
+function renderInlineText(text, baseStyle, highlight) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) => {
+    const emphasized = part.startsWith('**') && part.endsWith('**');
+    const emphasizedValue = emphasized ? part.slice(2, -2).trim() : part;
+    const emphasizeForQuestion = !highlight || (STATUS_VALUE_PATTERN.test(emphasizedValue)
+      ? highlight.status
+      : highlight.missingDocuments);
+    return (
+      <Text key={index} style={[baseStyle, emphasized && emphasizeForQuestion && styles.answerEmphasis]}>
+        {emphasized ? emphasizedValue : part}
+      </Text>
+    );
+  });
+}
+
+function AnswerBody({ text, highlight }) {
+  const markers = [...text.matchAll(/(?:^|\s)(?:\((\d+)\)|(\d+)[.)]|\[(\d+)\])\s*/g)];
+  if (markers.length < 2) {
+    return <Text style={styles.aiText}>{renderInlineText(text, styles.aiText, highlight)}</Text>;
+  }
+
+  const first = markers[0];
+  const intro = text.slice(0, first.index).trim();
+  return (
+    <View>
+      {!!intro && <Text style={[styles.aiText, styles.answerIntro]}>{renderInlineText(intro, styles.aiText, highlight)}</Text>}
+      <View style={styles.answerList}>
+        {markers.map((marker, index) => {
+          const start = marker.index + marker[0].length;
+          const end = markers[index + 1]?.index ?? text.length;
+          const item = text.slice(start, end).trim();
+          return (
+            <View key={`${marker.index}-${index}`} style={styles.answerListItem}>
+              <Text style={styles.answerListNumber}>{marker[1] || marker[2] || marker[3]}.</Text>
+              <Text style={[styles.aiText, styles.answerListText]}>{renderInlineText(item, styles.aiText, highlight)}</Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 export default function AssistantTab({ app }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
@@ -39,7 +91,12 @@ export default function AssistantTab({ app }) {
     setBusy(true);
     try {
       const { answer, sources } = await api.ask(app._id, question, history);
-      setMessages((m) => [...m, { from: 'ai', text: answer, sources }]);
+      setMessages((m) => [...m, {
+        from: 'ai',
+        text: answer,
+        sources,
+        highlight: getHighlightIntent(question),
+      }]);
     } catch (e) {
       setMessages((m) => [...m, { from: 'ai', text: `Sorry — ${e.message}`, sources: [] }]);
     } finally {
@@ -74,7 +131,11 @@ export default function AssistantTab({ app }) {
 
         {messages.map((m, i) => (
           <View key={i} style={[styles.bubble, m.from === 'user' ? styles.userBubble : styles.aiBubble]}>
-            <Text style={m.from === 'user' ? styles.userText : styles.aiText}>{m.text}</Text>
+            {m.from === 'user' ? (
+              <Text style={styles.userText}>{m.text}</Text>
+            ) : (
+              <AnswerBody text={m.text} highlight={m.highlight} />
+            )}
             {m.sources?.length > 0 && (
               <View style={styles.sources}>
                 {m.sources.map((s, j) => (
@@ -143,6 +204,12 @@ const styles = StyleSheet.create({
   },
   userText: { color: '#fff', fontSize: 14, lineHeight: 20 },
   aiText: { color: colors.text, fontSize: 14, lineHeight: 21 },
+  answerEmphasis: { fontWeight: '800', color: colors.primary },
+  answerIntro: { marginBottom: 8 },
+  answerList: { width: '100%', gap: 8 },
+  answerListItem: { width: '100%', flexDirection: 'row', alignItems: 'flex-start', gap: 7 },
+  answerListText: { flex: 1, minWidth: 0 },
+  answerListNumber: { color: colors.primary, fontSize: 14, lineHeight: 21, fontWeight: '800' },
   sources: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
   sourceChip: {
     backgroundColor: colors.neutralBg,

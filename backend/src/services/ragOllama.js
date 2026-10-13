@@ -17,10 +17,10 @@ function statusAnswer(application, documents, role = 'borrower') {
   const subject = role === 'officer'
     ? `${application.applicantName}'s application`
     : 'your application';
-  let answer = `The status recorded for ${subject} is ${status}.`;
+  let answer = `The status recorded for ${subject} is **${status}**.`;
   if (missing.length) {
     answer += " Our records show these required documents are still missing: " +
-      missing.map((type) => type.replace(/[-_]/g, " ")).join(", ") + ".";
+      `**${missing.map((type) => type.replace(/[-_]/g, " ")).join(", ")}**.`;
   }
   return { answer, sources: [{ doc: "Application status" }] };
 }

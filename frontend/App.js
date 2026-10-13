@@ -68,7 +68,11 @@ function Shell() {
   const { width } = useWindowDimensions();
   const { user } = useAuth();
   const [activeApplicationId, setActiveApplicationId] = useState(null);
+  const [chatOpen, setChatOpen] = useState(false);
   const showSidebar = !!user && width >= SIDEBAR_BREAKPOINT;
+  // On wide screens, reserve the chat panel's footprint in the app layout so
+  // it cannot cover form controls. Smaller screens keep the chat as an overlay.
+  const reserveChatSpace = chatOpen && width >= 1120;
 
   useEffect(() => {
     const syncRoute = () => {
@@ -80,14 +84,22 @@ function Shell() {
     return unsubscribe;
   }, []);
 
+  useEffect(() => {
+    if (!user || user.role === 'admin') setChatOpen(false);
+  }, [user]);
+
   return (
     <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.bg }}>
       {showSidebar && <Sidebar />}
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, marginRight: reserveChatSpace ? 440 : 0 }}>
         <Routes />
       </View>
       {user && user.role !== 'admin' && (
-        <FloatingChatWidget user={user} activeApplicationId={activeApplicationId} />
+        <FloatingChatWidget
+          user={user}
+          activeApplicationId={activeApplicationId}
+          onOpenChange={setChatOpen}
+        />
       )}
     </View>
   );
