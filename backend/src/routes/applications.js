@@ -3,6 +3,7 @@ import Application from '../models/Application.js';
 import Document from '../models/Document.js';
 import { requireAuth } from '../middleware/auth.js';
 import { missingDocuments, openExceptions, withCrossDocumentChecks } from '../services/verification.js';
+import { withoutCredits } from '../services/statementAnalysis.js';
 import { REQUIRED_DOCS_BY_PRODUCT, PRODUCT_TYPES } from '../config/requiredDocs.js';
 import { AFFORDABILITY, maxAffordableAmount, maxAffordableBusinessAmount } from '../config/affordability.js';
 
@@ -144,7 +145,7 @@ router.get('/:id', async (req, res, next) => {
     const documents = withCrossDocumentChecks(app, rawDocuments);
     res.json({
       ...app,
-      documents,
+      documents: documents.map(withoutCredits),
       missingDocuments: missingDocuments(app, documents),
       openExceptions: openExceptions(app, documents),
     });

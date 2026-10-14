@@ -23,6 +23,9 @@ app.use('/admin', adminRoutes);
 app.use('/rag-admin', ragAdminRoutes);
 
 app.use((err, _req, res, _next) => {
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: 'File is too large (10 MB maximum). Upload the most recent 2-3 months of statements, or a smaller file.' });
+  }
   console.error(err);
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
 });

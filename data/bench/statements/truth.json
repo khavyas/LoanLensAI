@@ -1,0 +1,41 @@
+{
+  "statement_A_153p.pdf": {
+    "pages": 153,
+    "transactions": 1000,
+    "totalCredits": 38820.55,
+    "totalDebits": 61948.55,
+    "avgMonthlyCredits": 3235.05,
+    "endingBalance": -20987.45,
+    "overdraftCount": 5,
+    "payrollDepositRows": 31,
+    "payrollDepositTotal": 38480.52,
+    "netPay": 1480.02,
+    "splitPayDates": 5
+  },
+  "statement_B_153p.pdf": {
+    "pages": 153,
+    "transactions": 1000,
+    "totalCredits": 38820.55,
+    "totalDebits": 61948.55,
+    "avgMonthlyCredits": 3235.05,
+    "endingBalance": -20987.45,
+    "overdraftCount": 5,
+    "payrollDepositRows": 31,
+    "payrollDepositTotal": 38480.52,
+    "netPay": 1480.02,
+    "splitPayDates": 5
+  },
+  "statement_C_12p.pdf": {
+    "pages": 12,
+    "transactions": 70,
+    "totalCredits": 38855.52,
+    "totalDebits": 15768.79,
+    "avgMonthlyCredits": 3237.96,
+    "endingBalance": 25227.28,
+    "overdraftCount": 5,
+    "payrollDepositRows": 31,
+    "payrollDepositTotal": 38480.52,
+    "netPay": 1480.02,
+    "splitPayDates": 5
+  }
+}

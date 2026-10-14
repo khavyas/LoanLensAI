@@ -16,6 +16,70 @@ const ISSUE_TONE = { mismatch: 'danger', warning: 'warning' };
 const ISSUE_LABEL = { mismatch: 'Mismatch', warning: 'Review' };
 const ISSUE_ACCENT = { mismatch: colors.danger, warning: colors.warning };
 
+const usd = (n) =>
+  n == null ? '—' : `${n < 0 ? '-' : ''}$${Math.abs(Number(n)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Says exactly how much of a multi-page file was looked at, so nobody assumes a
+// 150-page statement was fully checked when the AI only saw page 1, and shows
+// the totals computed from every page when there are any.
+function PageCoverage({ doc }) {
+  const info = doc.pageInfo;
+  const s = doc.statementSummary;
+  if (!info || !(info.total > 1)) return null;
+
+  const aiRead = info.aiRead;
+  const scanned = info.textScanned || 0;
+  const fullyScanned = scanned >= info.total;
+  const covered = fullyScanned ? info.total : Math.max(aiRead || 0, scanned);
+  const unreadPages = info.total - covered;
+
+  return (
+    <View>
+      <Text style={styles.confidence}>
+        Pages checked · {covered} of {info.total}
+        {s ? ` (AI read page ${aiRead || 1}; text of ${scanned} pages scanned for transactions)` : ''}
+      </Text>
+
+      {unreadPages > 0 && (
+        <View style={styles.pageNotice}>
+          <Text style={styles.pageNoticeText}>
+            {unreadPages} of {info.total} pages were NOT checked
+            {doc.docType === 'bank-statement' && info.textLayer === false
+              ? ' — this looks like a scanned PDF with no selectable text, so only page 1 could be read.'
+              : ' — only the first page was read by the AI.'}{' '}
+            Anything that appears only on those pages was not verified.
+          </Text>
+        </View>
+      )}
+
+      {s && (
+        <View style={{ marginTop: 6 }}>
+          <Text style={styles.fieldsHeading}>Statement summary · computed from all {s.pagesScanned} pages</Text>
+          <View style={styles.fieldsGrid}>
+            {[
+              ['Transactions found', String(s.transactionsFound)],
+              [`Avg monthly deposits (${s.monthsCovered} mo)`, usd(s.avgMonthlyCredits)],
+              ['Ending balance', usd(s.endingBalance)],
+              ['Overdraft / NSF items', String(s.overdraftCount)],
+              ['Payroll-like deposits', String(s.payrollLikeDeposits?.length ?? 0)],
+              ['Lines not understood', String((s.unclassified || 0) + (s.unparsedDatedLines || 0))],
+            ].map(([k, v]) => (
+              <View key={k} style={styles.fieldItem}>
+                <Text style={styles.fieldKey}>{k}</Text>
+                <Text style={styles.fieldVal}>{v}</Text>
+              </View>
+            ))}
+          </View>
+          <Text style={styles.confidence}>
+            Deposits include transfers and refunds, not only income. Figures are calculated from the PDF's text,
+            not estimated by AI.
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function DocumentsTab({ app, onChanged }) {
   const [busyDocType, setBusyDocType] = useState(null); // which fix is uploading, or '__generic__'
   const [error, setError] = useState(null);
@@ -252,6 +316,7 @@ export default function DocumentsTab({ app, onChanged }) {
             <Text style={styles.confidence}>
               Extraction confidence · {Math.round((doc.confidence || 0) * 100)}%
             </Text>
+            <PageCoverage doc={doc} />
             <Text style={styles.fieldsHeading}>Extracted fields</Text>
             <View style={styles.fieldsGrid}>
               {Object.entries(doc.extractedFields || {})
@@ -400,6 +465,15 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   fallbackNoticeText: { color: colors.danger, fontSize: 12, lineHeight: 17, fontWeight: '600' },
+  pageNotice: {
+    backgroundColor: colors.warningBg,
+    borderWidth: 1,
+    borderColor: colors.warning,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 6,
+  },
+  pageNoticeText: { color: colors.warning, fontSize: 12, lineHeight: 17, fontWeight: '600' },
   // A 2-up grid instead of one long label/value-per-row list — a document
   // can have a dozen extracted fields, and on a wide screen that made for a
   // tall, sparse single column when the page itself already had room to spare.

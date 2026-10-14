@@ -2,6 +2,7 @@
 // so every flag is explainable and auditable.
 
 import { AFFORDABILITY, SMALL_BUSINESS_REVENUE_CAP_RATIO, maxAffordableAmount, maxAffordableBusinessAmount } from '../config/affordability.js';
+import { employerMatchesDescription } from './statementAnalysis.js';
 
 const INCOME_TOLERANCE = 0.05; // 5%
 
@@ -75,18 +76,35 @@ export function verifyDocument(application, extracted, options = {}) {
   // is progressive and depends on filing status/allowances we don't have).
   // Someone editing gross pay on a pay stub almost always forgets to also
   // rescale these two lines to match — a cheap, hard-to-fake tell.
+  // These two are a REVIEW signal, never a hard failure: an edited gross
+  // figure produces exactly this pattern, but so do legitimate pre-tax
+  // benefits (health premiums, FSA reduce the FICA base), FICA-exempt workers,
+  // and the Social Security wage cap. A flag sends a human to the stub's
+  // deductions list; it does not declare the document fake.
   if (f.grossPayPeriod != null && f.socialSecurityWithheld != null) {
     const expected = f.grossPayPeriod * SOCIAL_SECURITY_RATE;
     const diff = Math.abs(expected - f.socialSecurityWithheld) / expected;
     const ok = diff <= STATUTORY_TOLERANCE;
+
+    // Both FICA lines are charged on the same base, so if Medicare agrees with
+    // Social Security about that base, the stub is internally consistent and a
+    // lower-than-gross base is most likely pre-tax benefits.
+    let baseNote = '';
+    if (!ok && f.medicareWithheld != null) {
+      const ssBase = f.socialSecurityWithheld / SOCIAL_SECURITY_RATE;
+      const medBase = f.medicareWithheld / MEDICARE_RATE;
+      if (ssBase > 0 && Math.abs(ssBase - medBase) / ssBase <= STATUTORY_TOLERANCE) {
+        baseNote = ` Both FICA lines agree on a taxable base of ~$${ssBase.toFixed(2)} (about $${(f.grossPayPeriod - ssBase).toFixed(2)} below gross), which is typical when pre-tax benefits are deducted.`;
+      }
+    }
     checks.push({
       field: 'Social Security withholding (6.2%)',
       expected: `~$${expected.toFixed(2)}`,
       found: `$${f.socialSecurityWithheld.toFixed(2)}`,
-      status: ok ? 'match' : 'mismatch',
+      status: ok ? 'match' : 'warning',
       explanation: ok
         ? 'Social Security withholding matches the statutory 6.2% rate for the gross pay shown.'
-        : `Social Security withholding ($${f.socialSecurityWithheld.toFixed(2)}) doesn't match the statutory 6.2% rate for the gross pay shown (expected ~$${expected.toFixed(2)}). Gross pay edited without recalculating withholding is a common tampering signature — escalate to a human reviewer.`,
+        : `Social Security withholding ($${f.socialSecurityWithheld.toFixed(2)}) differs from 6.2% of the gross pay shown (~$${expected.toFixed(2)}). This is often legitimate (pre-tax benefits lower the taxable base; some workers are exempt) but it is also what an edited gross-pay figure looks like — check the deductions list.${baseNote}`,
     });
   }
 
@@ -98,10 +116,10 @@ export function verifyDocument(application, extracted, options = {}) {
       field: 'Medicare withholding (1.45%)',
       expected: `~$${expected.toFixed(2)}`,
       found: `$${f.medicareWithheld.toFixed(2)}`,
-      status: ok ? 'match' : 'mismatch',
+      status: ok ? 'match' : 'warning',
       explanation: ok
         ? 'Medicare withholding matches the statutory 1.45% rate for the gross pay shown.'
-        : `Medicare withholding ($${f.medicareWithheld.toFixed(2)}) doesn't match the statutory 1.45% rate for the gross pay shown (expected ~$${expected.toFixed(2)}). Gross pay edited without recalculating withholding is a common tampering signature — escalate to a human reviewer.`,
+        : `Medicare withholding ($${f.medicareWithheld.toFixed(2)}) differs from 1.45% of the gross pay shown (~$${expected.toFixed(2)}). Pre-tax benefits can legitimately cause this; an edited gross-pay figure can too — check the deductions list.`,
     });
   }
 
@@ -119,10 +137,10 @@ export function verifyDocument(application, extracted, options = {}) {
       field: 'Year-to-date gross consistency',
       expected: `~$${impliedPeriodGross.toFixed(2)}/period (from YTD ÷ period ${f.payPeriodNumber})`,
       found: `$${f.grossPayPeriod.toFixed(2)} this period`,
-      status: ok ? 'match' : 'mismatch',
+      status: ok ? 'match' : 'warning',
       explanation: ok
         ? 'Year-to-date gross pay is consistent with this period\'s gross pay and the pay period number shown.'
-        : `Year-to-date gross ($${f.ytdGrossPay.toLocaleString('en-US')}) implies an average of ~$${impliedPeriodGross.toFixed(2)}/period through period ${f.payPeriodNumber}, which doesn't line up with this period's gross pay of $${f.grossPayPeriod.toFixed(2)} (${(diff * 100).toFixed(0)}% difference). Confirm this pay stub wasn't edited — a genuinely inflated current-period figure rarely gets the YTD total updated to match.`,
+        : `Year-to-date gross ($${f.ytdGrossPay.toLocaleString('en-US')}) implies an average of ~$${impliedPeriodGross.toFixed(2)}/period through period ${f.payPeriodNumber}, which doesn't line up with this period's gross pay of $${f.grossPayPeriod.toFixed(2)} (${(diff * 100).toFixed(0)}% difference). A recent hire, unpaid leave, a bonus or a raise can cause this legitimately; so can an edited current-period figure whose YTD total was left unchanged — confirm with the borrower.`,
     });
   }
 
@@ -269,33 +287,95 @@ const DEPOSIT_TOLERANCE = 0.1; // 10% — looser than INCOME_TOLERANCE since a s
 // claimed on the pay stub actually backed by a real deposit, or just a
 // claim? A pay stub is trivial to alter; a matching bank deposit is much
 // harder to fake convincingly.
+const money = (n) => `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Pay can legitimately land in several accounts (a payroll "split deposit": a
+// fixed amount to savings, the rest to checking), or in a different bank than
+// the one the statement is from. So a missing or smaller deposit is a prompt
+// to ask for the other account - a 'warning' - never proof that the stub is
+// fake. A match is the only conclusive outcome.
+function depositVsNetPayCheck(application, payStub, bankStatement) {
+  const field = 'Bank deposit vs. pay stub net pay';
+  const net = payStub.extractedFields?.netPay;
+  if (net == null) return [];
+  const expected = `~${money(net)} (pay stub net pay)`;
+  const employer = payStub.extractedFields?.employerName || application.employerName;
+  const summary = bankStatement.statementSummary;
+  const within = (amount) => Math.abs(amount - net) / net <= DEPOSIT_TOLERANCE;
+
+  // Full-statement path: every page's transactions were read from the PDF text.
+  if (summary?.credits?.length) {
+    const pages = summary.pagesScanned;
+    const byEmployer = summary.credits.filter((c) => employerMatchesDescription(c.description, employer));
+    const candidates = byEmployer.length ? byEmployer : summary.payrollLikeDeposits || [];
+
+    const direct = candidates.filter((c) => within(c.amount)).sort((a, b) => Math.abs(a.amount - net) - Math.abs(b.amount - net))[0];
+    if (direct) {
+      return [{
+        field, expected, found: `${money(direct.amount)} on ${direct.date}`, status: 'match',
+        explanation: `A ${money(direct.amount)} payroll deposit ("${direct.description}") appears on the statement and matches the pay stub's net pay — the stub is corroborated by a real deposit (searched ${pages} page${pages === 1 ? '' : 's'}).`,
+      }];
+    }
+
+    const byDate = new Map();
+    for (const c of candidates) byDate.set(c.date, [...(byDate.get(c.date) || []), c]);
+    for (const [date, group] of byDate) {
+      const total = group.reduce((s, c) => s + c.amount, 0);
+      if (group.length > 1 && within(total)) {
+        return [{
+          field, expected, found: `${group.map((c) => money(c.amount)).join(' + ')} on ${date}`, status: 'match',
+          explanation: `The pay stub's net pay was split across ${group.length} deposits on ${date} (${money(total)} in total) — a normal split direct deposit, and it matches the stub.`,
+        }];
+      }
+    }
+
+    if (candidates.length) {
+      const sample = candidates.slice(0, 3).map((c) => money(c.amount)).join(', ');
+      return [{
+        field, expected, found: `${candidates.length} payroll-like deposit(s), e.g. ${sample}`, status: 'warning',
+        explanation: `Payroll-like deposits were found across ${pages} page${pages === 1 ? '' : 's'}, but none match the stub's net pay of ${money(net)}. If pay is split across accounts, ask for the statement of the other account; otherwise confirm the stub with the borrower.`,
+      }];
+    }
+    return [{
+      field, expected, found: `no payroll deposit found in ${pages} page${pages === 1 ? '' : 's'} scanned`, status: 'warning',
+      explanation: `No payroll deposit was found in the ${pages} page${pages === 1 ? '' : 's'} scanned, so this statement cannot corroborate the pay stub. Pay may go to a different account — ask for the statement of the account that receives it.`,
+    }];
+  }
+
+  // Single-deposit path: only what the AI read from page 1 of an image/scanned file.
+  const deposit = bankStatement.extractedFields?.recentDepositAmount;
+  const info = bankStatement.pageInfo;
+  const partial = info?.total > 1 && !(info.aiRead >= info.total);
+  const partialNote = partial ? ` Only page ${info.aiRead || 1} of ${info.total} of this statement was read, so a payroll deposit on a later page would not be seen.` : '';
+  if (deposit == null) {
+    return [{
+      field, expected, found: 'no payroll deposit identified', status: 'warning',
+      explanation: `No payroll deposit could be identified on the part of the statement that was read, so it cannot corroborate the pay stub.${partialNote}`,
+    }];
+  }
+  const ok = within(deposit);
+  return [{
+    field, expected, found: `${money(deposit)} (latest payroll-like deposit read)`, status: ok ? 'match' : 'warning',
+    explanation: ok
+      ? "The latest payroll-like deposit read is consistent with the pay stub's net pay — the stub is corroborated by a real deposit, not just a claim."
+      : `The latest payroll-like deposit read (${money(deposit)}) does not match the stub's net pay (${money(net)}). A split direct deposit would show only part of net pay in one account — ask for the other account's statement, or confirm the stub.${partialNote}`,
+  }];
+}
+
 export function crossDocumentChecks(application, documents) {
   const current = currentDocuments(documents);
   const payStub = current.find((d) => d.docType === 'pay-stub');
   const bankStatement = current.find((d) => d.docType === 'bank-statement');
   if (!payStub || !bankStatement) return [];
 
-  const checks = [];
-  const netPay = payStub.extractedFields?.netPay;
-  const depositAmount = bankStatement.extractedFields?.recentDepositAmount;
-  if (netPay != null && depositAmount != null) {
-    const diff = Math.abs(netPay - depositAmount) / netPay;
-    const ok = diff <= DEPOSIT_TOLERANCE;
-    checks.push({
-      field: 'Bank deposit vs. pay stub net pay',
-      expected: `~$${netPay.toLocaleString('en-US')} (pay stub net pay)`,
-      found: `$${depositAmount.toLocaleString('en-US')} (most recent bank deposit)`,
-      status: ok ? 'match' : 'mismatch',
-      explanation: ok
-        ? "The most recent bank deposit is consistent with the pay stub's net pay — the pay stub is corroborated by a real, matching deposit, not just a claim."
-        : `The bank statement's most recent deposit ($${depositAmount.toLocaleString('en-US')}) does not match the pay stub's net pay ($${netPay.toLocaleString('en-US')}, ${(diff * 100).toFixed(0)}% difference). A pay stub not backed by a matching deposit is a document-authenticity red flag — escalate to a human reviewer rather than accepting the document at face value.`,
-    });
-  }
+  const checks = depositVsNetPayCheck(application, payStub, bankStatement);
 
+  // With a full-statement scan the employer is already part of the match
+  // above; this separate source check only applies to the single-deposit path.
   const stubEmployer = payStub.extractedFields?.employerName;
   const depositSource = bankStatement.extractedFields?.recentDepositSource;
-  if (stubEmployer && depositSource) {
-    const match = depositSource.toLowerCase().includes(stubEmployer.toLowerCase());
+  if (!bankStatement.statementSummary?.credits?.length && stubEmployer && depositSource) {
+    const match = employerMatchesDescription(depositSource, stubEmployer);
     checks.push({
       field: 'Bank deposit source vs. pay stub employer',
       expected: stubEmployer,

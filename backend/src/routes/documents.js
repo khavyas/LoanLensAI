@@ -7,6 +7,8 @@ import Document from '../models/Document.js';
 import { requireAuth } from '../middleware/auth.js';
 import { classifyAndExtract } from '../services/extractionProvider.js';
 import { storeFile, readStoredFile, deleteStoredFile } from '../services/storage.js';
+import { readPdfPages } from '../services/pdfText.js';
+import { analyzeStatement, withoutCredits } from '../services/statementAnalysis.js';
 import { verifyDocument, openExceptions, withCrossDocumentChecks } from '../services/verification.js';
 
 // Server-side allowlist — the frontend picker already only offers image/PDF,
@@ -28,6 +30,33 @@ const upload = multer({
 });
 const router = Router();
 router.use(requireAuth);
+
+// How much of the file was looked at, plus (for a bank-statement PDF with a
+// text layer) totals computed from EVERY page. Never fails the upload: if the
+// PDF can't be parsed, the document is still kept, just without page info.
+async function describePages(mimeType, bytes, extracted) {
+  const aiRead = extracted.pagesRead ?? null;
+  if (mimeType !== 'application/pdf') return { pageInfo: { total: 1, aiRead: aiRead ?? 1 }, statementSummary: null };
+  try {
+    const parsed = await readPdfPages(bytes);
+    const statementSummary =
+      extracted.docType === 'bank-statement' && parsed.textLayer
+        ? analyzeStatement(parsed.pages, { pagesTotal: parsed.pagesTotal })
+        : null;
+    return {
+      pageInfo: {
+        total: parsed.pagesTotal,
+        aiRead,
+        textScanned: statementSummary ? parsed.pagesRead : 0,
+        textLayer: parsed.textLayer,
+      },
+      statementSummary,
+    };
+  } catch (err) {
+    console.error('[documents] could not read PDF pages:', err.message);
+    return { pageInfo: { total: null, aiRead }, statementSummary: null };
+  }
+}
 
 // A borrower may only touch documents on their own application; an officer
 // may touch any. Shared by the file/delete routes below (the upload route
@@ -62,6 +91,7 @@ router.post('/:applicationId', upload.single('file'), async (req, res, next) => 
     // read before the temp file is cleaned up below. Where they end up
     // (MongoDB or the private R2 bucket) is storage.js's decision.
     const fileBytes = fs.readFileSync(req.file.path);
+    const { pageInfo, statementSummary } = await describePages(req.file.mimetype, fileBytes, extracted);
 
     // Supersede whatever previously occupied this slot so the fix replaces it
     // instead of sitting alongside it. A targeted re-upload (expectedDocType
@@ -102,6 +132,8 @@ router.post('/:applicationId', upload.single('file'), async (req, res, next) => 
         docType: extracted.docType,
         ...stored,
         mimeType: req.file.mimetype,
+        pageInfo,
+        statementSummary,
         extractedFields: extracted.fields,
         confidence: extracted.confidence,
         extractionSource: extracted.extractionSource || 'live',
@@ -140,7 +172,7 @@ router.post('/:applicationId', upload.single('file'), async (req, res, next) => 
     // Don't echo the raw bytes or the internal storage key back — the
     // frontend only ever needs the dedicated file route below.
     const { fileData: _omit, storageKey: _key, ...docWithoutBytes } = doc.toObject();
-    res.status(201).json(docWithoutBytes);
+    res.status(201).json(withoutCredits(docWithoutBytes));
   } catch (err) {
     next(err);
   }

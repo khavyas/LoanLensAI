@@ -1,0 +1,2185 @@
+{
+  "paystub_01.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Dorothea Vance",
+      "employerName": "Brightwater Logistics LLC",
+      "grossMonthlyIncome": 6047.21,
+      "payPeriod": "09/14/2026 - 09/20/2026",
+      "address": "3424 Wexford Road, Boise, ID 83702",
+      "ssnLast4": "3616",
+      "documentDate": "2026-09-25",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 1058.29,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 1395.51,
+      "socialSecurityWithheld": 86.52,
+      "medicareWithheld": 20.23,
+      "ytdGrossPay": 51633.87,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "classic_table",
+      "frequency": "weekly",
+      "degraded": false,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "hourly, 2 earnings line(s); YTD printed but period number not printed",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular",
+            "amount": 1194.0,
+            "ytd": 44178.0
+          },
+          {
+            "label": "Overtime",
+            "amount": 201.51,
+            "ytd": 7455.87
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Fed Income Tax",
+            "amount": 104.94,
+            "ytd": 3882.78
+          },
+          {
+            "kind": "ss",
+            "label": "Social Security",
+            "amount": 86.52,
+            "ytd": 3201.24
+          },
+          {
+            "kind": "med",
+            "label": "Medicare",
+            "amount": 20.23,
+            "ytd": 748.51
+          },
+          {
+            "kind": "state",
+            "label": "State W/H",
+            "amount": 39.35,
+            "ytd": 1455.95
+          },
+          {
+            "kind": "k401",
+            "label": "Retirement 401(k)",
+            "amount": 83.73,
+            "ytd": 3098.01
+          },
+          {
+            "kind": "other",
+            "label": "Vision Plan",
+            "amount": 2.45,
+            "ytd": 90.65
+          }
+        ],
+        "ficaWages": 1395.51,
+        "section125Premium": null,
+        "totalDeductions": 337.22,
+        "periodsPerYear": 52,
+        "periodNumberTrue": 37,
+        "ytdPrinted": true
+      }
+    }
+  },
+  "paystub_02.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Marcus A. Delgado",
+      "employerName": "Cobalt Ridge Staffing Inc.",
+      "grossMonthlyIncome": 7291.66,
+      "payPeriod": "08/31/2026 - 09/13/2026",
+      "address": "119 Birchwood Lane, Mobile, AL 36602",
+      "ssnLast4": null,
+      "documentDate": "2026-09-18",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 2584.0,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 3365.38,
+      "socialSecurityWithheld": 208.65,
+      "medicareWithheld": 48.8,
+      "ytdGrossPay": 60576.84,
+      "payPeriodNumber": 18
+    },
+    "meta": {
+      "layout": "two_column",
+      "frequency": "biweekly",
+      "degraded": false,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "salaried, 1 earnings line(s)",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular Salary",
+            "amount": 3365.38,
+            "ytd": 60576.84
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Federal W/H",
+            "amount": 370.19,
+            "ytd": 6663.42
+          },
+          {
+            "kind": "ss",
+            "label": "Soc Sec",
+            "amount": 208.65,
+            "ytd": 3755.7
+          },
+          {
+            "kind": "med",
+            "label": "Medicare",
+            "amount": 48.8,
+            "ytd": 878.4
+          },
+          {
+            "kind": "state",
+            "label": "State Tax",
+            "amount": 117.79,
+            "ytd": 2120.22
+          },
+          {
+            "kind": "other",
+            "label": "Parking",
+            "amount": 20.05,
+            "ytd": 360.9
+          },
+          {
+            "kind": "other",
+            "label": "Uniform Deduction",
+            "amount": 15.9,
+            "ytd": 286.2
+          }
+        ],
+        "ficaWages": 3365.38,
+        "section125Premium": null,
+        "totalDeductions": 781.38,
+        "periodsPerYear": 26,
+        "periodNumberTrue": 18,
+        "ytdPrinted": true
+      }
+    }
+  },
+  "paystub_03.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Anneliese Kowalczyk",
+      "employerName": "Tallgrass Analytics, Inc.",
+      "grossMonthlyIncome": 12791.66,
+      "payPeriod": "Jun 16, 2026 - Jun 30, 2026",
+      "address": null,
+      "ssnLast4": "7517",
+      "documentDate": "2026-06-30",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 5033.72,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 6395.83,
+      "socialSecurityWithheld": 396.54,
+      "medicareWithheld": 92.74,
+      "ytdGrossPay": null,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "dashboard_boxes",
+      "frequency": "semi-monthly",
+      "degraded": false,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "salaried, 2 earnings line(s)",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular Salary",
+            "amount": 5770.83,
+            "ytd": 69249.96
+          },
+          {
+            "label": "Referral Bonus",
+            "amount": 625.0,
+            "ytd": 7500.0
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Fed Income Tax",
+            "amount": 575.62,
+            "ytd": 6907.44
+          },
+          {
+            "kind": "ss",
+            "label": "OASDI",
+            "amount": 396.54,
+            "ytd": 4758.48
+          },
+          {
+            "kind": "med",
+            "label": "Medicare",
+            "amount": 92.74,
+            "ytd": 1112.88
+          },
+          {
+            "kind": "state",
+            "label": "State Tax",
+            "amount": 287.81,
+            "ytd": 3453.72
+          },
+          {
+            "kind": "other",
+            "label": "Uniform Deduction",
+            "amount": 9.4,
+            "ytd": 112.8
+          }
+        ],
+        "ficaWages": 6395.83,
+        "section125Premium": null,
+        "totalDeductions": 1362.11,
+        "periodsPerYear": 24,
+        "periodNumberTrue": 12,
+        "ytdPrinted": false
+      }
+    }
+  },
+  "paystub_04.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Jamal Tran-Whitfield",
+      "employerName": "Halcyon Freight Systems",
+      "grossMonthlyIncome": 4843.91,
+      "payPeriod": "06/22/2026 - 07/05/2026",
+      "address": "2451 Birchwood Lane, Apt 17, Dayton, OH 45402",
+      "ssnLast4": null,
+      "documentDate": "2026-07-10",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 1790.98,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 2235.65,
+      "socialSecurityWithheld": 138.61,
+      "medicareWithheld": 32.42,
+      "ytdGrossPay": 29063.45,
+      "payPeriodNumber": 13
+    },
+    "meta": {
+      "layout": "dense_bureau",
+      "frequency": "biweekly",
+      "degraded": true,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "hourly, 2 earnings line(s); scan degradation (rotation -0.51 deg, noise, blur, JPEG artefacts, paper tint)",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular",
+            "amount": 2044.0,
+            "ytd": 26572.0
+          },
+          {
+            "label": "Overtime",
+            "amount": 191.65,
+            "ytd": 2491.45
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Fed Income Tax",
+            "amount": 195.17,
+            "ytd": 2537.21
+          },
+          {
+            "kind": "ss",
+            "label": "FICA-SS",
+            "amount": 138.61,
+            "ytd": 1801.93
+          },
+          {
+            "kind": "med",
+            "label": "FICA-Med",
+            "amount": 32.42,
+            "ytd": 421.46
+          },
+          {
+            "kind": "k401",
+            "label": "401(k)",
+            "amount": 67.07,
+            "ytd": 871.91
+          },
+          {
+            "kind": "other",
+            "label": "Uniform Deduction",
+            "amount": 7.25,
+            "ytd": 94.25
+          },
+          {
+            "kind": "other",
+            "label": "Vision Plan",
+            "amount": 4.15,
+            "ytd": 53.95
+          }
+        ],
+        "ficaWages": 2235.65,
+        "section125Premium": null,
+        "totalDeductions": 444.67,
+        "periodsPerYear": 26,
+        "periodNumberTrue": 13,
+        "ytdPrinted": true
+      }
+    }
+  },
+  "paystub_05.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Fiona R. Castellano",
+      "employerName": "Orchard Lane Bakery Co.",
+      "grossMonthlyIncome": 7083.33,
+      "payPeriod": "08/01/2026 - 08/31/2026",
+      "address": "3682 Linden Terrace, Reno, NV 89501",
+      "ssnLast4": "7895",
+      "documentDate": "2026-08-31",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 5057.85,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 7083.33,
+      "socialSecurityWithheld": 439.17,
+      "medicareWithheld": 102.71,
+      "ytdGrossPay": null,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "check_stub_bottom",
+      "frequency": "monthly",
+      "degraded": false,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "salaried, 1 earnings line(s); pay frequency word not printed (infer from period dates)",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Salary",
+            "amount": 7083.33,
+            "ytd": 56666.64
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Fed Income Tax",
+            "amount": 1099.33,
+            "ytd": 8794.64
+          },
+          {
+            "kind": "ss",
+            "label": "Social Security",
+            "amount": 439.17,
+            "ytd": 3513.36
+          },
+          {
+            "kind": "med",
+            "label": "Medicare",
+            "amount": 102.71,
+            "ytd": 821.68
+          },
+          {
+            "kind": "state",
+            "label": "ST Withholding",
+            "amount": 171.77,
+            "ytd": 1374.16
+          },
+          {
+            "kind": "k401",
+            "label": "Retirement 401(k)",
+            "amount": 212.5,
+            "ytd": 1700.0
+          }
+        ],
+        "ficaWages": 7083.33,
+        "section125Premium": null,
+        "totalDeductions": 2025.48,
+        "periodsPerYear": 12,
+        "periodNumberTrue": 8,
+        "ytdPrinted": false
+      }
+    }
+  },
+  "paystub_06.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Oluwaseun Adebayo",
+      "employerName": "Vantor Cloud Labs",
+      "grossMonthlyIncome": 12458.34,
+      "payPeriod": "Aug 1, 2026 - Aug 15, 2026",
+      "address": null,
+      "ssnLast4": null,
+      "documentDate": "2026-08-14",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 4424.51,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 6229.17,
+      "socialSecurityWithheld": 386.21,
+      "medicareWithheld": 90.32,
+      "ytdGrossPay": null,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "minimal_modern",
+      "frequency": "semi-monthly",
+      "degraded": false,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "salaried, 1 earnings line(s); pay frequency word not printed (infer from period dates); low-resolution render (~600px wide)",
+      "lowres": true,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular Salary",
+            "amount": 6229.17,
+            "ytd": 93437.55
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Federal Income Tax",
+            "amount": 996.67,
+            "ytd": 14950.05
+          },
+          {
+            "kind": "ss",
+            "label": "Soc Sec",
+            "amount": 386.21,
+            "ytd": 5793.15
+          },
+          {
+            "kind": "med",
+            "label": "Med Tax",
+            "amount": 90.32,
+            "ytd": 1354.8
+          },
+          {
+            "kind": "state",
+            "label": "State W/H",
+            "amount": 311.46,
+            "ytd": 4671.9
+          },
+          {
+            "kind": "other",
+            "label": "Parking",
+            "amount": 11.35,
+            "ytd": 170.25
+          },
+          {
+            "kind": "other",
+            "label": "Vision Plan",
+            "amount": 8.65,
+            "ytd": 129.75
+          }
+        ],
+        "ficaWages": 6229.17,
+        "section125Premium": null,
+        "totalDeductions": 1804.66,
+        "periodsPerYear": 24,
+        "periodNumberTrue": 15,
+        "ytdPrinted": false
+      }
+    }
+  },
+  "paystub_07.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Ronnie Dale Pruitt",
+      "employerName": "Northgate Fabrication Ltd.",
+      "grossMonthlyIncome": 5248.75,
+      "payPeriod": "05/18/2026 - 05/24/2026",
+      "address": null,
+      "ssnLast4": "7816",
+      "documentDate": "2026-05-29",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 938.91,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 1211.25,
+      "socialSecurityWithheld": null,
+      "medicareWithheld": null,
+      "ytdGrossPay": 24225.0,
+      "payPeriodNumber": 20
+    },
+    "meta": {
+      "layout": "dot_matrix_mono",
+      "frequency": "weekly",
+      "degraded": true,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": true,
+      "notes": "hourly, 1 earnings line(s); single combined FICA line printed; SS and Medicare not separately shown; photo degradation (rotation 1.3 deg, noise, blur, JPEG artefacts, paper tint)",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular",
+            "amount": 1211.25,
+            "ytd": 24225.0
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Federal Income Tax",
+            "amount": 121.13,
+            "ytd": 2422.6
+          },
+          {
+            "kind": "fica",
+            "label": "FICA",
+            "amount": 92.66,
+            "ytd": 1853.2
+          },
+          {
+            "kind": "state",
+            "label": "ST Withholding",
+            "amount": 48.45,
+            "ytd": 969.0
+          },
+          {
+            "kind": "other",
+            "label": "Optional Life Ins",
+            "amount": 10.1,
+            "ytd": 202.0
+          }
+        ],
+        "ficaWages": 1211.25,
+        "section125Premium": null,
+        "totalDeductions": 272.34,
+        "periodsPerYear": 52,
+        "periodNumberTrue": 20,
+        "ytdPrinted": true
+      }
+    }
+  },
+  "paystub_08.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Mei-Ling Hartwell",
+      "employerName": "Juniper Bay Marine Services",
+      "grossMonthlyIncome": 7765.33,
+      "payPeriod": "2026-03-30 - 2026-04-12",
+      "address": "2414 Linden Terrace, Lubbock, TX 79401",
+      "ssnLast4": null,
+      "documentDate": "2026-04-17",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 2518.49,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 3584.0,
+      "socialSecurityWithheld": 214.54,
+      "medicareWithheld": 50.17,
+      "ytdGrossPay": 25088.0,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "landscape_wide",
+      "frequency": "biweekly",
+      "degraded": false,
+      "tampered": false,
+      "section125": true,
+      "combined_fica": false,
+      "notes": "hourly, 2 earnings line(s); Section 125 premium 123.75; FICA wages 3460.25; YTD printed but period number not printed",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular",
+            "amount": 2384.0,
+            "ytd": 16688.0
+          },
+          {
+            "label": "Referral Bonus",
+            "amount": 1200.0,
+            "ytd": 8400.0
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "pretax",
+            "label": "Sect 125 Medical",
+            "amount": 123.75,
+            "ytd": 866.25
+          },
+          {
+            "kind": "fit",
+            "label": "Fed Withholding",
+            "amount": 553.64,
+            "ytd": 3875.48
+          },
+          {
+            "kind": "ss",
+            "label": "FED FICA SS",
+            "amount": 214.54,
+            "ytd": 1501.78
+          },
+          {
+            "kind": "med",
+            "label": "Med Tax",
+            "amount": 50.17,
+            "ytd": 351.19
+          },
+          {
+            "kind": "state",
+            "label": "State W/H",
+            "amount": 121.11,
+            "ytd": 847.77
+          },
+          {
+            "kind": "other",
+            "label": "Vision Plan",
+            "amount": 2.3,
+            "ytd": 16.1
+          }
+        ],
+        "ficaWages": 3460.25,
+        "section125Premium": 123.75,
+        "totalDeductions": 1065.51,
+        "periodsPerYear": 26,
+        "periodNumberTrue": 7,
+        "ytdPrinted": true
+      }
+    }
+  },
+  "paystub_09.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Gideon P. Lindqvist",
+      "employerName": "Lumen Harbor Health Partners",
+      "grossMonthlyIncome": 11125.0,
+      "payPeriod": "06/01/2026 - 06/30/2026",
+      "address": "205 Quarry Street, Provo, UT 84601",
+      "ssnLast4": "4686",
+      "documentDate": "2026-06-30",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 9251.19,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 11125.0,
+      "socialSecurityWithheld": 689.75,
+      "medicareWithheld": 161.31,
+      "ytdGrossPay": 66750.0,
+      "payPeriodNumber": 6
+    },
+    "meta": {
+      "layout": "sidebar_ytd_summary",
+      "frequency": "monthly",
+      "degraded": false,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "salaried, 1 earnings line(s)",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Base Salary",
+            "amount": 11125.0,
+            "ytd": 66750.0
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Federal W/H",
+            "amount": 1001.25,
+            "ytd": 6007.5
+          },
+          {
+            "kind": "ss",
+            "label": "OASDI",
+            "amount": 689.75,
+            "ytd": 4138.5
+          },
+          {
+            "kind": "med",
+            "label": "Medicare",
+            "amount": 161.31,
+            "ytd": 967.86
+          },
+          {
+            "kind": "other",
+            "label": "Optional Life Ins",
+            "amount": 5.3,
+            "ytd": 31.8
+          },
+          {
+            "kind": "other",
+            "label": "Uniform Deduction",
+            "amount": 16.2,
+            "ytd": 97.2
+          }
+        ],
+        "ficaWages": 11125.0,
+        "section125Premium": null,
+        "totalDeductions": 1873.81,
+        "periodsPerYear": 12,
+        "periodNumberTrue": 6,
+        "ytdPrinted": true
+      }
+    }
+  },
+  "paystub_10.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Esperanza Quill",
+      "employerName": "Copperleaf Foods Corporation",
+      "grossMonthlyIncome": 8592.7,
+      "payPeriod": "Apr 1, 2026 - Apr 15, 2026",
+      "address": "1183 Marlow Place, Apt 26, Provo, UT 84601",
+      "ssnLast4": null,
+      "documentDate": "2026-04-15",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 2914.76,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 4296.35,
+      "socialSecurityWithheld": null,
+      "medicareWithheld": null,
+      "ytdGrossPay": null,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "serif_logo_corner",
+      "frequency": "semi-monthly",
+      "degraded": true,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": true,
+      "notes": "hourly, 2 earnings line(s); single combined FICA line printed; SS and Medicare not separately shown; scan degradation (rotation 1.83 deg, noise, blur, JPEG artefacts, paper tint)",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular",
+            "amount": 4034.49,
+            "ytd": 28241.43
+          },
+          {
+            "label": "Overtime",
+            "amount": 261.86,
+            "ytd": 1833.02
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "FITW",
+            "amount": 653.04,
+            "ytd": 4571.28
+          },
+          {
+            "kind": "fica",
+            "label": "FICA",
+            "amount": 328.67,
+            "ytd": 2300.69
+          },
+          {
+            "kind": "state",
+            "label": "State Income Tax",
+            "amount": 163.26,
+            "ytd": 1142.82
+          },
+          {
+            "kind": "k401",
+            "label": "401K Employee",
+            "amount": 214.82,
+            "ytd": 1503.74
+          },
+          {
+            "kind": "other",
+            "label": "Dental Insurance",
+            "amount": 19.1,
+            "ytd": 133.7
+          },
+          {
+            "kind": "other",
+            "label": "Vision Plan",
+            "amount": 2.7,
+            "ytd": 18.9
+          }
+        ],
+        "ficaWages": 4296.35,
+        "section125Premium": null,
+        "totalDeductions": 1381.59,
+        "periodsPerYear": 24,
+        "periodNumberTrue": 7,
+        "ytdPrinted": false
+      }
+    }
+  },
+  "paystub_11.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Marcus A. Delgado",
+      "employerName": "Cobalt Ridge Staffing Inc.",
+      "grossMonthlyIncome": 9187.49,
+      "payPeriod": "08/31/2026 - 09/13/2026",
+      "address": "119 Birchwood Lane, Mobile, AL 36602",
+      "ssnLast4": null,
+      "documentDate": "2026-09-18",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 3459.0,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 4240.38,
+      "socialSecurityWithheld": 208.65,
+      "medicareWithheld": 48.8,
+      "ytdGrossPay": 60576.84,
+      "payPeriodNumber": 18
+    },
+    "meta": {
+      "layout": "two_column",
+      "frequency": "biweekly",
+      "degraded": false,
+      "tampered": true,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "salaried, 1 earnings line(s); TAMPERED copy of paystub_02: gross raised from 3365.38; SS, Medicare and YTD left unchanged",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular Salary",
+            "amount": 4240.38,
+            "ytd": 60576.84
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Federal W/H",
+            "amount": 370.19,
+            "ytd": 6663.42
+          },
+          {
+            "kind": "ss",
+            "label": "Soc Sec",
+            "amount": 208.65,
+            "ytd": 3755.7
+          },
+          {
+            "kind": "med",
+            "label": "Medicare",
+            "amount": 48.8,
+            "ytd": 878.4
+          },
+          {
+            "kind": "state",
+            "label": "State Tax",
+            "amount": 117.79,
+            "ytd": 2120.22
+          },
+          {
+            "kind": "other",
+            "label": "Parking",
+            "amount": 20.05,
+            "ytd": 360.9
+          },
+          {
+            "kind": "other",
+            "label": "Uniform Deduction",
+            "amount": 15.9,
+            "ytd": 286.2
+          }
+        ],
+        "ficaWages": 3365.38,
+        "section125Premium": null,
+        "totalDeductions": 781.38,
+        "periodsPerYear": 26,
+        "periodNumberTrue": 18,
+        "ytdPrinted": true
+      },
+      "tamperedFrom": "paystub_02.png",
+      "originalGrossPayPeriod": 3365.38,
+      "originalNetPay": 2584.0,
+      "grossInflation": 1.26
+    }
+  },
+  "paystub_12.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Tobias Ng",
+      "employerName": "Sablewood Hospitality Group",
+      "grossMonthlyIncome": 4688.15,
+      "payPeriod": "Apr 27, 2026 - May 3, 2026",
+      "address": "2712 Harlan Avenue, Mobile, AL 36602",
+      "ssnLast4": "2048",
+      "documentDate": "2026-05-08",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 837.58,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 1081.88,
+      "socialSecurityWithheld": 67.08,
+      "medicareWithheld": 15.69,
+      "ytdGrossPay": 18391.96,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "dashboard_boxes",
+      "frequency": "weekly",
+      "degraded": true,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "hourly, 1 earnings line(s); pay frequency word not printed (infer from period dates); photo degradation (rotation -0.61 deg, noise, blur, JPEG artefacts, paper tint); YTD printed but period number not printed",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular",
+            "amount": 1081.88,
+            "ytd": 18391.96
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Federal Income Tax",
+            "amount": 114.25,
+            "ytd": 1942.25
+          },
+          {
+            "kind": "ss",
+            "label": "Social Security",
+            "amount": 67.08,
+            "ytd": 1140.36
+          },
+          {
+            "kind": "med",
+            "label": "FICA-Med",
+            "amount": 15.69,
+            "ytd": 266.73
+          },
+          {
+            "kind": "k401",
+            "label": "Retirement 401(k)",
+            "amount": 43.28,
+            "ytd": 735.76
+          },
+          {
+            "kind": "other",
+            "label": "Optional Life Ins",
+            "amount": 4.0,
+            "ytd": 68.0
+          }
+        ],
+        "ficaWages": 1081.88,
+        "section125Premium": null,
+        "totalDeductions": 244.3,
+        "periodsPerYear": 52,
+        "periodNumberTrue": 17,
+        "ytdPrinted": true
+      }
+    }
+  },
+  "paystub_13.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Calista Brannigan",
+      "employerName": "Pinecrest Veterinary Partners",
+      "grossMonthlyIncome": 5503.22,
+      "payPeriod": "04/16/2026 - 04/30/2026",
+      "address": "4120 Birchwood Lane, Apt 3, Tulsa, OK 74103",
+      "ssnLast4": null,
+      "documentDate": "2026-04-30",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 2146.6,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 2751.61,
+      "socialSecurityWithheld": 162.6,
+      "medicareWithheld": 38.03,
+      "ytdGrossPay": null,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "two_column",
+      "frequency": "semi-monthly",
+      "degraded": false,
+      "tampered": false,
+      "section125": true,
+      "combined_fica": false,
+      "notes": "hourly, 3 earnings line(s); Section 125 premium 129.00; FICA wages 2622.61",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular",
+            "amount": 2231.75,
+            "ytd": 17854.0
+          },
+          {
+            "label": "Overtime",
+            "amount": 144.86,
+            "ytd": 1158.88
+          },
+          {
+            "label": "Performance Bonus",
+            "amount": 375.0,
+            "ytd": 3000.0
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "pretax",
+            "label": "Medical - Pre-Tax",
+            "amount": 129.0,
+            "ytd": 1032.0
+          },
+          {
+            "kind": "fit",
+            "label": "Fed Withholding",
+            "amount": 209.81,
+            "ytd": 1678.48
+          },
+          {
+            "kind": "ss",
+            "label": "FICA-SS",
+            "amount": 162.6,
+            "ytd": 1300.8
+          },
+          {
+            "kind": "med",
+            "label": "FICA-Med",
+            "amount": 38.03,
+            "ytd": 304.24
+          },
+          {
+            "kind": "state",
+            "label": "State Income Tax",
+            "amount": 65.57,
+            "ytd": 524.56
+          }
+        ],
+        "ficaWages": 2622.61,
+        "section125Premium": 129.0,
+        "totalDeductions": 605.01,
+        "periodsPerYear": 24,
+        "periodNumberTrue": 8,
+        "ytdPrinted": false
+      }
+    }
+  },
+  "paystub_14.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Raghav Mehta-Sloan",
+      "employerName": "Ironbridge Builders Inc.",
+      "grossMonthlyIncome": 11375.0,
+      "payPeriod": "09/01/2026 - 09/30/2026",
+      "address": "1574 Sycamore Drive, Fairhaven, WA 98225",
+      "ssnLast4": "5479",
+      "documentDate": "2026-09-30",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 8949.85,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 11375.0,
+      "socialSecurityWithheld": 705.25,
+      "medicareWithheld": 164.94,
+      "ytdGrossPay": 102375.0,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "dense_bureau",
+      "frequency": "monthly",
+      "degraded": false,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "salaried, 1 earnings line(s); pay frequency word not printed (infer from period dates); YTD printed but period number not printed",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Salary",
+            "amount": 11375.0,
+            "ytd": 102375.0
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Federal W/H",
+            "amount": 972.56,
+            "ytd": 8753.04
+          },
+          {
+            "kind": "ss",
+            "label": "FED FICA SS",
+            "amount": 705.25,
+            "ytd": 6347.25
+          },
+          {
+            "kind": "med",
+            "label": "Med Tax",
+            "amount": 164.94,
+            "ytd": 1484.46
+          },
+          {
+            "kind": "k401",
+            "label": "Retirement 401(k)",
+            "amount": 568.75,
+            "ytd": 5118.75
+          },
+          {
+            "kind": "other",
+            "label": "Vision Plan",
+            "amount": 2.35,
+            "ytd": 21.15
+          },
+          {
+            "kind": "other",
+            "label": "Optional Life Ins",
+            "amount": 11.3,
+            "ytd": 101.7
+          }
+        ],
+        "ficaWages": 11375.0,
+        "section125Premium": null,
+        "totalDeductions": 2425.15,
+        "periodsPerYear": 12,
+        "periodNumberTrue": 9,
+        "ytdPrinted": true
+      }
+    }
+  },
+  "paystub_15.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Winifred Oyelaran",
+      "employerName": "Maple & Vine Cafe LLC",
+      "grossMonthlyIncome": 6475.0,
+      "payPeriod": "09/01/2026 - 09/30/2026",
+      "address": null,
+      "ssnLast4": null,
+      "documentDate": "2026-09-30",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 5137.91,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 6475.0,
+      "socialSecurityWithheld": 401.45,
+      "medicareWithheld": 93.89,
+      "ytdGrossPay": null,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "classic_table",
+      "frequency": "monthly",
+      "degraded": false,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "hourly, 1 earnings line(s); low-resolution render (~600px wide)",
+      "lowres": true,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular",
+            "amount": 6475.0,
+            "ytd": 58275.0
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Fed Withholding",
+            "amount": 647.5,
+            "ytd": 5827.5
+          },
+          {
+            "kind": "ss",
+            "label": "Social Security",
+            "amount": 401.45,
+            "ytd": 3613.05
+          },
+          {
+            "kind": "med",
+            "label": "Medicare",
+            "amount": 93.89,
+            "ytd": 845.01
+          },
+          {
+            "kind": "state",
+            "label": "State W/H",
+            "amount": 194.25,
+            "ytd": 1748.25
+          }
+        ],
+        "ficaWages": 6475.0,
+        "section125Premium": null,
+        "totalDeductions": 1337.09,
+        "periodsPerYear": 12,
+        "periodNumberTrue": 9,
+        "ytdPrinted": false
+      }
+    }
+  },
+  "paystub_16.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Dmitri Valcourt",
+      "employerName": "Zephyrline Couriers",
+      "grossMonthlyIncome": 4208.75,
+      "payPeriod": "Apr 13, 2026 - Apr 19, 2026",
+      "address": null,
+      "ssnLast4": "5709",
+      "documentDate": "2026-04-24",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 690.92,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 971.25,
+      "socialSecurityWithheld": 60.22,
+      "medicareWithheld": 14.08,
+      "ytdGrossPay": 14568.75,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "minimal_modern",
+      "frequency": "weekly",
+      "degraded": true,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "hourly, 1 earnings line(s); pay frequency word not printed (infer from period dates); scan degradation (rotation -0.51 deg, noise, blur, JPEG artefacts, paper tint); YTD printed but period number not printed",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular",
+            "amount": 971.25,
+            "ytd": 14568.75
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Federal Income Tax",
+            "amount": 113.05,
+            "ytd": 1695.75
+          },
+          {
+            "kind": "ss",
+            "label": "Soc Sec",
+            "amount": 60.22,
+            "ytd": 903.3
+          },
+          {
+            "kind": "med",
+            "label": "Medicare",
+            "amount": 14.08,
+            "ytd": 211.2
+          },
+          {
+            "kind": "state",
+            "label": "State Tax",
+            "amount": 42.39,
+            "ytd": 635.85
+          },
+          {
+            "kind": "k401",
+            "label": "Retirement 401(k)",
+            "amount": 29.14,
+            "ytd": 437.1
+          },
+          {
+            "kind": "other",
+            "label": "Dental Insurance",
+            "amount": 21.45,
+            "ytd": 321.75
+          }
+        ],
+        "ficaWages": 971.25,
+        "section125Premium": null,
+        "totalDeductions": 280.33,
+        "periodsPerYear": 52,
+        "periodNumberTrue": 15,
+        "ytdPrinted": true
+      }
+    }
+  },
+  "paystub_17.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Gideon P. Lindqvist",
+      "employerName": "Lumen Harbor Health Partners",
+      "grossMonthlyIncome": 14935.31,
+      "payPeriod": "06/01/2026 - 06/30/2026",
+      "address": "205 Quarry Street, Provo, UT 84601",
+      "ssnLast4": "4686",
+      "documentDate": "2026-06-30",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 13061.5,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 14935.31,
+      "socialSecurityWithheld": 689.75,
+      "medicareWithheld": 161.31,
+      "ytdGrossPay": 66750.0,
+      "payPeriodNumber": 6
+    },
+    "meta": {
+      "layout": "sidebar_ytd_summary",
+      "frequency": "monthly",
+      "degraded": false,
+      "tampered": true,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "salaried, 1 earnings line(s); TAMPERED copy of paystub_09: gross raised from 11125.00; SS, Medicare and YTD left unchanged",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Base Salary",
+            "amount": 14935.31,
+            "ytd": 66750.0
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Federal W/H",
+            "amount": 1001.25,
+            "ytd": 6007.5
+          },
+          {
+            "kind": "ss",
+            "label": "OASDI",
+            "amount": 689.75,
+            "ytd": 4138.5
+          },
+          {
+            "kind": "med",
+            "label": "Medicare",
+            "amount": 161.31,
+            "ytd": 967.86
+          },
+          {
+            "kind": "other",
+            "label": "Optional Life Ins",
+            "amount": 5.3,
+            "ytd": 31.8
+          },
+          {
+            "kind": "other",
+            "label": "Uniform Deduction",
+            "amount": 16.2,
+            "ytd": 97.2
+          }
+        ],
+        "ficaWages": 11125.0,
+        "section125Premium": null,
+        "totalDeductions": 1873.81,
+        "periodsPerYear": 12,
+        "periodNumberTrue": 6,
+        "ytdPrinted": true
+      },
+      "tamperedFrom": "paystub_09.png",
+      "originalGrossPayPeriod": 11125.0,
+      "originalNetPay": 9251.19,
+      "grossInflation": 1.3425
+    }
+  },
+  "paystub_18.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Harriet J. Pemberton",
+      "employerName": "Ashgrove Senior Living",
+      "grossMonthlyIncome": 6541.66,
+      "payPeriod": "2026-09-01 - 2026-09-15",
+      "address": null,
+      "ssnLast4": "9038",
+      "documentDate": "2026-09-15",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 2440.71,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 3270.83,
+      "socialSecurityWithheld": 202.79,
+      "medicareWithheld": 47.43,
+      "ytdGrossPay": null,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "landscape_wide",
+      "frequency": "semi-monthly",
+      "degraded": false,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "salaried, 1 earnings line(s); pay frequency word not printed (infer from period dates)",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Salary",
+            "amount": 3270.83,
+            "ytd": 55604.11
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Fed Withholding",
+            "amount": 248.58,
+            "ytd": 4225.86
+          },
+          {
+            "kind": "ss",
+            "label": "OASDI",
+            "amount": 202.79,
+            "ytd": 3447.43
+          },
+          {
+            "kind": "med",
+            "label": "Med Tax",
+            "amount": 47.43,
+            "ytd": 806.31
+          },
+          {
+            "kind": "state",
+            "label": "State W/H",
+            "amount": 139.83,
+            "ytd": 2377.11
+          },
+          {
+            "kind": "k401",
+            "label": "401K Employee",
+            "amount": 163.54,
+            "ytd": 2780.18
+          },
+          {
+            "kind": "other",
+            "label": "Union Dues",
+            "amount": 27.95,
+            "ytd": 475.15
+          }
+        ],
+        "ficaWages": 3270.83,
+        "section125Premium": null,
+        "totalDeductions": 830.12,
+        "periodsPerYear": 24,
+        "periodNumberTrue": 17,
+        "ytdPrinted": false
+      }
+    }
+  },
+  "paystub_19.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Santiago Ibarra",
+      "employerName": "Redfern Auto Group",
+      "grossMonthlyIncome": 4266.82,
+      "payPeriod": "06/22/2026 - 07/05/2026",
+      "address": "3277 Tern Way, Provo, UT 84601",
+      "ssnLast4": "7106",
+      "documentDate": "2026-07-10",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 1433.14,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 1969.3,
+      "socialSecurityWithheld": 117.79,
+      "medicareWithheld": 27.55,
+      "ytdGrossPay": 25600.9,
+      "payPeriodNumber": 13
+    },
+    "meta": {
+      "layout": "check_stub_bottom",
+      "frequency": "biweekly",
+      "degraded": false,
+      "tampered": false,
+      "section125": true,
+      "combined_fica": false,
+      "notes": "hourly, 2 earnings line(s); Section 125 premium 69.50; FICA wages 1899.80",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular",
+            "amount": 1504.0,
+            "ytd": 19552.0
+          },
+          {
+            "label": "Overtime",
+            "amount": 465.3,
+            "ytd": 6048.9
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "pretax",
+            "label": "Health Premium (Section 125)",
+            "amount": 69.5,
+            "ytd": 903.5
+          },
+          {
+            "kind": "fit",
+            "label": "Fed Withholding",
+            "amount": 303.97,
+            "ytd": 3951.61
+          },
+          {
+            "kind": "ss",
+            "label": "FICA-SS",
+            "amount": 117.79,
+            "ytd": 1531.27
+          },
+          {
+            "kind": "med",
+            "label": "FICA-Med",
+            "amount": 27.55,
+            "ytd": 358.15
+          },
+          {
+            "kind": "other",
+            "label": "Vision Plan",
+            "amount": 5.2,
+            "ytd": 67.6
+          },
+          {
+            "kind": "other",
+            "label": "Optional Life Ins",
+            "amount": 12.15,
+            "ytd": 157.95
+          }
+        ],
+        "ficaWages": 1899.8,
+        "section125Premium": 69.5,
+        "totalDeductions": 536.16,
+        "periodsPerYear": 26,
+        "periodNumberTrue": 13,
+        "ytdPrinted": true
+      }
+    }
+  },
+  "paystub_20.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Kendra Lockridge",
+      "employerName": "Kestrel Wire & Cable Co.",
+      "grossMonthlyIncome": 9541.68,
+      "payPeriod": "08/31/2026 - 09/13/2026",
+      "address": "2334 Alder Court, Fairhaven, WA 98225",
+      "ssnLast4": null,
+      "documentDate": "2026-09-18",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 3320.37,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 4403.85,
+      "socialSecurityWithheld": 273.04,
+      "medicareWithheld": 63.86,
+      "ytdGrossPay": null,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "dot_matrix_mono",
+      "frequency": "biweekly",
+      "degraded": false,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "salaried, 1 earnings line(s); pay frequency word not printed (infer from period dates); low-resolution render (~600px wide)",
+      "lowres": true,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular Salary",
+            "amount": 4403.85,
+            "ytd": 79269.3
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Federal W/H",
+            "amount": 289.77,
+            "ytd": 5215.86
+          },
+          {
+            "kind": "ss",
+            "label": "FED FICA SS",
+            "amount": 273.04,
+            "ytd": 4914.72
+          },
+          {
+            "kind": "med",
+            "label": "Medicare",
+            "amount": 63.86,
+            "ytd": 1149.48
+          },
+          {
+            "kind": "state",
+            "label": "State Income Tax",
+            "amount": 186.28,
+            "ytd": 3353.04
+          },
+          {
+            "kind": "k401",
+            "label": "Retirement 401(k)",
+            "amount": 264.23,
+            "ytd": 4756.14
+          },
+          {
+            "kind": "other",
+            "label": "Uniform Deduction",
+            "amount": 6.3,
+            "ytd": 113.4
+          }
+        ],
+        "ficaWages": 4403.85,
+        "section125Premium": null,
+        "totalDeductions": 1083.48,
+        "periodsPerYear": 26,
+        "periodNumberTrue": 18,
+        "ytdPrinted": false
+      }
+    }
+  },
+  "paystub_21.png": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Bartholomew Nakamura",
+      "employerName": "Quillfeather Print Works",
+      "grossMonthlyIncome": 7416.67,
+      "payPeriod": "Sep 7, 2026 - Sep 13, 2026",
+      "address": "783 Marlow Place, Apt 39, Provo, UT 84601",
+      "ssnLast4": null,
+      "documentDate": "2026-09-18",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 1344.35,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 1711.54,
+      "socialSecurityWithheld": 106.12,
+      "medicareWithheld": 24.82,
+      "ytdGrossPay": 61615.44,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "serif_logo_corner",
+      "frequency": "weekly",
+      "degraded": true,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "salaried, 1 earnings line(s); photo degradation (rotation 0.8 deg, noise, blur, JPEG artefacts, paper tint); YTD printed but period number not printed",
+      "lowres": false,
+      "format": "png",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular Salary",
+            "amount": 1711.54,
+            "ytd": 61615.44
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Federal W/H",
+            "amount": 136.92,
+            "ytd": 4929.12
+          },
+          {
+            "kind": "ss",
+            "label": "Social Security",
+            "amount": 106.12,
+            "ytd": 3820.32
+          },
+          {
+            "kind": "med",
+            "label": "Medicare",
+            "amount": 24.82,
+            "ytd": 893.52
+          },
+          {
+            "kind": "state",
+            "label": "State Income Tax",
+            "amount": 85.58,
+            "ytd": 3080.88
+          },
+          {
+            "kind": "other",
+            "label": "Parking",
+            "amount": 13.75,
+            "ytd": 495.0
+          }
+        ],
+        "ficaWages": 1711.54,
+        "section125Premium": null,
+        "totalDeductions": 367.19,
+        "periodsPerYear": 52,
+        "periodNumberTrue": 36,
+        "ytdPrinted": true
+      }
+    }
+  },
+  "paystub_22.pdf": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Yolanda S. Fairweather",
+      "employerName": "Stonebrook Dental Associates",
+      "grossMonthlyIncome": 9425.94,
+      "payPeriod": "08/01/2026 - 08/15/2026",
+      "address": null,
+      "ssnLast4": "1083",
+      "documentDate": "2026-08-14",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 3532.53,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 4712.97,
+      "socialSecurityWithheld": 288.24,
+      "medicareWithheld": 67.41,
+      "ytdGrossPay": null,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "sidebar_ytd_summary",
+      "frequency": "semi-monthly",
+      "degraded": false,
+      "tampered": false,
+      "section125": true,
+      "combined_fica": false,
+      "notes": "hourly, 2 earnings line(s); Section 125 premium 64.00; FICA wages 4648.97; pay frequency word not printed (infer from period dates)",
+      "lowres": false,
+      "format": "pdf",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular",
+            "amount": 4047.49,
+            "ytd": 60712.35
+          },
+          {
+            "label": "Overtime",
+            "amount": 665.48,
+            "ytd": 9982.2
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "pretax",
+            "label": "Health Ins (Sec 125)",
+            "amount": 64.0,
+            "ytd": 960.0
+          },
+          {
+            "kind": "fit",
+            "label": "Fed Income Tax",
+            "amount": 511.39,
+            "ytd": 7670.85
+          },
+          {
+            "kind": "ss",
+            "label": "Soc Sec",
+            "amount": 288.24,
+            "ytd": 4323.6
+          },
+          {
+            "kind": "med",
+            "label": "FICA-Med",
+            "amount": 67.41,
+            "ytd": 1011.15
+          },
+          {
+            "kind": "state",
+            "label": "State Income Tax",
+            "amount": 209.2,
+            "ytd": 3138.0
+          },
+          {
+            "kind": "other",
+            "label": "Parking",
+            "amount": 25.6,
+            "ytd": 384.0
+          },
+          {
+            "kind": "other",
+            "label": "Optional Life Ins",
+            "amount": 14.6,
+            "ytd": 219.0
+          }
+        ],
+        "ficaWages": 4648.97,
+        "section125Premium": 64.0,
+        "totalDeductions": 1180.44,
+        "periodsPerYear": 24,
+        "periodNumberTrue": 15,
+        "ytdPrinted": false
+      }
+    }
+  },
+  "paystub_23.pdf": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Ignatius Moreau",
+      "employerName": "Meridian Pines Electric Cooperative",
+      "grossMonthlyIncome": 11683.32,
+      "payPeriod": "03/23/2026 - 03/29/2026",
+      "address": null,
+      "ssnLast4": null,
+      "documentDate": "2026-04-03",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 2261.91,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 2696.15,
+      "socialSecurityWithheld": null,
+      "medicareWithheld": null,
+      "ytdGrossPay": 32353.8,
+      "payPeriodNumber": 12
+    },
+    "meta": {
+      "layout": "classic_table",
+      "frequency": "weekly",
+      "degraded": false,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": true,
+      "notes": "salaried, 2 earnings line(s); single combined FICA line printed; SS and Medicare not separately shown",
+      "lowres": false,
+      "format": "pdf",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Salary",
+            "amount": 1471.15,
+            "ytd": 17653.8
+          },
+          {
+            "label": "Bonus",
+            "amount": 1225.0,
+            "ytd": 14700.0
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "FITW",
+            "amount": 215.69,
+            "ytd": 2588.28
+          },
+          {
+            "kind": "fica",
+            "label": "FICA",
+            "amount": 206.25,
+            "ytd": 2475.0
+          },
+          {
+            "kind": "other",
+            "label": "Dental Insurance",
+            "amount": 12.3,
+            "ytd": 147.6
+          }
+        ],
+        "ficaWages": 2696.15,
+        "section125Premium": null,
+        "totalDeductions": 434.24,
+        "periodsPerYear": 52,
+        "periodNumberTrue": 12,
+        "ytdPrinted": true
+      }
+    }
+  },
+  "paystub_24.pdf": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Raghav Mehta-Sloan",
+      "employerName": "Ironbridge Builders Inc.",
+      "grossMonthlyIncome": 15697.5,
+      "payPeriod": "09/01/2026 - 09/30/2026",
+      "address": "1574 Sycamore Drive, Fairhaven, WA 98225",
+      "ssnLast4": "5479",
+      "documentDate": "2026-09-30",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 13272.35,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 15697.5,
+      "socialSecurityWithheld": 705.25,
+      "medicareWithheld": 164.94,
+      "ytdGrossPay": 102375.0,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "dense_bureau",
+      "frequency": "monthly",
+      "degraded": false,
+      "tampered": true,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "salaried, 1 earnings line(s); pay frequency word not printed (infer from period dates); TAMPERED copy of paystub_14: gross raised from 11375.00; SS, Medicare and YTD left unchanged; YTD printed but period number not printed",
+      "lowres": false,
+      "format": "pdf",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Salary",
+            "amount": 15697.5,
+            "ytd": 102375.0
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Federal W/H",
+            "amount": 972.56,
+            "ytd": 8753.04
+          },
+          {
+            "kind": "ss",
+            "label": "FED FICA SS",
+            "amount": 705.25,
+            "ytd": 6347.25
+          },
+          {
+            "kind": "med",
+            "label": "Med Tax",
+            "amount": 164.94,
+            "ytd": 1484.46
+          },
+          {
+            "kind": "k401",
+            "label": "Retirement 401(k)",
+            "amount": 568.75,
+            "ytd": 5118.75
+          },
+          {
+            "kind": "other",
+            "label": "Vision Plan",
+            "amount": 2.35,
+            "ytd": 21.15
+          },
+          {
+            "kind": "other",
+            "label": "Optional Life Ins",
+            "amount": 11.3,
+            "ytd": 101.7
+          }
+        ],
+        "ficaWages": 11375.0,
+        "section125Premium": null,
+        "totalDeductions": 2425.15,
+        "periodsPerYear": 12,
+        "periodNumberTrue": 9,
+        "ytdPrinted": true
+      },
+      "tamperedFrom": "paystub_14.png",
+      "originalGrossPayPeriod": 11375.0,
+      "originalNetPay": 8949.85,
+      "grossInflation": 1.38
+    }
+  },
+  "paystub_25.pdf": {
+    "docType": "pay-stub",
+    "fields": {
+      "fullName": "Beatrix Oduya",
+      "employerName": "Bluefin Harbor Seafood Inc.",
+      "grossMonthlyIncome": 3623.0,
+      "payPeriod": "Apr 1, 2026 - Apr 30, 2026",
+      "address": null,
+      "ssnLast4": null,
+      "documentDate": "2026-04-30",
+      "businessName": null,
+      "ein": null,
+      "annualBusinessRevenue": null,
+      "ownershipPercent": null,
+      "netPay": 2742.91,
+      "recentDepositAmount": null,
+      "recentDepositSource": null,
+      "grossPayPeriod": 3623.0,
+      "socialSecurityWithheld": 224.63,
+      "medicareWithheld": 52.53,
+      "ytdGrossPay": null,
+      "payPeriodNumber": null
+    },
+    "meta": {
+      "layout": "dashboard_boxes",
+      "frequency": "monthly",
+      "degraded": false,
+      "tampered": false,
+      "section125": false,
+      "combined_fica": false,
+      "notes": "hourly, 2 earnings line(s)",
+      "lowres": false,
+      "format": "pdf",
+      "audit": {
+        "earnings": [
+          {
+            "label": "Regular",
+            "amount": 2548.0,
+            "ytd": 10192.0
+          },
+          {
+            "label": "Spot Bonus",
+            "amount": 1075.0,
+            "ytd": 4300.0
+          }
+        ],
+        "deductions": [
+          {
+            "kind": "fit",
+            "label": "Federal W/H",
+            "amount": 434.76,
+            "ytd": 1739.04
+          },
+          {
+            "kind": "ss",
+            "label": "OASDI",
+            "amount": 224.63,
+            "ytd": 898.52
+          },
+          {
+            "kind": "med",
+            "label": "Medicare",
+            "amount": 52.53,
+            "ytd": 210.12
+          },
+          {
+            "kind": "state",
+            "label": "ST Withholding",
+            "amount": 144.92,
+            "ytd": 579.68
+          },
+          {
+            "kind": "other",
+            "label": "Dental Insurance",
+            "amount": 23.25,
+            "ytd": 93.0
+          }
+        ],
+        "ficaWages": 3623.0,
+        "section125Premium": null,
+        "totalDeductions": 880.09,
+        "periodsPerYear": 12,
+        "periodNumberTrue": 4,
+        "ytdPrinted": false
+      }
+    }
+  }
+}

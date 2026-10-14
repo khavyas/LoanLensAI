@@ -81,7 +81,9 @@ export async function classifyAndExtractGroq(filePath, mimeType, originalFilenam
   // "unknown". Same pattern as extraction.js's Anthropic path.
   try {
     const { data, imageMimeType } = await toImageBase64(filePath, mimeType);
-    return { ...(await extractViaGroq(imageMimeType, data)), extractionSource: 'live' };
+    // Only ever one image per call (page 1 for a PDF) - reported so the app
+    // can say "AI read 1 of N pages" instead of implying a full read.
+    return { ...(await extractViaGroq(imageMimeType, data)), extractionSource: 'live', pagesRead: 1 };
   } catch (err) {
     console.error('[extractionGroq] Groq extraction failed, falling back to mock data:', err.message);
     return { ...mockClassifyAndExtract(originalFilename), extractionSource: 'fallback' };

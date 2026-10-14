@@ -18,6 +18,14 @@ const documentSchema = new mongoose.Schema(
     size: Number,
     sha256: String,
     mimeType: String,
+    // How much of the file was actually looked at, so nobody assumes a
+    // 150-page statement was fully read when the AI only saw page 1.
+    //   total       - pages in the file (null if the PDF couldn't be opened)
+    //   aiRead      - pages the vision model read (null if not recorded)
+    //   textScanned - pages whose text was scanned for transactions (bank statements)
+    pageInfo: { type: mongoose.Schema.Types.Mixed, default: null },
+    // Bank statements only: totals computed from every page's text.
+    statementSummary: { type: mongoose.Schema.Types.Mixed, default: null },
     extractedFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     confidence: { type: Number, default: 0 }, // 0..1 from the extraction model
     // 'live' = a real vision-model call succeeded; 'mock' = MOCK_AI=true

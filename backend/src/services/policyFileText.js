@@ -28,6 +28,6 @@ export async function extractPolicyText(fileName, buffer) {
     if (!text) throw new Error('This PDF contains no selectable text. Scanned PDFs need OCR before upload.');
     return text;
   } finally {
-    await pdf.destroy();
+    await task.destroy();
   }
 }
