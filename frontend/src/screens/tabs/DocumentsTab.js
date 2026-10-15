@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, Alert, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, Alert } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { api } from '../../api/client';
+import { useContentWidth } from '../../layout';
 import { colors, labelize } from '../../theme';
 import { Pill, Card, Overline } from '../../components/ui';
 
@@ -86,10 +87,9 @@ export default function DocumentsTab({ app, onChanged }) {
   const [showHistory, setShowHistory] = useState(false);
   const [busyDocId, setBusyDocId] = useState(null); // which document's preview/delete is in flight
   // On a wide screen, action items and uploaded documents sit side by side
-  // instead of one long stacked column — matches the SIDEBAR_BREAKPOINT
-  // convention used elsewhere in the app (App.js).
-  const { width } = useWindowDimensions();
-  const isWide = width >= 900;
+  // instead of one long stacked column. Based on the content column's width
+  // (not the window's), so a docked chat panel collapses it to one column.
+  const isWide = useContentWidth() >= 760;
 
   const allDocs = app.documents || [];
   const currentDocs = allDocs.filter((d) => (d.status || 'current') === 'current');

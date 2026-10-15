@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors, labelize } from '../theme';
 import { useAuth } from '../context/AuthContext';
+import { navigationRef } from '../navigationRef';
 
 function initials(name) {
   return (name || '')
@@ -12,20 +13,21 @@ function initials(name) {
     .toUpperCase();
 }
 
-// The global header for every authenticated screen — set once as the
-// Stack Navigator's header (App.js), not per-screen, so branding/nav/profile
-// can never be accidentally missing from a screen the way the plain
-// "Application" / "Apply for a Loan" titles were before.
-export default function BrandHeader({ navigation, options, back }) {
+// The global header for every authenticated screen. It is rendered once by
+// the app shell (App.js) above the sidebar/content/chat row — not as the
+// Stack Navigator's per-screen header — so the bar always spans the full
+// window width and never shrinks when the chat panel docks open. Being
+// outside the navigator, it navigates through navigationRef.
+export default function BrandHeader({ title, canGoBack }) {
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <View style={styles.bar}>
       <View style={styles.left}>
-        {back && (
+        {canGoBack && (
           <TouchableOpacity
-            onPress={navigation.goBack}
+            onPress={() => navigationRef.isReady() && navigationRef.goBack()}
             style={styles.backBtn}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
@@ -34,7 +36,10 @@ export default function BrandHeader({ navigation, options, back }) {
         )}
         <TouchableOpacity
           style={styles.brand}
-          onPress={() => navigation.navigate(user?.role === 'admin' ? 'RagAdmin' : 'Applications')}
+          onPress={() =>
+            navigationRef.isReady() &&
+            navigationRef.navigate(user?.role === 'admin' ? 'RagAdmin' : 'Applications')
+          }
         >
           <View style={styles.logoMark}>
             <Text style={styles.logoMarkText}>L</Text>
@@ -43,7 +48,7 @@ export default function BrandHeader({ navigation, options, back }) {
             LoanLens <Text style={{ color: colors.accent }}>AI</Text>
           </Text>
         </TouchableOpacity>
-        {options?.title && <Text style={styles.pageTitle}>{options.title}</Text>}
+        {!!title && <Text style={styles.pageTitle}>{title}</Text>}
       </View>
 
       {user && (
@@ -90,6 +95,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
+    zIndex: 1100,
   },
   left: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   backBtn: { padding: 4 },

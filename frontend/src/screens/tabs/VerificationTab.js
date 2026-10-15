@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { useContentWidth } from '../../layout';
 import { colors, labelize } from '../../theme';
 import { Pill, Card, Overline } from '../../components/ui';
 
@@ -17,9 +18,8 @@ export default function VerificationTab({ app }) {
   const docs = (app.documents || []).filter((d) => (d.status || 'current') === 'current');
   const anyChecks = docs.some((d) => d.verification?.checks?.length);
   // Two document cards side by side on a wide screen instead of one long
-  // stacked column — same breakpoint convention as elsewhere (App.js).
-  const { width } = useWindowDimensions();
-  const isWide = width >= 900;
+  // stacked column; based on the content column's width (see layout.js).
+  const isWide = useContentWidth() >= 760;
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>

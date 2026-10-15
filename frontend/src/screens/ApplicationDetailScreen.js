@@ -97,9 +97,10 @@ export default function ApplicationDetailScreen({ route }) {
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: colors.bg },
-  // Widened from 760 — on a real desktop monitor a single 760px column left
-  // huge dead space left/right.
-  inner: { flex: 1, width: '100%', maxWidth: 1200, alignSelf: 'center' },
+  // Fills the content column (sidebar and chat dock are separate columns in
+  // App.js). A centered max-width box here made the whole page jump sideways
+  // whenever the chat opened or closed, since the column width changed.
+  inner: { flex: 1, width: '100%' },
   loading: { margin: 24, color: colors.muted },
   header: {
     backgroundColor: colors.card,

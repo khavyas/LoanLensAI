@@ -18,31 +18,36 @@ const NAV_ITEMS = [
 // hooks aren't available here — they need a nearby Navigator context that a
 // sibling of the Navigator doesn't have. Navigating via navigationRef is
 // React Navigation's documented way to do this from outside the tree.
-export default function Sidebar() {
+export default function Sidebar({ width = 220, activeRoute }) {
   const { user } = useAuth();
 
   if (!user) return null;
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, { width }]}>
       <Text style={styles.sectionLabel}>Navigate</Text>
-      {NAV_ITEMS.filter((item) => item.roles.includes(user.role)).map((item) => (
-        <TouchableOpacity
-          key={item.route}
-          style={styles.item}
-          onPress={() => navigationRef.isReady() && navigationRef.navigate(item.route)}
-        >
-          <Text style={styles.icon}>{item.icon}</Text>
-          <Text style={styles.label}>{item.label}</Text>
-        </TouchableOpacity>
-      ))}
+      {NAV_ITEMS.filter((item) => item.roles.includes(user.role)).map((item) => {
+        // An application's detail page belongs to the Applications section.
+        const active =
+          activeRoute === item.route ||
+          (item.route === 'Applications' && activeRoute === 'ApplicationDetail');
+        return (
+          <TouchableOpacity
+            key={item.route}
+            style={[styles.item, active && styles.itemActive]}
+            onPress={() => navigationRef.isReady() && navigationRef.navigate(item.route)}
+          >
+            <Text style={[styles.icon, active && styles.textActive]}>{item.icon}</Text>
+            <Text style={[styles.label, active && styles.textActive]}>{item.label}</Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    width: 220,
     backgroundColor: colors.card,
     borderRightWidth: 1,
     borderColor: colors.border,
@@ -67,6 +72,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 2,
   },
+  itemActive: { backgroundColor: colors.infoBg },
+  textActive: { color: colors.accent },
   icon: { fontSize: 16, color: colors.muted, width: 18, textAlign: 'center' },
   label: { fontSize: 14, fontWeight: '600', color: colors.muted },
 });

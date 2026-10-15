@@ -11,7 +11,16 @@ import { api } from '../api/client';
 import AssistantTab from '../screens/tabs/AssistantTab';
 import { colors, shadow } from '../theme';
 
-export default function FloatingChatWidget({ user, activeApplicationId, onOpenChange }) {
+// Wide screens (`dockable`): the open chat is a full-height column at the
+// right edge of the layout row (App.js), so the content beside it narrows
+// rather than being covered. Narrow screens: it floats over the content.
+export default function FloatingChatWidget({
+  user,
+  activeApplicationId,
+  dockable = false,
+  dockWidth = 400,
+  onOpenChange,
+}) {
   const { width, height } = useWindowDimensions();
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
@@ -44,15 +53,27 @@ export default function FloatingChatWidget({ user, activeApplicationId, onOpenCh
   if (!user) return null;
 
   const app = applications.find((item) => item._id === activeApplicationId) || applications[0];
-  const panelStyle = {
-    width: Math.min(420, Math.max(280, width - 32)),
-    height: Math.min(620, Math.max(360, height - 96)),
-  };
+  const panelVisible = open && !minimized;
+  const docked = dockable && panelVisible;
+  const panelStyle = docked
+    ? styles.dockedPanel
+    : [
+        styles.panel,
+        {
+          width: Math.min(420, Math.max(280, width - 32)),
+          height: Math.min(620, Math.max(360, height - 96)),
+        },
+      ];
 
+  // The same root View is used in both modes (only its style changes), so
+  // docking/undocking on resize never remounts the conversation.
   return (
-    <View pointerEvents="box-none" style={styles.anchor}>
+    <View
+      pointerEvents="box-none"
+      style={docked ? [styles.dock, { width: dockWidth }] : styles.anchor}
+    >
       {open && (
-        <View style={[styles.panel, panelStyle, minimized && styles.hiddenPanel]}>
+        <View style={[panelStyle, minimized && styles.hiddenPanel]}>
           <View style={styles.header}>
             <View style={styles.headerTitle}>
               <Text style={styles.title}>LoanLens Assistant</Text>
@@ -112,6 +133,14 @@ export default function FloatingChatWidget({ user, activeApplicationId, onOpenCh
 
 const styles = StyleSheet.create({
   anchor: { position: 'absolute', right: 20, bottom: 20, zIndex: 1000, elevation: 30 },
+  dock: { alignSelf: 'stretch', flexShrink: 0 },
+  dockedPanel: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderLeftWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
   launcher: {
     minHeight: 54,
     borderRadius: 28,
