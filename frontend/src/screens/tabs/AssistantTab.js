@@ -13,10 +13,25 @@ import {
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../theme';
+import { handleLocalIntent } from '../../assistantActions';
+import { goToApplicationTab } from '../../navigationRef';
 
-const SUGGESTIONS = {
-  borrower: ['What documents do I still need?', 'Why is my application in review?', 'How long until a decision?'],
-  officer: ['Why is this application flagged?', 'What is the income tolerance policy?', 'What has been submitted so far?'],
+// Sample questions, grouped by what they open. The first three groups are
+// answered from the application's own data and jump to the matching page; the
+// Policy group goes to the assistant's policy knowledge base.
+const SAMPLE_GROUPS = {
+  borrower: [
+    { title: 'Documents', questions: ['What documents have I uploaded?', 'What documents do I still need?'] },
+    { title: 'Progress', questions: ['What is the progress of my application?', 'What is my application status?'] },
+    { title: 'Verification', questions: ['Show my verification results', 'Why is my application in review?'] },
+    { title: 'Policy', questions: ['What documents do I need for a car loan?', 'How long until a decision?', 'Is a co-signer allowed?'] },
+  ],
+  officer: [
+    { title: 'Documents', questions: ['Show the uploaded documents', 'Which documents are missing?'] },
+    { title: 'Progress', questions: ['Where is this application in the process?', 'What is the next step?'] },
+    { title: 'Verification', questions: ['Show the verification checks', 'Why is this application flagged?'] },
+    { title: 'Policy', questions: ['What is the income tolerance policy?', 'What are the small business loan requirements?'] },
+  ],
 };
 
 const STATUS_VALUE_PATTERN = /^(?:unknown|submitted|under review|in review|needs review|approved|rejected|declined|failed|pending|denied|cancelled|canceled|funded)$/i;
@@ -71,11 +86,15 @@ function AnswerBody({ text, highlight }) {
   );
 }
 
-export default function AssistantTab({ app }) {
+// `autoNavigate`: open the matching page when a question is answered. Off when
+// the chat IS a page (the Assistant tab) — navigating away would unmount it
+// and lose the conversation, so it offers an "Open …" link instead.
+export default function AssistantTab({ app, autoNavigate = true }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
+  const [showSamples, setShowSamples] = useState(false);
   const scrollRef = useRef(null);
 
   async function send(text) {
@@ -88,8 +107,23 @@ export default function AssistantTab({ app }) {
       .map((message) => ({ role: 'user', content: message.text }));
     setInput('');
     setMessages((m) => [...m, { from: 'user', text: question }]);
+    setShowSamples(false);
     setBusy(true);
     try {
+      // Questions about this application's own state are answered from its
+      // data and open the matching page; anything else goes to the assistant.
+      const local = await handleLocalIntent(question, app, user.role).catch(() => null);
+      if (local) {
+        setMessages((m) => [...m, {
+          from: 'ai',
+          text: local.answer,
+          sources: local.sources,
+          highlight: getHighlightIntent(question),
+          nav: { tab: local.tab, label: local.label, applicationId: local.applicationId },
+        }]);
+        if (autoNavigate) goToApplicationTab(local.applicationId, local.tab);
+        return;
+      }
       const { answer, sources } = await api.ask(app._id, question, history);
       setMessages((m) => [...m, {
         from: 'ai',
@@ -118,13 +152,18 @@ export default function AssistantTab({ app }) {
         contentContainerStyle={{ flexGrow: 1, padding: 14, paddingBottom: 18 }}
         keyboardShouldPersistTaps="handled"
       >
-        {messages.length === 0 && (
+        {(messages.length === 0 || showSamples) && (
           <View>
             <Text style={styles.suggestLabel}>Try asking</Text>
-            {SUGGESTIONS[user.role].map((s) => (
-              <TouchableOpacity key={s} style={styles.suggestion} onPress={() => send(s)}>
-                <Text style={styles.suggestionText}>{s}</Text>
-              </TouchableOpacity>
+            {(SAMPLE_GROUPS[user.role] || SAMPLE_GROUPS.borrower).map((g) => (
+              <View key={g.title} style={{ marginBottom: 6 }}>
+                <Text style={styles.groupTitle}>{g.title}</Text>
+                {g.questions.map((q) => (
+                  <TouchableOpacity key={q} style={styles.suggestion} onPress={() => send(q)}>
+                    <Text style={styles.suggestionText}>{q}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             ))}
           </View>
         )}
@@ -135,6 +174,14 @@ export default function AssistantTab({ app }) {
               <Text style={styles.userText}>{m.text}</Text>
             ) : (
               <AnswerBody text={m.text} highlight={m.highlight} />
+            )}
+            {m.nav && (
+              <TouchableOpacity
+                style={styles.navChip}
+                onPress={() => goToApplicationTab(m.nav.applicationId, m.nav.tab)}
+              >
+                <Text style={styles.navChipText}>{autoNavigate ? 'Opened' : 'Open'} {m.nav.label} →</Text>
+              </TouchableOpacity>
             )}
             {m.sources?.length > 0 && (
               <View style={styles.sources}>
@@ -155,6 +202,11 @@ export default function AssistantTab({ app }) {
         )}
       </ScrollView>
 
+      {messages.length > 0 && !showSamples && (
+        <TouchableOpacity style={styles.samplesToggle} onPress={() => setShowSamples(true)}>
+          <Text style={styles.samplesToggleText}>💡 Sample questions</Text>
+        </TouchableOpacity>
+      )}
       <View style={styles.inputRow}>
         <TextInput
           style={styles.input}
@@ -182,6 +234,18 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 8,
   },
+  groupTitle: { fontSize: 12, fontWeight: '700', color: colors.muted, marginBottom: 6, marginTop: 4 },
+  navChip: {
+    alignSelf: 'flex-start',
+    marginTop: 10,
+    backgroundColor: colors.infoBg,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  navChipText: { color: colors.info, fontSize: 12, fontWeight: '700' },
+  samplesToggle: { paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.bg },
+  samplesToggleText: { color: colors.accent, fontSize: 12, fontWeight: '600' },
   suggestion: {
     backgroundColor: colors.card,
     borderWidth: 1,

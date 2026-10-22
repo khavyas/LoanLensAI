@@ -1,7 +1,8 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '../theme';
 import { useAuth } from '../context/AuthContext';
-import { navigationRef } from '../navigationRef';
+import { navigationRef, APP_TABS, goToApplicationTab } from '../navigationRef';
+import { chatBus } from '../chatBus';
 
 const NAV_ITEMS = [
   { route: 'Applications', label: 'Applications', icon: '⌂', roles: ['officer', 'borrower'] },
@@ -18,7 +19,7 @@ const NAV_ITEMS = [
 // hooks aren't available here — they need a nearby Navigator context that a
 // sibling of the Navigator doesn't have. Navigating via navigationRef is
 // React Navigation's documented way to do this from outside the tree.
-export default function Sidebar({ width = 220, activeRoute }) {
+export default function Sidebar({ width = 220, activeRoute, activeApplicationId, activeTab }) {
   const { user } = useAuth();
 
   if (!user) return null;
@@ -32,16 +33,37 @@ export default function Sidebar({ width = 220, activeRoute }) {
           activeRoute === item.route ||
           (item.route === 'Applications' && activeRoute === 'ApplicationDetail');
         return (
-          <TouchableOpacity
-            key={item.route}
-            style={[styles.item, active && styles.itemActive]}
-            onPress={() => navigationRef.isReady() && navigationRef.navigate(item.route)}
-          >
-            <Text style={[styles.icon, active && styles.textActive]}>{item.icon}</Text>
-            <Text style={[styles.label, active && styles.textActive]}>{item.label}</Text>
-          </TouchableOpacity>
+          <View key={item.route}>
+            <TouchableOpacity
+              style={[styles.item, active && styles.itemActive]}
+              onPress={() => navigationRef.isReady() && navigationRef.navigate(item.route)}
+            >
+              <Text style={[styles.icon, active && styles.textActive]}>{item.icon}</Text>
+              <Text style={[styles.label, active && styles.textActive]}>{item.label}</Text>
+            </TouchableOpacity>
+            {/* The open application's own pages, nested under Applications. */}
+            {item.route === 'Applications' && activeApplicationId &&
+              APP_TABS.map((t) => {
+                const tabActive = activeTab === t.key;
+                return (
+                  <TouchableOpacity
+                    key={t.key}
+                    style={[styles.subItem, tabActive && styles.subItemActive]}
+                    onPress={() => goToApplicationTab(activeApplicationId, t.key)}
+                  >
+                    <Text style={[styles.subLabel, tabActive && styles.textActive]}>{t.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+          </View>
         );
       })}
+      {user.role !== 'admin' && (
+        <TouchableOpacity style={[styles.item, styles.chatItem]} onPress={() => chatBus.open()}>
+          <Text style={[styles.icon, { color: colors.accent }]}>💬</Text>
+          <Text style={[styles.label, { color: colors.accent }]}>Ask LoanLens</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -76,4 +98,8 @@ const styles = StyleSheet.create({
   textActive: { color: colors.accent },
   icon: { fontSize: 16, color: colors.muted, width: 18, textAlign: 'center' },
   label: { fontSize: 14, fontWeight: '600', color: colors.muted },
+  subItem: { paddingVertical: 7, paddingLeft: 36, paddingRight: 8, borderRadius: 8, marginBottom: 1 },
+  subItemActive: { backgroundColor: colors.infoBg },
+  subLabel: { fontSize: 13, fontWeight: '600', color: colors.muted },
+  chatItem: { marginTop: 14, borderTopWidth: 1, borderColor: colors.border, borderRadius: 0, paddingTop: 14 },
 });

@@ -1,18 +1,24 @@
 import { useCallback, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
 import { colors, labelize, STATUS_TONE } from '../theme';
 import { Pill, Overline } from '../components/ui';
 import DocumentsTab from './tabs/DocumentsTab';
 import VerificationTab from './tabs/VerificationTab';
+import ProgressTab from './tabs/ProgressTab';
+import ActionNeededTab from './tabs/ActionNeededTab';
+import AssistantTab from './tabs/AssistantTab';
+import { APP_TABS, DEFAULT_TAB } from '../navigationRef';
 
-const TABS = ['Documents', 'Verification'];
-
-export default function ApplicationDetailScreen({ route }) {
+export default function ApplicationDetailScreen({ route, navigation }) {
   const { id } = route.params;
   const [app, setApp] = useState(null);
-  const [tab, setTab] = useState('Documents');
+  // The page is part of the URL (/applications/:id/<tab>), so it can be
+  // bookmarked, shared and opened directly by the chat assistant.
+  const requested = route.params?.tab;
+  const tab = APP_TABS.some((t) => t.key === requested) ? requested : DEFAULT_TAB;
+  const setTab = (key) => navigation.setParams({ tab: key });
 
   const load = useCallback(async () => {
     try {
@@ -74,21 +80,32 @@ export default function ApplicationDetailScreen({ route }) {
           </View>
         </View>
 
-        <View style={styles.tabBar}>
-          {TABS.map((t) => (
-            <TouchableOpacity
-              key={t}
-              style={[styles.tabBtn, tab === t && styles.tabBtnActive]}
-              onPress={() => setTab(t)}
-            >
-              <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>{t}</Text>
-            </TouchableOpacity>
-          ))}
+        <View style={styles.tabBarWrap}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabBar}>
+            {APP_TABS.map((t) => {
+              const count = t.key === 'action-needed' ? (app.openExceptions || []).length : 0;
+              return (
+                <TouchableOpacity
+                  key={t.key}
+                  style={[styles.tabBtn, tab === t.key && styles.tabBtnActive]}
+                  onPress={() => setTab(t.key)}
+                >
+                  <Text style={[styles.tabText, tab === t.key && styles.tabTextActive]}>
+                    {t.label}
+                    {count > 0 ? ` (${count})` : ''}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
         </View>
 
         <View style={{ flex: 1 }}>
-          {tab === 'Documents' && <DocumentsTab app={app} onChanged={load} />}
-          {tab === 'Verification' && <VerificationTab app={app} />}
+          {tab === 'progress' && <ProgressTab app={app} />}
+          {tab === 'documents' && <DocumentsTab app={app} onChanged={load} />}
+          {tab === 'verification' && <VerificationTab app={app} />}
+          {tab === 'action-needed' && <ActionNeededTab app={app} onChanged={load} />}
+          {tab === 'assistant' && <AssistantTab app={app} autoNavigate={false} />}
         </View>
       </View>
     </View>
@@ -114,13 +131,13 @@ const styles = StyleSheet.create({
   fact: { minWidth: 120 },
   factLabel: { fontSize: 12, color: colors.faint, marginBottom: 2 },
   factValue: { fontSize: 14, fontWeight: '700', color: colors.text },
-  tabBar: {
-    flexDirection: 'row',
+  tabBarWrap: {
     backgroundColor: colors.card,
     borderBottomWidth: 1,
     borderColor: colors.border,
-    paddingHorizontal: 8,
+    flexGrow: 0,
   },
+  tabBar: { flexDirection: 'row', paddingHorizontal: 8 },
   tabBtn: { paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 2, borderColor: 'transparent' },
   tabBtnActive: { borderColor: colors.accent },
   tabText: { color: colors.muted, fontWeight: '600', fontSize: 14 },

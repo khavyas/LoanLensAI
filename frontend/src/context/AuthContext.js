@@ -6,14 +6,21 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  // False until the saved session has been read. The navigator waits for it,
+  // otherwise a page reload on /applications/:id/progress is resolved while
+  // "logged out" and the deep link is lost.
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem('loanlens.session').then((raw) => {
-      if (!raw) return;
-      const { token, user: savedUser } = JSON.parse(raw);
-      setToken(token);
-      setUser(savedUser);
-    });
+    AsyncStorage.getItem('loanlens.session')
+      .then((raw) => {
+        if (!raw) return;
+        const { token, user: savedUser } = JSON.parse(raw);
+        setToken(token);
+        setUser(savedUser);
+      })
+      .catch(() => {})
+      .finally(() => setReady(true));
   }, []);
 
   // Any 401 from anywhere in the app (expired/invalid token) drops back to
@@ -50,7 +57,7 @@ export function AuthProvider({ children }) {
     await AsyncStorage.removeItem('loanlens.session');
   }
 
-  return <AuthContext.Provider value={{ user, login, adminLogin, register, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, ready, login, adminLogin, register, logout }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);

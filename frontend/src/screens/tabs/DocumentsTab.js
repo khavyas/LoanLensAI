@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, Alert } from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
 import { api } from '../../api/client';
+import { pickAndUploadDocument } from '../../utils/uploadDocument';
 import { useContentWidth } from '../../layout';
 import { colors, labelize } from '../../theme';
 import { Pill, Card, Overline } from '../../components/ui';
+import { VerificationChecklist, VerificationScoreboard } from '../../components/VerificationSummary';
 
 const OVERALL_TONE = { pass: 'success', 'needs-review': 'warning', fail: 'danger' };
 const REQ_STATUS_TONE = { pending: 'neutral', received: 'success', 'needs-attention': 'warning' };
@@ -99,27 +100,9 @@ export default function DocumentsTab({ app, onChanged }) {
 
   async function pickAndUpload(expectedDocType) {
     setError(null);
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ['image/*', 'application/pdf'],
-      copyToCacheDirectory: true,
-    });
-    if (result.canceled) return;
-    const asset = result.assets[0];
-
-    const form = new FormData();
-    if (Platform.OS === 'web') {
-      // Some browsers don't populate asset.file — fall back to fetching the blob URI.
-      const file = asset.file ?? (await (await fetch(asset.uri)).blob());
-      form.append('file', file, asset.name);
-    } else {
-      form.append('file', { uri: asset.uri, name: asset.name, type: asset.mimeType || 'image/jpeg' });
-    }
-    if (expectedDocType) form.append('expectedDocType', expectedDocType);
-
     setBusyDocType(expectedDocType || '__generic__');
     try {
-      await api.uploadDocument(app._id, form);
-      onChanged();
+      if (await pickAndUploadDocument(app._id, expectedDocType)) onChanged();
     } catch (e) {
       setError(e.message);
     } finally {
@@ -269,6 +252,7 @@ export default function DocumentsTab({ app, onChanged }) {
       {currentDocs.length > 0 && (
         <Text style={[styles.sectionHeading, { marginTop: 0 }]}>Uploaded Documents</Text>
       )}
+      {currentDocs.length > 0 && <VerificationScoreboard docs={currentDocs} />}
       {currentDocs.map((doc) => {
         const isBusy = busyDocId === doc._id;
         return (
@@ -328,6 +312,7 @@ export default function DocumentsTab({ app, onChanged }) {
                   </View>
                 ))}
             </View>
+            <VerificationChecklist doc={doc} />
           </Card>
         );
       })}

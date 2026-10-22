@@ -13,7 +13,7 @@ import RagAdminScreen from './src/screens/RagAdminScreen';
 import FloatingChatWidget from './src/components/FloatingChatWidget';
 import BrandHeader from './src/components/BrandHeader';
 import Sidebar from './src/components/Sidebar';
-import { navigationRef } from './src/navigationRef';
+import { navigationRef, APP_TABS, DEFAULT_TAB } from './src/navigationRef';
 import { ContentWidthContext } from './src/layout';
 import { colors } from './src/theme';
 
@@ -91,6 +91,7 @@ function Shell() {
   const { width } = useWindowDimensions();
   const { user } = useAuth();
   const [activeApplicationId, setActiveApplicationId] = useState(null);
+  const [activeTab, setActiveTab] = useState(null);
   const [routeName, setRouteName] = useState(null);
   const [canGoBack, setCanGoBack] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
@@ -109,6 +110,7 @@ function Shell() {
       setRouteName(route?.name ?? null);
       setCanGoBack(navigationRef.isReady() && navigationRef.canGoBack());
       setActiveApplicationId(route?.name === 'ApplicationDetail' ? route.params?.id : null);
+      setActiveTab(route?.name === 'ApplicationDetail' ? route.params?.tab || DEFAULT_TAB : null);
     };
     syncRoute();
     const unsubscribe = navigationRef.addListener('state', syncRoute);
@@ -126,7 +128,12 @@ function Shell() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       {user && <BrandHeader title={routeTitle(routeName, user)} canGoBack={canGoBack} />}
       <View style={{ flex: 1, flexDirection: 'row', minHeight: 0 }}>
-        {showSidebar && <Sidebar width={SIDEBAR_WIDTH} activeRoute={routeName} />}
+        {showSidebar && <Sidebar
+            width={SIDEBAR_WIDTH}
+            activeRoute={routeName}
+            activeApplicationId={activeApplicationId}
+            activeTab={activeTab}
+          />}
         <View style={{ flex: 1, minWidth: 0 }}>
           <ContentWidthContext.Provider value={contentWidth}>
             <Routes />
@@ -139,6 +146,8 @@ function Shell() {
             dockable={chatDockable}
             dockWidth={CHAT_DOCK_WIDTH}
             onOpenChange={setChatOpen}
+            // The Assistant page is itself a chat; its launcher would sit on top of Send.
+            hideLauncher={activeTab === 'assistant'}
           />
         )}
       </View>
@@ -152,17 +161,46 @@ function Shell() {
 const documentTitle = {
   formatter: (options, route) => {
     const screenTitle = options?.title ?? route?.name;
-    return screenTitle ? `LoanLens AI · ${screenTitle}` : 'LoanLens AI';
+    const tabTitle = APP_TABS.find((t) => t.key === route?.params?.tab)?.label;
+    if (!screenTitle) return 'LoanLens AI';
+    return tabTitle ? `LoanLens AI · ${screenTitle} · ${tabTitle}` : `LoanLens AI · ${screenTitle}`;
   },
 };
+
+// Every page has a readable URL, e.g. /applications/<id>/progress. The
+// application pages are tabs of one screen; the chat assistant opens them by
+// changing the `tab` param.
+const linking = {
+  prefixes: [],
+  config: {
+    screens: {
+      Login: 'login',
+      SignUp: 'signup',
+      Applications: 'applications',
+      NewApplication: 'apply',
+      ApplicationDetail: 'applications/:id/:tab?',
+      RagAdmin: 'admin/policies',
+    },
+  },
+};
+
+function Root() {
+  const { ready } = useAuth();
+  // Build the navigator only once we know who is logged in, so a deep link
+  // (e.g. a reload on /applications/<id>/progress) resolves to the right page.
+  if (!ready) return null;
+  return (
+    <NavigationContainer ref={navigationRef} documentTitle={documentTitle} linking={linking}>
+      <StatusBar style="light" />
+      <Shell />
+    </NavigationContainer>
+  );
+}
 
 export default function App() {
   return (
     <AuthProvider>
-      <NavigationContainer ref={navigationRef} documentTitle={documentTitle}>
-        <StatusBar style="light" />
-        <Shell />
-      </NavigationContainer>
+      <Root />
     </AuthProvider>
   );
 }
