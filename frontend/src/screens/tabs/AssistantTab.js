@@ -32,6 +32,12 @@ const SAMPLE_GROUPS = {
     { title: 'Verification', questions: ['Show the verification checks', 'Why is this application flagged?'] },
     { title: 'Policy', questions: ['What is the income tolerance policy?', 'What are the small business loan requirements?'] },
   ],
+  underwriter: [
+    { title: 'Exception review', questions: ['Why was this application referred?', 'Which parameters are not met?', 'What is the credit score on this file?'] },
+    { title: 'Documents', questions: ['Show the uploaded documents', 'Show the verification checks'] },
+    { title: 'Progress', questions: ['Where is this application in the process?'] },
+    { title: 'Policy', questions: ['What is the income tolerance policy?', 'What are the small business loan requirements?'] },
+  ],
 };
 
 const STATUS_VALUE_PATTERN = /^(?:unknown|submitted|under review|in review|needs review|approved|rejected|declined|failed|pending|denied|cancelled|canceled|funded)$/i;

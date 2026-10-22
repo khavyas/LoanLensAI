@@ -15,7 +15,12 @@ export const APP_TABS = [
   { key: 'verification', label: 'Verification' },
   { key: 'action-needed', label: 'Action Needed' },
   { key: 'assistant', label: 'Assistant' },
+  // Bank staff only: policy parameters, credit score, referral / decision, audit trail.
+  { key: 'decision', label: 'Decision', staff: true },
 ];
+
+const STAFF = ['officer', 'underwriter'];
+export const tabsForRole = (role) => APP_TABS.filter((t) => !t.staff || STAFF.includes(role));
 export const DEFAULT_TAB = 'documents';
 
 // Opens one page of an application. If that application is already on screen

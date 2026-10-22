@@ -92,6 +92,7 @@ export default function LoginScreen({ navigation }) {
         {!adminMode && <View style={styles.demoBox}>
           <Text style={styles.demoTitle}>Demo accounts</Text>
           <Text style={styles.demoLine}>Loan officer · officer@loanlens.demo</Text>
+          <Text style={styles.demoLine}>Underwriter · underwriter@loanlens.demo</Text>
           <Text style={styles.demoLine}>Jordan Rivera (auto-loan) · borrower@loanlens.demo</Text>
           <Text style={styles.demoLine}>Priya Nair (personal-loan, clean) · priya.nair@example.demo</Text>
           <Text style={styles.demoLine}>Arjun Mehta (auto-loan) · arjun.mehta@example.demo</Text>

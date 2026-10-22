@@ -11,6 +11,17 @@ export default function ProgressTab({ app }) {
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>
+      {app.decisionNotice && (
+        <Card style={[{ marginBottom: 12, borderWidth: 1 }, { borderColor: app.decisionNotice.outcome === 'approved' ? colors.success : colors.danger }]}>
+          <Overline>Decision</Overline>
+          <Text style={styles.noticeTitle}>{app.decisionNotice.message}</Text>
+          {app.decisionNotice.reasons ? <Text style={styles.noticeBody}>Reason: {app.decisionNotice.reasons}</Text> : null}
+          {app.decisionNotice.conditions?.length ? (
+            <Text style={styles.noticeBody}>Conditions: {app.decisionNotice.conditions.join('; ')}</Text>
+          ) : null}
+          {app.decisionNotice.notice ? <Text style={styles.noticeSmall}>{app.decisionNotice.notice}</Text> : null}
+        </Card>
+      )}
       <Card>
         <Overline>Overall progress</Overline>
         <View style={styles.pctRow}>
@@ -70,6 +81,9 @@ export default function ProgressTab({ app }) {
 }
 
 const styles = StyleSheet.create({
+  noticeTitle: { fontSize: 16, fontWeight: '800', color: colors.text, marginTop: 6 },
+  noticeBody: { color: colors.text, fontSize: 13, marginTop: 6, lineHeight: 19 },
+  noticeSmall: { color: colors.muted, fontSize: 11, marginTop: 10, lineHeight: 16 },
   pctRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10, marginTop: 8 },
   pct: { fontSize: 34, fontWeight: '800', color: colors.text },
   pctSub: { color: colors.muted, fontSize: 13 },

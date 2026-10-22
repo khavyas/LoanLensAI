@@ -5,6 +5,7 @@ import { connectDb } from './config/db.js';
 import authRoutes from './routes/auth.js';
 import applicationRoutes from './routes/applications.js';
 import documentRoutes from './routes/documents.js';
+import decisionRoutes from './routes/decisions.js';
 import chatRoutes from './routes/chat.js';
 import adminRoutes from './routes/admin.js';
 import ragAdminRoutes from './routes/ragAdmin.js';
@@ -17,6 +18,7 @@ app.get('/health', (_req, res) => res.json({ ok: true, service: 'loanlens-backen
 
 app.use('/auth', authRoutes);
 app.use('/applications', applicationRoutes);
+app.use('/applications', decisionRoutes);
 app.use('/documents', documentRoutes);
 app.use('/chat', chatRoutes);
 app.use('/admin', adminRoutes);

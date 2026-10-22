@@ -41,5 +41,11 @@ export const STATUS_TONE = {
   'needs-review': 'warning',
   approved: 'success',
   rejected: 'danger',
+  referred: 'info',
   draft: 'neutral',
 };
+
+// 'referred' is shown as the role holding the file, not the internal status word.
+export function statusLabel(status) {
+  return status === 'referred' ? 'With Underwriter' : labelize(status);
+}

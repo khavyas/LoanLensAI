@@ -1,11 +1,11 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '../theme';
 import { useAuth } from '../context/AuthContext';
-import { navigationRef, APP_TABS, goToApplicationTab } from '../navigationRef';
+import { navigationRef, tabsForRole, goToApplicationTab } from '../navigationRef';
 import { chatBus } from '../chatBus';
 
 const NAV_ITEMS = [
-  { route: 'Applications', label: 'Applications', icon: '⌂', roles: ['officer', 'borrower'] },
+  { route: 'Applications', label: 'Applications', icon: '⌂', roles: ['officer', 'underwriter', 'borrower'] },
   { route: 'NewApplication', label: 'Apply for a Loan', icon: '+', roles: ['borrower'] },
   { route: 'RagAdmin', label: 'RAG Documents', icon: '▤', roles: ['admin'] },
 ];
@@ -43,7 +43,7 @@ export default function Sidebar({ width = 220, activeRoute, activeApplicationId,
             </TouchableOpacity>
             {/* The open application's own pages, nested under Applications. */}
             {item.route === 'Applications' && activeApplicationId &&
-              APP_TABS.map((t) => {
+              tabsForRole(user.role).map((t) => {
                 const tabActive = activeTab === t.key;
                 return (
                   <TouchableOpacity

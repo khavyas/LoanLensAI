@@ -66,6 +66,8 @@ async function runSeed() {
   const passwordHash = await bcrypt.hash('demo1234', 10);
   await User.create([
     { email: 'officer@loanlens.demo', passwordHash, name: 'Olivia Officer', role: 'officer' },
+    // Approves policy exceptions on files a loan officer refers; not self-registrable.
+    { email: 'underwriter@loanlens.demo', passwordHash, name: 'Uma Underwriter', role: 'underwriter' },
     { email: 'borrower@loanlens.demo', passwordHash, name: 'Jordan Rivera', role: 'borrower' },
     { email: 'dana.whitfield@example.demo', passwordHash, name: 'Dana Whitfield', role: 'borrower' },
     { email: 'priya.nair@example.demo', passwordHash, name: 'Priya Nair', role: 'borrower' },
@@ -99,6 +101,7 @@ async function runSeed() {
     },
     {
       applicantName: 'Priya Nair',
+      creditProfile: { score: 742, enteredBy: 'officer@loanlens.demo', enteredAt: new Date() },
       applicantEmail: 'priya.nair@example.demo',
       productType: 'personal-loan',
       statedMonthlyIncome: 7200,
@@ -110,6 +113,7 @@ async function runSeed() {
     },
     {
       applicantName: 'Arjun Mehta',
+      creditProfile: { score: 598, enteredBy: 'officer@loanlens.demo', enteredAt: new Date() },
       applicantEmail: 'arjun.mehta@example.demo',
       productType: 'auto-loan',
       statedMonthlyIncome: 3900,

@@ -11,6 +11,12 @@ import { computeProgress } from './utils/progress';
 // falls through to the normal assistant.
 const INTENTS = [
   {
+    // Staff only: referral, exception and credit-score questions open the Decision page.
+    tab: 'decision',
+    staffOnly: true,
+    test: /\b(referred|refer(?:ral)?|exception|underwriter|waive\w*|credit score|parameters?|who (?:decided|approved))\b/i,
+  },
+  {
     tab: 'action-needed',
     test: /\b(still need|need to (do|upload|fix)|what(?:'s| is| are) (missing|outstanding|pending)|missing|outstanding|action needed|to[- ]?do|next step|what should i do)\b|\bwhy\b.*\b(flagged|in review|review|mismatch|rejected|declined|failed)\b/i,
   },
@@ -32,13 +38,15 @@ const NAME_LIKE = /\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b/;
 const RESULT = { pass: 'Passed', 'needs-review': 'Needs review', fail: 'Failed' };
 const tabLabel = (key) => APP_TABS.find((t) => t.key === key)?.label || key;
 
+const isBorrower = (role) => role === 'borrower';
+
 function subject(role, app) {
-  return role === 'officer' ? app.applicantName : 'You';
+  return isBorrower(role) ? 'You' : app.applicantName;
 }
 
 function documentsAnswer(role, app, p) {
   const who = subject(role, app);
-  const verb = role === 'officer' ? 'has' : 'have';
+  const verb = isBorrower(role) ? 'have' : 'has';
   // "Still needed" goes before the numbered list — text after the last list
   // item would be rendered as part of that item.
   const still = p.missing.length ? ` Still needed: ${p.missing.map(labelize).join(', ')}.` : '';
@@ -59,6 +67,30 @@ function verificationAnswer(p) {
   return `${s.fields} fields were extracted and ${s.total} checks were run: **${s.passed}** matched and **${s.flagged}** were flagged. Open the Verification page to see every parameter, with the expected value next to the value found.`;
 }
 
+const when = (d) => (d ? new Date(d).toLocaleDateString('en-US', { dateStyle: 'medium' }) : '');
+
+// Where the file stands in the officer -> underwriter flow, from the review
+// record the server returned to staff.
+function decisionAnswer(app) {
+  const a = app.assessment;
+  const unmet = (a?.parameters || []).filter((p) => p.status !== 'met');
+  const history = app.reviewHistory || [];
+  const last = history[history.length - 1];
+  if (app.status === 'approved' || app.status === 'rejected') {
+    const d = app.decision || {};
+    const base = `${labelize(app.status)} by ${d.decidedBy?.name || 'staff'} (${d.decidedBy?.role || 'staff'}) on ${when(d.decidedAt)}.`;
+    return d.exception
+      ? `${base} Approved as an exception — waived: ${d.exception.waivedParameters.map(labelize).join(', ')}. Compensating factors: ${d.exception.compensatingFactors}`
+      : base;
+  }
+  const gap = unmet.length ? `Parameters not met: ${unmet.map((p) => `${p.label} (${p.detail})`).join('; ')}.` : 'Every parameter is met.';
+  if (app.status === 'referred') {
+    const ref = [...history].reverse().find((e) => e.action === 'refer');
+    return `Referred to the underwriter by ${ref?.actor?.name || 'the loan officer'}${ref?.note ? ` — "${ref.note}"` : ''}. ${gap}`;
+  }
+  return `${gap} ${a?.canApprove ? 'The loan officer can approve it.' : a?.canRefer ? 'It can be referred to an underwriter for an exception.' : 'It cannot be approved or referred until the blocking items are resolved.'}${last ? ` Last activity: ${last.action} by ${last.actor?.name}.` : ''}`;
+}
+
 function actionNeededAnswer(p) {
   if (!p.exceptions.length) return 'Nothing needs action right now — every required document is uploaded and all checks are clear.';
   const list = p.exceptions
@@ -77,7 +109,7 @@ export async function handleLocalIntent(question, application, role) {
   // the server, which resolves applicants by name and enforces who may see
   // whose data — the open application is the wrong subject for it.
   if (NAME_LIKE.test(question)) return null;
-  const intent = INTENTS.find((i) => i.test.test(question));
+  const intent = INTENTS.find((i) => (!i.staffOnly || role !== 'borrower') && i.test.test(question));
   if (!intent) return null;
 
   // Always read the full, current application — the list the chat was given
@@ -90,6 +122,7 @@ export async function handleLocalIntent(question, application, role) {
     progress: () => progressAnswer(app, p),
     documents: () => documentsAnswer(role, app, p),
     verification: () => verificationAnswer(p),
+    decision: () => decisionAnswer(app),
   };
 
   return {

@@ -13,6 +13,7 @@ export function computeProgress(app) {
   const exceptions = app.openExceptions || [];
   const stats = checkStats(docs);
   const decided = app.status === 'approved' || app.status === 'rejected';
+  const referred = app.status === 'referred';
   const allReceived = required.length > 0 && missing.length === 0;
   const clean = allReceived && exceptions.length === 0;
 
@@ -53,7 +54,13 @@ export function computeProgress(app) {
     {
       key: 'review',
       title: 'Officer review',
-      detail: decided ? 'Review completed' : clean ? 'Waiting for a loan officer to review' : 'Starts once all issues are resolved',
+      detail: decided
+        ? 'Review completed'
+        : referred
+          ? 'Under senior review by an underwriter'
+          : clean
+            ? 'Waiting for a loan officer to review'
+            : 'Starts once all issues are resolved',
       done: decided,
       tab: null,
     },
@@ -72,6 +79,7 @@ export function computeProgress(app) {
 
   let next;
   if (decided) next = `The application was ${app.status}.`;
+  else if (referred) next = 'An underwriter is reviewing the application. No action is needed from you.';
   else if (missing.length) next = `Upload the remaining document${missing.length === 1 ? '' : 's'}: ${missing.map(labelize).join(', ')}.`;
   else if (exceptions.length) next = `Resolve ${exceptions.length} open item${exceptions.length === 1 ? '' : 's'} (see Action Needed).`;
   else next = 'A loan officer will review the application and make a decision.';

@@ -3,8 +3,10 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } fr
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { colors, labelize, STATUS_TONE, shadow } from '../theme';
+import { colors, labelize, statusLabel, STATUS_TONE, shadow } from '../theme';
 import { Pill, Overline } from '../components/ui';
+
+const PORTAL = { officer: 'Loan Officer Portal', underwriter: 'Underwriter Portal', borrower: 'Borrower Portal' };
 
 function initials(name) {
   return (name || '')
@@ -42,9 +44,9 @@ export default function ApplicationsScreen({ navigation }) {
       <View style={styles.inner}>
         <View style={styles.topBar}>
           <View>
-            <Overline>{user.role === 'officer' ? 'Loan Officer Portal' : 'Borrower Portal'}</Overline>
+            <Overline>{PORTAL[user.role] || 'Borrower Portal'}</Overline>
             <Text style={styles.heading}>
-              {user.role === 'officer' ? 'Loan Applications' : 'My Applications'}
+              {user.role === 'borrower' ? 'My Applications' : 'Loan Applications'}
             </Text>
           </View>
           {user.role === 'borrower' && (
@@ -76,7 +78,7 @@ export default function ApplicationsScreen({ navigation }) {
             const needsDocs = item.status === 'submitted' && item.missingDocumentsCount > 0;
             const displayLabel = needsDocs
               ? `${item.missingDocumentsCount} Document${item.missingDocumentsCount > 1 ? 's' : ''} Needed`
-              : labelize(item.status);
+              : statusLabel(item.status);
             const displayTone = needsDocs ? 'warning' : STATUS_TONE[item.status] || 'neutral';
             return (
               <TouchableOpacity
