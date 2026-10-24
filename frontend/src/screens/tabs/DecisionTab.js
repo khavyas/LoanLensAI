@@ -14,10 +14,14 @@ const PARAM_ACCENT = { met: colors.success, unmet: colors.danger, pending: color
 const CHECK_TONE = { verified: 'success', clear: 'success', scored: 'success', failed: 'danger', 'potential-match': 'danger', frozen: 'warning', 'thin-file': 'warning', 'not-run': 'neutral' };
 const CHECK_LABEL = { verified: 'Verified', clear: 'Clear', scored: 'Score returned', failed: 'Failed', 'potential-match': 'Possible match', frozen: 'Frozen', 'thin-file': 'No history', 'not-run': 'Skipped' };
 
-// Approve is green and Decline is red, always — tinted until chosen, solid once chosen.
+// Every action has its own colour — tinted until chosen, solid once chosen:
+// Approve green, Decline red, Refer to underwriter amber (waiting on a senior
+// decision), Return to officer blue. Always paired with a text label.
 const MODE_TONE = {
-  approve: { fg: colors.success, tint: colors.successBg },
-  reject: { fg: colors.danger, tint: colors.dangerBg },
+  approve: { border: colors.success, text: colors.success, tint: colors.successBg, solid: colors.success, solidText: '#fff' },
+  reject: { border: colors.danger, text: colors.danger, tint: colors.dangerBg, solid: colors.danger, solidText: '#fff' },
+  refer: { border: colors.amberBorder, text: colors.amberText, tint: colors.amberTint, solid: colors.amber, solidText: colors.amberSolidText },
+  return: { border: colors.info, text: colors.info, tint: colors.infoBg, solid: colors.info, solidText: '#fff' },
 };
 
 const ACTION_LABEL = {
@@ -305,8 +309,8 @@ export default function DecisionTab({ app, onChanged }) {
                   style={[
                     styles.modeBtn,
                     selected && styles.modeBtnActive,
-                    tone && { borderColor: tone.fg, backgroundColor: selected ? tone.fg : tone.tint },
-                    disabled && { opacity: 0.4 },
+                    tone && { borderColor: tone.border, backgroundColor: selected ? tone.solid : tone.tint },
+                    disabled && { opacity: 0.55 },
                   ]}
                   onPress={() => setMode(m.key)}
                   disabled={disabled}
@@ -315,7 +319,7 @@ export default function DecisionTab({ app, onChanged }) {
                     style={[
                       styles.modeText,
                       selected && styles.modeTextActive,
-                      tone && { color: selected ? '#fff' : tone.fg, fontWeight: '700' },
+                      tone && { color: selected ? tone.solidText : tone.text, fontWeight: '700' },
                     ]}
                   >
                     {m.label}
@@ -383,18 +387,14 @@ export default function DecisionTab({ app, onChanged }) {
 
           {mode && (
             <TouchableOpacity
-              style={[
-                styles.primaryBtn,
-                mode === 'reject' && { backgroundColor: colors.danger },
-                mode === 'approve' && { backgroundColor: colors.success },
-              ]}
+              style={[styles.primaryBtn, MODE_TONE[mode] && { backgroundColor: MODE_TONE[mode].solid }]}
               onPress={submit}
               disabled={busy}
             >
               {busy ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.primaryText}>
+                <Text style={[styles.primaryText, MODE_TONE[mode] && { color: MODE_TONE[mode].solidText }]}>
                   Confirm: {modes.find((m) => m.key === mode)?.label}
                 </Text>
               )}

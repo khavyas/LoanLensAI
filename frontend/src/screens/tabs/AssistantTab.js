@@ -15,6 +15,7 @@ import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../theme';
 import { handleLocalIntent } from '../../assistantActions';
 import { goToApplicationTab } from '../../navigationRef';
+import AnswerText from '../../components/AnswerText';
 
 // Sample questions, grouped by what they open. The first three groups are
 // answered from the application's own data and jump to the matching page; the
@@ -40,61 +41,6 @@ const SAMPLE_GROUPS = {
   ],
 };
 
-const STATUS_VALUE_PATTERN = /^(?:unknown|submitted|under review|in review|needs review|approved|rejected|declined|failed|pending|denied|cancelled|canceled|funded)$/i;
-
-function getHighlightIntent(question) {
-  return {
-    status: /\b(?:status|approved|approval|rejected|declined|failed|pending|under review|needs review|progress)\b/i.test(question),
-    missingDocuments: /\b(?:missing|still need|documents? do i need|documents? needed|outstanding documents?)\b/i.test(question),
-  };
-}
-
-function renderInlineText(text, baseStyle, highlight) {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) => {
-    const emphasized = part.startsWith('**') && part.endsWith('**');
-    const emphasizedValue = emphasized ? part.slice(2, -2).trim() : part;
-    const emphasizeForQuestion = !highlight || (STATUS_VALUE_PATTERN.test(emphasizedValue)
-      ? highlight.status
-      : highlight.missingDocuments);
-    return (
-      <Text key={index} style={[baseStyle, emphasized && emphasizeForQuestion && styles.answerEmphasis]}>
-        {emphasized ? emphasizedValue : part}
-      </Text>
-    );
-  });
-}
-
-function AnswerBody({ text, highlight }) {
-  const markers = [...text.matchAll(/(?:^|\s)(?:\((\d+)\)|(\d+)[.)]|\[(\d+)\])\s*/g)];
-  if (markers.length < 2) {
-    return <Text style={styles.aiText}>{renderInlineText(text, styles.aiText, highlight)}</Text>;
-  }
-
-  const first = markers[0];
-  const intro = text.slice(0, first.index).trim();
-  return (
-    <View>
-      {!!intro && <Text style={[styles.aiText, styles.answerIntro]}>{renderInlineText(intro, styles.aiText, highlight)}</Text>}
-      <View style={styles.answerList}>
-        {markers.map((marker, index) => {
-          const start = marker.index + marker[0].length;
-          const end = markers[index + 1]?.index ?? text.length;
-          const item = text.slice(start, end).trim();
-          return (
-            <View key={`${marker.index}-${index}`} style={styles.answerListItem}>
-              <Text style={styles.answerListNumber}>{marker[1] || marker[2] || marker[3]}.</Text>
-              <Text style={[styles.aiText, styles.answerListText]}>{renderInlineText(item, styles.aiText, highlight)}</Text>
-            </View>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
-// `autoNavigate`: open the matching page when a question is answered. Off when
-// the chat IS a page (the Assistant tab) — navigating away would unmount it
-// and lose the conversation, so it offers an "Open …" link instead.
 export default function AssistantTab({ app, autoNavigate = true }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
@@ -124,7 +70,6 @@ export default function AssistantTab({ app, autoNavigate = true }) {
           from: 'ai',
           text: local.answer,
           sources: local.sources,
-          highlight: getHighlightIntent(question),
           nav: { tab: local.tab, label: local.label, applicationId: local.applicationId },
         }]);
         if (autoNavigate) goToApplicationTab(local.applicationId, local.tab);
@@ -135,7 +80,6 @@ export default function AssistantTab({ app, autoNavigate = true }) {
         from: 'ai',
         text: answer,
         sources,
-        highlight: getHighlightIntent(question),
       }]);
     } catch (e) {
       setMessages((m) => [...m, { from: 'ai', text: `Sorry — ${e.message}`, sources: [] }]);
@@ -179,7 +123,7 @@ export default function AssistantTab({ app, autoNavigate = true }) {
             {m.from === 'user' ? (
               <Text style={styles.userText}>{m.text}</Text>
             ) : (
-              <AnswerBody text={m.text} highlight={m.highlight} />
+              <AnswerText text={m.text} />
             )}
             {m.nav && (
               <TouchableOpacity
