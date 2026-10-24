@@ -41,36 +41,47 @@ const tabLabel = (key) => APP_TABS.find((t) => t.key === key)?.label || key;
 
 const isBorrower = (role) => role === 'borrower';
 
-function subject(role, app) {
-  return isBorrower(role) ? 'You' : app.applicantName;
-}
+// Who an answer is about: a borrower only ever sees their own application;
+// staff may be told about someone else's, so the heading names the applicant.
+const owner = (role, app) => (isBorrower(role) ? 'Your application' : app.applicantName);
 
-// Staff may be told about an application other than the open one, so every
-// answer says whose it is. A borrower only ever sees their own.
-const whose = (role, app) => (isBorrower(role) ? 'Your application' : `${app.applicantName}'s application`);
-const lead = (role, app) => (isBorrower(role) ? '' : `${app.applicantName}: `);
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+// Answers use a small markdown-like format (## heading, - bullet, > callout,
+// **bold**) that components/AnswerText.js renders, so they can be scanned.
 
 function documentsAnswer(role, app, p) {
-  const who = subject(role, app);
-  const verb = isBorrower(role) ? 'have' : 'has';
-  // "Still needed" goes before the numbered list — text after the last list
-  // item would be rendered as part of that item.
-  const still = p.missing.length ? ` Still needed: ${p.missing.map(labelize).join(', ')}.` : '';
-  if (!p.docs.length) return `No documents have been uploaded yet for this application.${still}`;
-  const list = p.docs
-    .map((d, i) => `${i + 1}. ${labelize(d.docType)} (${d.fileName || 'file'}) — ${RESULT[d.verification?.overall] || 'Pending'}`)
-    .join(' ');
-  return `${who} ${verb} uploaded ${p.docs.length} document${p.docs.length === 1 ? '' : 's'}.${still} ${list}`;
+  const head = isBorrower(role) ? 'Your documents' : `${app.applicantName} — documents`;
+  const still = p.missing.length
+    ? `> Still needed: ${p.missing.map((t) => `**${labelize(t)}**`).join(', ')}`
+    : '> All required documents are in.';
+  if (!p.docs.length) return `## ${head}\nNo documents have been uploaded yet.\n${still}`;
+  const rows = p.docs.map(
+    (d) => `- **${labelize(d.docType)}** · ${d.fileName || 'file'} — **${RESULT[d.verification?.overall] || 'Pending'}**`
+  );
+  return `## ${head} — ${plural(p.docs.length, 'document')} uploaded\n${rows.join('\n')}\n${still}`;
 }
 
 function progressAnswer(role, app, p) {
-  return `${whose(role, app)} is **${p.percent}%** through the process (${p.doneCount} of ${p.steps.length} steps). Currently at: **${p.current.title}** — ${p.current.detail}. Next: ${p.next}`;
+  return [
+    `## ${owner(role, app)} — **${p.percent}%** complete`,
+    `${p.doneCount} of ${p.steps.length} steps done. Currently at **${p.current.title}** — ${p.current.detail}.`,
+    `> Next step: ${p.next}`,
+  ].join('\n');
 }
 
 function verificationAnswer(role, app, p) {
   const s = p.stats;
-  if (!s.total) return `${lead(role, app)}No verification checks have run yet — they run automatically after each document is uploaded.`;
-  return `${lead(role, app)}${s.fields} fields were extracted and ${s.total} checks were run: **${s.passed}** matched and **${s.flagged}** were flagged. Open the Verification page to see every parameter, with the expected value next to the value found.`;
+  const head = `## ${owner(role, app)} — verification`;
+  if (!s.total) return `${head}\nNo checks have run yet — they run automatically after each document is uploaded.`;
+  return [
+    head,
+    `- **${s.total}** checks run`,
+    `- **${s.passed}** **matched**`,
+    s.flagged ? `- **${s.flagged}** **flagged**` : '- **0** flagged',
+    `${s.fields} fields were extracted from the documents.`,
+    '> Open the Verification page to see every parameter, with the expected value next to the value found.',
+  ].join('\n');
 }
 
 const when = (d) => (d ? new Date(d).toLocaleDateString('en-US', { dateStyle: 'medium' }) : '');
@@ -82,30 +93,49 @@ function decisionAnswer(role, app) {
   const unmet = (a?.parameters || []).filter((p) => p.status !== 'met');
   const history = app.reviewHistory || [];
   const last = history[history.length - 1];
+  const gapRows = unmet.map((p) => `- **${p.label}** — ${p.detail}`);
+
   if (app.status === 'approved' || app.status === 'rejected') {
     const d = app.decision || {};
-    const base = `${lead(role, app)}${labelize(app.status)} by ${d.decidedBy?.name || 'staff'} (${d.decidedBy?.role || 'staff'}) on ${when(d.decidedAt)}.`;
-    return d.exception
-      ? `${base} Approved as an exception — waived: ${d.exception.waivedParameters.map(labelize).join(', ')}. Compensating factors: ${d.exception.compensatingFactors}`
-      : base;
+    const lines = [
+      `## ${app.applicantName} — **${labelize(app.status)}**`,
+      `Decided by ${d.decidedBy?.name || 'staff'} (${d.decidedBy?.role || 'staff'}) on ${when(d.decidedAt)}.`,
+    ];
+    if (d.exception) {
+      lines.push(`> Approved as an exception — waived: ${d.exception.waivedParameters.map((k) => `**${labelize(k)}**`).join(', ')}`);
+      lines.push(`Compensating factors: ${d.exception.compensatingFactors}`);
+    }
+    return lines.join('\n');
   }
-  const gap = unmet.length ? `${lead(role, app)}Parameters not met: ${unmet.map((p) => `${p.label} (${p.detail})`).join('; ')}.` : `${lead(role, app)}Every parameter is met.`;
   if (app.status === 'referred') {
     const ref = [...history].reverse().find((e) => e.action === 'refer');
-    return `Referred to the underwriter by ${ref?.actor?.name || 'the loan officer'}${ref?.note ? ` — "${ref.note}"` : ''}. ${gap}`;
+    return [
+      `## ${app.applicantName} — **Referred to the underwriter**`,
+      `Referred by ${ref?.actor?.name || 'the loan officer'}${ref?.note ? `: "${ref.note}"` : ''}.`,
+      gapRows.length ? `**Not met:**\n${gapRows.join('\n')}` : 'Every parameter is met.',
+    ].join('\n');
   }
-  return `${gap} ${a?.canApprove ? 'The loan officer can approve it.' : a?.canRefer ? 'It can be referred to an underwriter for an exception.' : 'It cannot be approved or referred until the blocking items are resolved.'}${last ? ` Last activity: ${last.action} by ${last.actor?.name}.` : ''}`;
+  const next = a?.canApprove
+    ? 'The loan officer can approve it.'
+    : a?.canRefer
+      ? 'It can be referred to an underwriter for an exception.'
+      : 'It cannot be approved or referred until the blocking items are resolved.';
+  return [
+    `## ${app.applicantName} — decision status`,
+    gapRows.length ? `**Not met:**\n${gapRows.join('\n')}` : 'Every parameter is **met**.',
+    `> ${next}${last ? ` Last activity: ${last.action} by ${last.actor?.name}.` : ''}`,
+  ].join('\n');
 }
 
 function actionNeededAnswer(role, app, p) {
-  if (!p.exceptions.length) return `${lead(role, app)}Nothing needs action right now — every required document is uploaded and all checks are clear.`;
-  const list = p.exceptions
-    .map((e, i) => {
-      const what = e.type === 'missing' ? 'not uploaded yet' : (e.checks || []).map((c) => c.field).join(', ');
-      return `${i + 1}. ${labelize(e.docType)} — ${what}`;
-    })
-    .join(' ');
-  return `${lead(role, app)}${p.exceptions.length} item${p.exceptions.length === 1 ? ' needs' : 's need'} action: ${list}`;
+  if (!p.exceptions.length) {
+    return `## ${owner(role, app)} — **Nothing needs action**\nEvery required document is uploaded and all checks are clear.`;
+  }
+  const rows = p.exceptions.map((e) => {
+    const what = e.type === 'missing' ? '**Not uploaded yet**' : (e.checks || []).map((c) => c.field).join(', ');
+    return `- **${labelize(e.docType)}** — ${what}`;
+  });
+  return `## ${owner(role, app)} — ${plural(p.exceptions.length, 'item')} need${p.exceptions.length === 1 ? 's' : ''} action\n${rows.join('\n')}`;
 }
 
 // Resolves to { answer, sources, tab, label } when the question is an

@@ -4,6 +4,15 @@ import { colors, labelize } from '../theme';
 import { useAuth } from '../context/AuthContext';
 import { navigationRef } from '../navigationRef';
 
+// Which screen is this? Staff share most pages, so the signed-in role is shown in
+// the header on every page.
+const ROLE_BADGE = {
+  officer: { label: 'Loan Officer', dot: '#53B1FD' },
+  underwriter: { label: 'Underwriter', dot: '#FDB022' },
+  borrower: { label: 'Borrower', dot: '#32D583' },
+  admin: { label: 'Administrator', dot: '#B692F6' },
+};
+
 function initials(name) {
   return (name || '')
     .split(/\s+/)
@@ -52,6 +61,13 @@ export default function BrandHeader({ title, canGoBack }) {
       </View>
 
       {user && (
+        <View style={styles.rightRow}>
+          {ROLE_BADGE[user.role] && (
+            <View style={styles.roleBadge}>
+              <View style={[styles.roleDot, { backgroundColor: ROLE_BADGE[user.role].dot }]} />
+              <Text style={styles.roleText}>{ROLE_BADGE[user.role].label}</Text>
+            </View>
+          )}
         <View style={styles.right}>
           <TouchableOpacity
             style={styles.avatar}
@@ -81,6 +97,7 @@ export default function BrandHeader({ title, canGoBack }) {
               </TouchableOpacity>
             </View>
           )}
+        </View>
         </View>
       )}
     </View>
@@ -112,6 +129,20 @@ const styles = StyleSheet.create({
   logoMarkText: { color: '#fff', fontWeight: '800', fontSize: 14 },
   brandText: { color: '#fff', fontWeight: '800', fontSize: 16 },
   pageTitle: { color: 'rgba(255,255,255,0.55)', fontSize: 14, marginLeft: 4 },
+  rightRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  roleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    paddingVertical: 5,
+    paddingHorizontal: 11,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+  },
+  roleDot: { width: 8, height: 8, borderRadius: 4 },
+  roleText: { color: '#fff', fontSize: 12, fontWeight: '700', letterSpacing: 0.3 },
   right: { position: 'relative' },
   avatar: {
     width: 34,

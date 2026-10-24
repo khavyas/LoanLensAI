@@ -17,6 +17,13 @@ export const colors = {
   dangerBg: '#FEF3F2',
   info: '#175CD3',
   infoBg: '#EFF8FF',
+  // Amber for "waiting on a decision / needs approval" (deep amber, never lemon yellow):
+  // dark text on solid amber, deep-amber text on the pale tint, so it stays legible on a large screen.
+  amber: '#F59E0B',
+  amberBorder: '#D97706',
+  amberText: '#92400E',
+  amberSolidText: '#3B2300',
+  amberTint: '#FFF4D6',
   neutral: '#475467',
   neutralBg: '#F2F4F7',
 };

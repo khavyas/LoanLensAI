@@ -33,7 +33,7 @@ const CHAT_DOCK_WIDTH = 400;
 function routeTitle(name, user) {
   switch (name) {
     case 'Applications':
-      return user?.role === 'officer' ? 'Loan Applications' : 'My Applications';
+      return user?.role === 'borrower' ? 'My Applications' : 'Loan Applications';
     case 'ApplicationDetail':
       return 'Application';
     case 'NewApplication':
