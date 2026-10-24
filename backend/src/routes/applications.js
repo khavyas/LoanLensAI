@@ -8,6 +8,8 @@ import { REQUIRED_DOCS_BY_PRODUCT, PRODUCT_TYPES } from '../config/requiredDocs.
 import { AFFORDABILITY, maxAffordableAmount, maxAffordableBusinessAmount } from '../config/affordability.js';
 import { isStaff } from '../config/roles.js';
 import { assessApplication, borrowerNotice } from '../services/decisionRules.js';
+import { validateResidency } from '../services/residency.js';
+import { duplicateMatchesFor } from '../services/duplicateCheck.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -92,7 +94,11 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: 'You must authorize identity/credit verification and e-sign consent to apply' });
     }
 
+    const residency = validateResidency(req.body);
+    if (residency.error) return res.status(residency.error).json({ error: residency.message });
+
     const application = {
+      ...residency,
       applicantName: req.user.name,
       applicantEmail: req.user.email,
       productType,
@@ -168,7 +174,9 @@ router.get('/:id', async (req, res, next) => {
           missingDocuments: missingDocuments(app, documents),
           openExceptions: openExceptions(app, documents),
           // Staff-only: which of the bank's parameters this file meets.
-          ...(isStaff(req.user.role) ? { assessment: assessApplication(app, documents) } : {}),
+          ...(isStaff(req.user.role)
+            ? { assessment: assessApplication(app, documents, { duplicates: await duplicateMatchesFor(app) }) }
+            : {}),
         },
         req.user.role
       )

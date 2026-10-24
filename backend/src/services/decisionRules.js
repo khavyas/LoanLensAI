@@ -1,4 +1,5 @@
 import { currentDocuments, missingDocuments } from './verification.js';
+import { residencyParameter } from './residency.js';
 import {
   CREDIT_SCORE_RANGE,
   MIN_CREDIT_SCORE,
@@ -15,7 +16,9 @@ const INCOME_FIELDS = ['Monthly income', 'Annual business revenue'];
 // answers before approving, and the list an underwriter weighs when deciding
 // whether to grant an exception. Each parameter is met, unmet or pending
 // (pending = a human still has to enter something).
-export function assessApplication(application, documents) {
+// `duplicates` comes from duplicateCheck.js (a database lookup, so the caller
+// supplies it); `now` is injectable for tests.
+export function assessApplication(application, documents, { duplicates = [], now = new Date() } = {}) {
   const current = currentDocuments(documents);
   const checks = current.flatMap((d) => d.verification?.checks || []);
   const mismatches = (fields) => checks.filter((c) => c.status === 'mismatch' && fields.includes(c.field));
@@ -61,6 +64,21 @@ export function assessApplication(application, documents) {
     detail: !report ? 'Not run yet — run the identity and credit checks' : report.sanctions.detail + simulated,
   });
 
+  const reused = duplicates.filter((d) => d.kind === 'different-name');
+  const another = duplicates.filter((d) => d.kind === 'same-person-open');
+  parameters.push({
+    key: 'duplicate-identity',
+    label: 'No duplicate or reused identity',
+    status: reused.length || another.length ? 'unmet' : 'met',
+    waivable: false,
+    detail: reused.length
+      ? 'The same SSN last-4 and date of birth were used on an earlier application under a different name — possible identity reuse'
+      : another.length
+        ? 'This applicant already has another open application; policy allows one at a time'
+        : 'No other application shares this SSN and date of birth',
+  });
+  parameters.push(residencyParameter(application, now));
+
   const income = mismatches(INCOME_FIELDS);
   parameters.push({
     key: 'income',
@@ -104,6 +122,7 @@ export function assessApplication(application, documents) {
   const pending = parameters.filter((p) => p.status === 'pending');
   return {
     parameters,
+    duplicates,
     unmetKeys: unmet.map((p) => p.key),
     // Everything satisfied: a loan officer may approve on their own authority.
     canApprove: unmet.length === 0 && pending.length === 0,

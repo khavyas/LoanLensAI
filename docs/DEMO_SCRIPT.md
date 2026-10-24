@@ -125,7 +125,7 @@ person is who they say they are, and what about a low credit score?"* It is the 
 > the real ones need contracts and the borrower's consent. Every simulated result is labelled
 > *Simulated* on screen, and this is the one place a real provider plugs in."
 
-**Setup:** run `npm run reset` (or the Render reset) so the five borrowers and their documents
+**Setup:** run `npm run reset` (or the Render reset) so the seven borrowers and their documents
 are loaded. Log in as the **loan officer**. For each borrower open the application, go to the
 **Decision** tab and click **Run identity and credit checks** (until you do, every file shows
 "Needs entry" and cannot be approved — point that out once: *"nothing is decided on an
@@ -140,6 +140,8 @@ All logins use password `demo1234`.
 | 3 | **Meera Iyer** (`meera.iyer@example.demo`) | Open **Action Needed** (no simulation) | Drivers License: **ID expiry** mismatch, Re-upload button | "A real document check: policy does not accept an expired ID, and the borrower is told exactly what to fix." |
 | 4 | **Arjun Mehta** (`arjun.mehta@example.demo`) | Run the checks, then refer, then switch user | Score **598** against a 620 minimum: Approve is disabled, Refer is enabled | "A low score is not the end — but only a named senior role can approve outside the rules." |
 | 5 | **Kavya Reddy** (`kavya.reddy@example.demo`) | Run the checks | Credit report **No history** (thin file); score stays "Needs entry"; no approve or refer | "No credit history means no score. The system refuses to invent one." |
+| 6 | **Anil Kapoor** (`anil.kapoor@example.demo`) | Open **Decision** — *before* running anything | **No duplicate or reused identity: Not Met**, with a link to the earlier application (Priya Nair). Identity verification then fails too | "Same SSN digits and date of birth as an earlier applicant, under a different name. Caught from our own records, no bureau needed — and Priya's file is untouched." |
+| 7 | **Lakshmi Pillai** (`lakshmi.pillai@example.demo`) | Run the checks; note the header "Visa holder (until 2028-06-30)" | Everything Met except **Residency status covers the loan term: Not Met** (visa ends 2028-06-30, loan runs to 2029-10). Officer can only refer | "We never verify citizenship — we ask one practical question: will your legal status last as long as the loan? If not, only an underwriter can approve, with a condition like proof of renewal." |
 
 ### The exception walk-through (Arjun, about 90 seconds)
 
@@ -164,6 +166,7 @@ audit trail — and the things that are about fraud, like identity, can never be
 
 - **"Is the credit score real?"** — No, it is a scripted test record. In production it comes from
   Equifax, Experian or TransUnion, with the borrower's consent.
+- **"How do you catch the same person applying twice?"** — The SSN's last four digits plus the date of birth are compared across applications. Only the later file is flagged, so a real borrower is never blocked by someone copying their details. Production would compare a keyed hash of the full SSN.
 - **"Why not check citizenship or Aadhaar-style government IDs?"** — The US has no single national ID.
   Lenders verify identity (a government photo ID plus the SSN) and apply product policy to
   residency; they do not verify citizenship against a government site. The same applies to

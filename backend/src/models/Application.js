@@ -32,6 +32,9 @@ const applicationSchema = new mongoose.Schema(
     // cross-checked against the business license and tax return uploads.
     businessName: String,
     statedAnnualBusinessRevenue: Number,
+    // Declared by the applicant; the rule is in services/residency.js.
+    residencyStatus: { type: String, enum: ['us-citizen', 'permanent-resident', 'visa-holder'] },
+    visaValidUntil: Date,
     status: {
       type: String,
       // 'referred' = a loan officer sent it to an underwriter for an exception.

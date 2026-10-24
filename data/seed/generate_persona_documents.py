@@ -1,5 +1,5 @@
 """
-Generates the documents for the three *identity / credit test borrowers* used to
+Generates the documents for the *identity / credit / residency test borrowers* used to
 demo the simulated verification (see docs/SIMULATED_VERIFICATION.md):
 
   Rohan Desai  - documents are clean, but his SSN belongs to a different
@@ -8,6 +8,10 @@ demo the simulated verification (see docs/SIMULATED_VERIFICATION.md):
                  on 04/30/2026                    -> rejected document.
   Kavya Reddy  - a recent graduate: documents are clean, but the simulated
                  bureau has no credit history     -> thin file, manual review.
+  Anil Kapoor  - reuses Priya Nair's SSN last-4 and date of birth under a
+                 different name                   -> duplicate identity flag.
+  Lakshmi Pillai - a visa holder whose visa ends before her loan does
+                 -> residency exception for the underwriter.
 
 Each borrower gets a pay stub, driver's license and bank statement. The same
 script writes data/seed/persona-fixtures.json: what a reader of each image
@@ -55,6 +59,32 @@ PERSONAS = [
         "expires": "04/30/2026",  # expired — the planted problem
         "monthly": 5400.00,
         "ssn_last4": "2218",
+    },
+    {
+        "slug": "anil-kapoor",
+        "name": "Anil Kapoor",
+        "employer": "Summit Realty Group",
+        "employer_addr": "210 Summit Avenue, Springfield",
+        "address": "5 Maple Terrace, Springfield",
+        "dob": "11/22/1991",  # same date of birth as Priya Nair
+        "license_no": "SP-612904-A",
+        "issued": "03/03/2022",
+        "expires": "11/22/2030",
+        "monthly": 5800.00,
+        "ssn_last4": "9034",  # same SSN last-4 as Priya Nair -> duplicate identity
+    },
+    {
+        "slug": "lakshmi-pillai",
+        "name": "Lakshmi Pillai",
+        "employer": "Orbit Software Labs",
+        "employer_addr": "88 Technology Drive, Springfield",
+        "address": "38 Riverside Drive, Springfield",
+        "dob": "04/18/1992",
+        "license_no": "SP-780135-L",
+        "issued": "07/12/2023",
+        "expires": "04/18/2028",
+        "monthly": 8200.00,
+        "ssn_last4": "6150",
     },
     {
         "slug": "kavya-reddy",
@@ -190,7 +220,7 @@ def drivers_license(p):
     kv_row(d, x, y, "Address", p["address"])
     y += 60
     kv_row(d, x, y, "Date of Birth", p["dob"])
-    kv_row(d, x + 300, y, "Sex", "M" if p["slug"].startswith("rohan") else "F")
+    kv_row(d, x + 300, y, "Sex", "M" if p["slug"].startswith(("rohan", "anil")) else "F")
     y += 60
     kv_row(d, x, y, "Issue Date", p["issued"])
     kv_row(d, x + 300, y, "Expires", p["expires"])

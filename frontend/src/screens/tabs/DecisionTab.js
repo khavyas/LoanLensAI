@@ -3,6 +3,7 @@ import { View, Text, TextInput, ScrollView, TouchableOpacity, ActivityIndicator,
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { colors, labelize } from '../../theme';
+import { goToApplicationTab } from '../../navigationRef';
 import { Pill, Card, Overline } from '../../components/ui';
 
 const PARAM_TONE = { met: 'success', unmet: 'danger', pending: 'warning' };
@@ -194,6 +195,28 @@ export default function DecisionTab({ app, onChanged }) {
           </View>
         ))}
       </Card>
+
+      {(assessment?.duplicates || []).length > 0 && (
+        <Card style={{ marginTop: 12, borderColor: colors.danger, borderWidth: 1 }}>
+          <Overline>Matching earlier applications</Overline>
+          <Text style={styles.help}>
+            These share this applicant's SSN last-4 and date of birth. The earlier record is not affected.
+          </Text>
+          {assessment.duplicates.map((d) => (
+            <View key={d.id} style={styles.dupRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.paramLabel}>{d.applicantName}</Text>
+                <Text style={styles.paramDetail}>
+                  {d.kind === 'different-name' ? 'Different name — possible identity reuse' : 'Same person — another open application'} · {labelize(d.status)}
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.secondaryBtn} onPress={() => goToApplicationTab(d.id, 'decision')}>
+                <Text style={styles.secondaryText}>Open</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </Card>
+      )}
 
       {canAct && (
         <Card style={{ marginTop: 12 }}>
@@ -400,6 +423,7 @@ export default function DecisionTab({ app, onChanged }) {
 }
 
 const styles = StyleSheet.create({
+  dupRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderColor: colors.border },
   simHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   simMeta: { color: colors.faint, fontSize: 11, marginTop: 12, lineHeight: 16 },
   paramRow: { flexDirection: 'row', gap: 10, borderLeftWidth: 3, paddingLeft: 10, paddingVertical: 6, marginTop: 10, alignItems: 'flex-start' },

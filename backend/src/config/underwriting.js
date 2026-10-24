@@ -16,7 +16,8 @@ export const CREDIT_SCORE_RANGE = { min: 300, max: 850 };
 // else is a compliance / fraud guardrail and can only be fixed, never waived:
 // an exception is for "the numbers are short but the borrower is sound", not
 // for "the documents disagree about who the borrower is".
-export const WAIVABLE_PARAMETERS = ['credit-score', 'affordability'];
+// Residency is waivable only for a visa that ends before the loan does (with a condition).
+export const WAIVABLE_PARAMETERS = ['credit-score', 'affordability', 'residency'];
 
 // Minimum length for free-text justifications, so "ok" is not an exception reason.
 export const MIN_JUSTIFICATION_CHARS = 20;

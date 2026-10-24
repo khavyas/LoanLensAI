@@ -14,6 +14,7 @@ const cleanReport = {
 
 const baseApp = (extra = {}) => ({
   productType: 'personal-loan',
+  residencyStatus: 'us-citizen',
   verificationReport: cleanReport,
   status: 'needs-review',
   requiredDocTypes: ['pay-stub'],

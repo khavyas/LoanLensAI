@@ -9,6 +9,9 @@
 //   7301 Rohan Desai     SSN is on file for a DIFFERENT person -> identity fails
 //   2218 Meera Iyer      clean at the bureau; her driver's license is expired
 //   4410 Kavya Reddy     thin file: no credit history, no score
+//   9034 (again) Anil Kapoor reuses Priya's SSN/date of birth: the bureau says the
+//                       SSN belongs to Priya, and the duplicate check flags it too
+//   6150 Lakshmi Pillai  clean; the visa-holder residency rule is the story, not the bureau
 // Others (Jordan Rivera, Dana Whitfield) are plain clean records, and
 // 0911 / 0912 exist only for tests (sanctions hit, credit freeze).
 export const TEST_PERSONAS = {
@@ -17,6 +20,7 @@ export const TEST_PERSONAS = {
   '7301': { label: 'SSN belongs to someone else', nameOnFile: 'Vikram Nambiar', dobOnFile: '1979-02-02', credit: { status: 'scored', score: 701 }, sanctions: 'clear' },
   '2218': { label: 'Clean at the bureau (expired ID is a document problem)', nameOnFile: 'Meera Iyer', dobOnFile: '1990-09-21', credit: { status: 'scored', score: 715 }, sanctions: 'clear' },
   '4410': { label: 'Thin file, no credit history', nameOnFile: 'Kavya Reddy', dobOnFile: '2003-07-09', credit: { status: 'thin-file' }, sanctions: 'clear' },
+  '6150': { label: 'Clean at the bureau (visa ends before the loan: a residency exception)', nameOnFile: 'Lakshmi Pillai', dobOnFile: '1992-04-18', credit: { status: 'scored', score: 730 }, sanctions: 'clear' },
   '4821': { label: 'Clean borrower', nameOnFile: 'Jordan Rivera', dobOnFile: '1994-03-12', credit: { status: 'scored', score: 705 }, sanctions: 'clear' },
   '6672': { label: 'Clean borrower', nameOnFile: 'Dana Whitfield', dobOnFile: null, credit: { status: 'scored', score: 688 }, sanctions: 'clear' },
   // Test-only records

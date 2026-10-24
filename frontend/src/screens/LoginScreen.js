@@ -100,6 +100,8 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.demoLine}>Rohan Desai (SSN mismatch) · rohan.desai@example.demo</Text>
           <Text style={styles.demoLine}>Meera Iyer (expired ID) · meera.iyer@example.demo</Text>
           <Text style={styles.demoLine}>Kavya Reddy (no credit history) · kavya.reddy@example.demo</Text>
+          <Text style={styles.demoLine}>Anil Kapoor (reused identity) · anil.kapoor@example.demo</Text>
+          <Text style={styles.demoLine}>Lakshmi Pillai (visa ends before loan) · lakshmi.pillai@example.demo</Text>
           <Text style={styles.demoLine}>Password (all accounts) · demo1234</Text>
         </View>}
       </View>

@@ -6,6 +6,7 @@ import { withCrossDocumentChecks } from '../services/verification.js';
 import { assessApplication, canEnterCreditScore, evaluateDecision, validateCreditScore } from '../services/decisionRules.js';
 import { isStaff } from '../config/roles.js';
 import { runSimulatedChecks } from '../services/simulatedBureau.js';
+import { duplicateMatchesFor } from '../services/duplicateCheck.js';
 
 // Review actions on an application: credit score entry and the decision
 // itself (approve / reject / refer / return). All rules live in
@@ -95,7 +96,7 @@ router.post('/:id/decision', async (req, res, next) => {
     if (!loaded) return;
     const { application, documents } = loaded;
 
-    const assessment = assessApplication(application.toObject(), documents);
+    const assessment = assessApplication(application.toObject(), documents, { duplicates: await duplicateMatchesFor(application) });
     const result = evaluateDecision({ user: req.user, application, assessment, body: req.body });
     if (result.error) return res.status(result.error).json({ error: result.message });
 

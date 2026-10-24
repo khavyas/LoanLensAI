@@ -18,6 +18,12 @@ const AFFORDABILITY = {
 // (Select Account -> Tell Us About Yourself -> Tell Us More About Yourself ->
 // Disclosures & Submit) — a multi-step wizard reads as a real application,
 // not a form dump, and matches what a borrower would actually expect.
+const RESIDENCY_OPTIONS = [
+  { value: 'us-citizen', label: 'U.S. citizen' },
+  { value: 'permanent-resident', label: 'Permanent resident' },
+  { value: 'visa-holder', label: 'Visa holder' },
+];
+
 const STEPS = ['Select Product', 'Tell Us About Yourself', 'Tell Us More About Yourself', 'Disclosures & Submit'];
 
 function Field({ label, ...inputProps }) {
@@ -73,6 +79,8 @@ export default function NewApplicationScreen({ navigation }) {
   const [address, setAddress] = useState('');
   const [ssnLast4, setSsnLast4] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
+  const [residencyStatus, setResidencyStatus] = useState(null);
+  const [visaValidUntil, setVisaValidUntil] = useState('');
   const [consentAccepted, setConsentAccepted] = useState(false);
   // auto-loan / personal-loan
   const [employerName, setEmployerName] = useState('');
@@ -118,6 +126,8 @@ export default function NewApplicationScreen({ navigation }) {
       if (!address || !ssnLast4 || !dateOfBirth) {
         return 'Address, SSN (last 4), and date of birth are all required.';
       }
+      if (!residencyStatus) return 'Please choose your residency status.';
+      if (residencyStatus === 'visa-holder' && !visaValidUntil) return 'Enter the date your visa expires.';
     }
     return null;
   }
@@ -147,6 +157,8 @@ export default function NewApplicationScreen({ navigation }) {
         address,
         ssnLast4,
         dateOfBirth,
+        residencyStatus,
+        ...(residencyStatus === 'visa-holder' ? { visaValidUntil } : {}),
         consentAccepted,
         loanReason,
         ...(isSmallBusiness
@@ -308,6 +320,29 @@ export default function NewApplicationScreen({ navigation }) {
               <Text style={styles.label}>Date of birth (must be 18 or older)</Text>
               <DateField value={dateOfBirth} onChange={setDateOfBirth} />
             </View>
+            <View style={{ marginBottom: 16 }}>
+              <Text style={styles.label}>Residency status</Text>
+              <View style={styles.residencyRow}>
+                {RESIDENCY_OPTIONS.map((o) => (
+                  <TouchableOpacity
+                    key={o.value}
+                    style={[styles.productBtn, residencyStatus === o.value && styles.productBtnActive]}
+                    onPress={() => setResidencyStatus(o.value)}
+                  >
+                    <Text style={[styles.productBtnText, residencyStatus === o.value && styles.productBtnTextActive]}>{o.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text style={styles.affordabilityHint}>
+                We do not verify citizenship. We only need to know whether your status will last as long as the loan.
+              </Text>
+            </View>
+            {residencyStatus === 'visa-holder' && (
+              <View style={{ marginBottom: 16 }}>
+                <Text style={styles.label}>Visa expiry date</Text>
+                <DateField value={visaValidUntil} onChange={setVisaValidUntil} />
+              </View>
+            )}
           </View>
         </Card>
       )}
@@ -403,6 +438,7 @@ const styles = StyleSheet.create({
   productBtnActive: { borderColor: colors.accent, backgroundColor: colors.infoBg },
   productBtnText: { color: colors.muted, fontWeight: '600', fontSize: 12, textAlign: 'center' },
   productBtnTextActive: { color: colors.accent },
+  residencyRow: { flexDirection: 'row', gap: 8 },
   affordabilityHint: { color: colors.muted, fontSize: 12, marginTop: -8, marginBottom: 8, lineHeight: 17 },
   label: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
   input: {

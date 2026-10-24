@@ -13,6 +13,15 @@ import AssistantTab from './tabs/AssistantTab';
 import DecisionTab from './tabs/DecisionTab';
 import { DEFAULT_TAB, tabsForRole } from '../navigationRef';
 
+const RESIDENCY_LABEL = { 'us-citizen': 'U.S. citizen', 'permanent-resident': 'Permanent resident', 'visa-holder': 'Visa holder' };
+
+function residencyFact(app) {
+  const label = RESIDENCY_LABEL[app.residencyStatus] || '—';
+  return app.residencyStatus === 'visa-holder' && app.visaValidUntil
+    ? `${label} (until ${new Date(app.visaValidUntil).toISOString().slice(0, 10)})`
+    : label;
+}
+
 export default function ApplicationDetailScreen({ route, navigation }) {
   const { id } = route.params;
   const { user } = useAuth();
@@ -61,6 +70,7 @@ export default function ApplicationDetailScreen({ route, navigation }) {
           { label: 'Employer', value: app.employerName || '—' },
           { label: 'Employer phone', value: app.employerPhone || '—' },
           { label: 'Reason', value: app.loanReason || '—' },
+          { label: 'Residency', value: residencyFact(app) },
         ];
 
   return (
