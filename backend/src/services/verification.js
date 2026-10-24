@@ -16,12 +16,34 @@ const MEDICARE_RATE = 0.0145;
 const STATUTORY_TOLERANCE = 0.02; // 2% — allows for cent-level rounding only
 const YTD_TOLERANCE = 0.15; // 15% — real YTD varies period to period (OT, raises, unpaid leave)
 
+// Street-suffix words and punctuation vary between an ID and an application
+// ("Street" vs "St."), so compare a normalised form.
+const ADDRESS_WORDS = { street: 'st', avenue: 'ave', drive: 'dr', road: 'rd', court: 'ct', lane: 'ln', boulevard: 'blvd', apartment: 'apt' };
+export function normalizeAddress(s) {
+  return (s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => ADDRESS_WORDS[w] || w)
+    .join(' ');
+}
+
+// "MM/DD/YYYY" as printed on an ID -> a UTC date, or null if unreadable.
+export function parseUsDate(s) {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(s || '').trim());
+  if (!m) return null;
+  const d = new Date(Date.UTC(Number(m[3]), Number(m[1]) - 1, Number(m[2])));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 function normalizeName(s) {
   return (s || '').toLowerCase().replace(/[^a-z ]/g, '').split(/\s+/).filter(Boolean).sort().join(' ');
 }
 
 export function verifyDocument(application, extracted, options = {}) {
   const f = extracted.fields || {};
+  const now = options.now || new Date();
   const checks = [];
 
   // Targeted re-upload: the borrower was fixing one specific required item.
@@ -52,6 +74,50 @@ export function verifyDocument(application, extracted, options = {}) {
         ? 'Name on document matches the application.'
         : 'Name on this document does not match the applicant name on the application.',
     });
+  }
+
+  // Identity document checks (driver's license / state ID / passport). Real
+  // checks on the uploaded document itself — no outside service needed.
+  if (extracted.docType === 'drivers-license') {
+    const expiry = parseUsDate(f.licenseExpiry);
+    if (f.licenseExpiry != null && expiry) {
+      const expired = expiry < now;
+      checks.push({
+        field: 'ID expiry',
+        expected: 'Not expired',
+        found: `Expires ${f.licenseExpiry}`,
+        status: expired ? 'mismatch' : 'match',
+        explanation: expired
+          ? `This ID expired on ${f.licenseExpiry}. Policy does not accept expired identification — please upload a current ID.`
+          : 'The ID has not expired.',
+      });
+    }
+    const dob = parseUsDate(f.dateOfBirth);
+    if (dob && application.dateOfBirth) {
+      const stated = new Date(application.dateOfBirth);
+      const same = stated.getUTCFullYear() === dob.getUTCFullYear() && stated.getUTCMonth() === dob.getUTCMonth() && stated.getUTCDate() === dob.getUTCDate();
+      checks.push({
+        field: 'Date of birth',
+        expected: stated.toISOString().slice(0, 10),
+        found: f.dateOfBirth,
+        status: same ? 'match' : 'mismatch',
+        explanation: same
+          ? 'Date of birth on the ID matches the application.'
+          : 'Date of birth on the ID does not match the application. Escalate to an officer.',
+      });
+    }
+    if (f.address != null && application.address) {
+      const same = normalizeAddress(f.address) === normalizeAddress(application.address);
+      checks.push({
+        field: 'Address',
+        expected: application.address,
+        found: f.address,
+        status: same ? 'match' : 'warning',
+        explanation: same
+          ? 'Address on the ID matches the application.'
+          : 'The address on the ID differs from the application — may be a recent move; ask the borrower for proof of current address.',
+      });
+    }
   }
 
   if (f.grossMonthlyIncome != null && application.statedMonthlyIncome != null) {

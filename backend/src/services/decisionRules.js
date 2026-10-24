@@ -8,7 +8,7 @@ import {
 
 // Pure functions (no database access) so every rule can be unit-tested.
 
-const IDENTITY_FIELDS = ['Name', 'SSN (last 4)', 'Document type', 'Ownership percentage', 'Business name'];
+const IDENTITY_FIELDS = ['Name', 'SSN (last 4)', 'Document type', 'Ownership percentage', 'Business name', 'ID expiry', 'Date of birth'];
 const INCOME_FIELDS = ['Monthly income', 'Annual business revenue'];
 
 // "Does this file meet the bank's parameters?" — the question a loan officer
@@ -41,6 +41,26 @@ export function assessApplication(application, documents) {
       : 'Name, SSN and entity details agree across documents',
   });
 
+  // Outside checks (simulated in this build): SSN / name / date-of-birth match
+  // and sanctions screening. Neither can be waived, and nothing proceeds
+  // until staff have run them.
+  const report = application.verificationReport;
+  const simulated = report?.source === 'simulated' ? ' (simulated)' : '';
+  parameters.push({
+    key: 'identity-verification',
+    label: 'Identity verified against records',
+    status: !report ? 'pending' : report.identity.status === 'verified' ? 'met' : 'unmet',
+    waivable: false,
+    detail: !report ? 'Not run yet — run the identity and credit checks' : report.identity.detail + simulated,
+  });
+  parameters.push({
+    key: 'sanctions',
+    label: 'Sanctions screening',
+    status: !report ? 'pending' : report.sanctions.status === 'clear' ? 'met' : 'unmet',
+    waivable: false,
+    detail: !report ? 'Not run yet — run the identity and credit checks' : report.sanctions.detail + simulated,
+  });
+
   const income = mismatches(INCOME_FIELDS);
   parameters.push({
     key: 'income',
@@ -61,8 +81,10 @@ export function assessApplication(application, documents) {
     waivable: true,
     detail:
       score == null
-        ? `Not entered yet (minimum ${min})`
-        : `Score ${score} against a minimum of ${min}`,
+        ? report && ['thin-file', 'frozen', 'not-run'].includes(report.credit.status)
+          ? report.credit.detail + simulated
+          : `Not available yet — run the credit check, or enter a score by hand (minimum ${min})`
+        : `Score ${score} against a minimum of ${min}${application.creditProfile?.source === 'simulated' ? ' (simulated)' : ''}`,
   });
 
   const affordability = checks.find((c) => c.field === 'Requested amount vs. affordability');

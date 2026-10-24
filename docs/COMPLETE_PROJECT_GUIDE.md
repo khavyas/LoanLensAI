@@ -189,7 +189,7 @@ erDiagram
 | Assistant | Ask question → `POST /chat/:applicationId` | Policy chunks + current application summary; source chips returned | Claude unless `MOCK_AI=true` |
 | Demo administration | Secret-guarded `/admin/*` endpoints | Seed/reset users/apps, ingest policy, status counts, test storage | Mock fixtures used to prepopulate demo docs |
 
-The seed scenarios include a clean Priya Nair application, Jordan Rivera's income mismatch, Dana Whitfield's business revenue/name/affordability flags, and Arjun Mehta's employer warning. See `data/seed/documents/` and `backend/src/services/mockFixtures.js`.
+The seed scenarios include a clean Priya Nair application, Jordan Rivera's income mismatch, Dana Whitfield's business revenue/name/affordability flags, Arjun Mehta's employer warning and low simulated credit score, and three identity / credit test borrowers (Rohan Desai: SSN mismatch, Meera Iyer: expired ID, Kavya Reddy: no credit history) — see `docs/SIMULATED_VERIFICATION.md`. See `data/seed/documents/` and `backend/src/services/mockFixtures.js`.
 
 ## 11. End-to-End Application Workflows
 

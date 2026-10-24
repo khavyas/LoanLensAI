@@ -5,6 +5,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { withCrossDocumentChecks } from '../services/verification.js';
 import { assessApplication, canEnterCreditScore, evaluateDecision, validateCreditScore } from '../services/decisionRules.js';
 import { isStaff } from '../config/roles.js';
+import { runSimulatedChecks } from '../services/simulatedBureau.js';
 
 // Review actions on an application: credit score entry and the decision
 // itself (approve / reject / refer / return). All rules live in
@@ -40,7 +41,7 @@ router.put('/:id/credit-score', async (req, res, next) => {
     const checked = validateCreditScore(req.body?.score);
     if (checked.error) return res.status(checked.error).json({ error: checked.message });
 
-    application.creditProfile = { score: checked.score, enteredBy: req.user.email, enteredAt: new Date() };
+    application.creditProfile = { score: checked.score, enteredBy: req.user.email, enteredAt: new Date(), source: 'manual' };
     application.reviewHistory.push({
       at: new Date(),
       actor: { name: req.user.name, email: req.user.email, role: req.user.role },
@@ -50,6 +51,39 @@ router.put('/:id/credit-score', async (req, res, next) => {
     });
     await application.save();
     res.json({ ok: true, creditProfile: application.creditProfile });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Runs the identity, sanctions and credit checks. Simulated in this build
+// (services/simulatedBureau.js); a real provider plugs in at that one call.
+// Only whoever currently holds the file may run it.
+router.post('/:id/verify', async (req, res, next) => {
+  try {
+    const loaded = await load(req, res);
+    if (!loaded) return;
+    const { application } = loaded;
+    if (!canEnterCreditScore(req.user, application)) {
+      return res.status(409).json({ error: 'Checks can only be run by whoever currently holds the file, before a decision is recorded.' });
+    }
+    const report = runSimulatedChecks(application.toObject());
+    application.verificationReport = report;
+    if (report.credit.status === 'scored') {
+      application.creditProfile = { score: report.credit.score, enteredBy: 'simulated-bureau', enteredAt: new Date(), source: 'simulated' };
+    } else if (application.creditProfile?.source === 'simulated') {
+      application.creditProfile = undefined; // a stale simulated score must not outlive a failed re-run
+    }
+    application.markModified('verificationReport');
+    application.reviewHistory.push({
+      at: new Date(),
+      actor: { name: req.user.name, email: req.user.email, role: req.user.role },
+      action: 'verification-run',
+      note: '',
+      details: { simulated: true, identity: report.identity.status, sanctions: report.sanctions.status, credit: report.credit.status },
+    });
+    await application.save();
+    res.json({ ok: true, verificationReport: report });
   } catch (err) {
     next(err);
   }

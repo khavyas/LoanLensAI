@@ -48,7 +48,12 @@ const applicationSchema = new mongoose.Schema(
       score: Number,
       enteredBy: String,
       enteredAt: Date,
+      // 'manual' (typed by staff) or 'simulated' (from the simulated bureau).
+      source: String,
     },
+    // Result of the last identity / sanctions / credit run. Today always from
+    // the simulated bureau (services/simulatedBureau.js); staff-only.
+    verificationReport: mongoose.Schema.Types.Mixed,
     // Final outcome. `exception` is set only when an underwriter approved a
     // file that missed waivable parameters; it is internal and never shown to
     // the borrower (see borrowerNotice in services/decisionRules.js).

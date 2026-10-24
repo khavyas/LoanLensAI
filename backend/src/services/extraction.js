@@ -32,7 +32,10 @@ const EXTRACTION_PROMPT = `You are a loan document analyst. Look at this documen
     "socialSecurityWithheld": number|null,
     "medicareWithheld": number|null,
     "ytdGrossPay": number|null,
-    "payPeriodNumber": number|null
+    "payPeriodNumber": number|null,
+    "dateOfBirth": string|null,
+    "licenseNumber": string|null,
+    "licenseExpiry": string|null
   }
 }
 Rules:
@@ -45,6 +48,7 @@ Rules:
 - grossPayPeriod is a pay stub's GROSS PAY for the current pay period only (not the monthly-converted figure).
 - socialSecurityWithheld and medicareWithheld are the dollar amounts on the DEDUCTIONS lines labeled "Social Security" and "Medicare".
 - ytdGrossPay and payPeriodNumber are only present on a pay stub if it explicitly prints a year-to-date gross figure and a pay period number (e.g. "Period 16 of 26") — leave both null if not shown.
+- dateOfBirth, licenseNumber and licenseExpiry are only for a driver's license, state ID or passport: copy them exactly as printed (dates as MM/DD/YYYY). licenseExpiry is the "Expires" / "EXP" date.
 - Use null for anything not visible or not applicable to this document type. Never guess.
 - confidence reflects how legible/complete the document is, not your certainty about the docType alone.`;
 

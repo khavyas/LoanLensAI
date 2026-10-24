@@ -5,8 +5,16 @@ import { assessApplication, borrowerNotice, canEnterCreditScore, evaluateDecisio
 const officer = { name: 'Olivia Officer', email: 'o@x.test', role: 'officer' };
 const underwriter = { name: 'Uma Underwriter', email: 'u@x.test', role: 'underwriter' };
 
+const cleanReport = {
+  source: 'simulated',
+  identity: { status: 'verified', detail: 'ok' },
+  sanctions: { status: 'clear', detail: 'ok' },
+  credit: { status: 'scored', score: 700, detail: 'ok' },
+};
+
 const baseApp = (extra = {}) => ({
   productType: 'personal-loan',
+  verificationReport: cleanReport,
   status: 'needs-review',
   requiredDocTypes: ['pay-stub'],
   creditProfile: { score: 700 },

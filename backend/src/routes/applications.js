@@ -27,7 +27,7 @@ function ageOnDate(dateOfBirth, on = new Date()) {
 // relationship note. They get the outcome and plain-language notice instead.
 export function forViewer(app, role) {
   if (isStaff(role)) return app;
-  const { creditProfile, reviewHistory, decision, ...safe } = app; // eslint-disable-line no-unused-vars
+  const { creditProfile, reviewHistory, decision, verificationReport, ...safe } = app; // eslint-disable-line no-unused-vars
   return { ...safe, decisionNotice: borrowerNotice(app) };
 }
 
