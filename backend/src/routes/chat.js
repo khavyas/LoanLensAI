@@ -3,6 +3,7 @@ import Application from '../models/Application.js';
 import { requireAuth } from '../middleware/auth.js';
 import { answerQuestion } from '../services/rag.js';
 import { canAccessChatApplication } from '../services/chatAccess.js';
+import { isStaff } from '../config/roles.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -65,7 +66,7 @@ router.post('/:applicationId', async (req, res, next) => {
       })
       .sort((a, b) => normalizeName(b).length - normalizeName(a).length);
 
-    if (req.user.role === 'officer') {
+    if (isStaff(req.user.role)) {
       if (mentionedNames.length > 1) {
         return res.json({
           answer: 'Your question mentions more than one applicant. Please ask about one applicant at a time.',
@@ -104,7 +105,10 @@ router.post('/:applicationId', async (req, res, next) => {
     res.on('close', () => {
       if (!res.writableEnded) abortController.abort();
     });
-    const result = await answerQuestion({ question, application, role: req.user.role, history: safeHistory, signal: abortController.signal });
+    // The answer prompts only distinguish staff from borrower; an underwriter is
+    // staff and gets the same grounded, full-detail answers as an officer.
+    const chatRole = isStaff(req.user.role) ? 'officer' : req.user.role;
+    const result = await answerQuestion({ question, application, role: chatRole, history: safeHistory, signal: abortController.signal });
     res.json(result);
   } catch (err) {
     next(err);

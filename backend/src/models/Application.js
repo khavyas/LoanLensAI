@@ -32,9 +32,13 @@ const applicationSchema = new mongoose.Schema(
     // cross-checked against the business license and tax return uploads.
     businessName: String,
     statedAnnualBusinessRevenue: Number,
+    // Declared by the applicant; the rule is in services/residency.js.
+    residencyStatus: { type: String, enum: ['us-citizen', 'permanent-resident', 'visa-holder'] },
+    visaValidUntil: Date,
     status: {
       type: String,
-      enum: ['draft', 'submitted', 'needs-review', 'approved', 'rejected'],
+      // 'referred' = a loan officer sent it to an underwriter for an exception.
+      enum: ['draft', 'submitted', 'needs-review', 'referred', 'approved', 'rejected'],
       default: 'submitted',
     },
     // Document types this product requires; verification checks uploads against it.
@@ -42,6 +46,43 @@ const applicationSchema = new mongoose.Schema(
     // E-sign / credit-pull authorization, captured at application submission —
     // required before an application can be created (see routes/applications.js).
     consentAcceptedAt: Date,
+    // Entered by staff from the credit report (no bureau integration yet).
+    creditProfile: {
+      score: Number,
+      enteredBy: String,
+      enteredAt: Date,
+      // 'manual' (typed by staff) or 'simulated' (from the simulated bureau).
+      source: String,
+    },
+    // Result of the last identity / sanctions / credit run. Today always from
+    // the simulated bureau (services/simulatedBureau.js); staff-only.
+    verificationReport: mongoose.Schema.Types.Mixed,
+    // Final outcome. `exception` is set only when an underwriter approved a
+    // file that missed waivable parameters; it is internal and never shown to
+    // the borrower (see borrowerNotice in services/decisionRules.js).
+    decision: {
+      outcome: { type: String, enum: ['approved', 'rejected'] },
+      reason: String,
+      conditions: [String],
+      decidedBy: { name: String, email: String, role: String },
+      decidedAt: Date,
+      exception: {
+        waivedParameters: [String],
+        compensatingFactors: String,
+        relationshipNote: String,
+        conditions: [String],
+      },
+    },
+    // Append-only audit trail of every review action.
+    reviewHistory: [
+      {
+        at: Date,
+        actor: { name: String, email: String, role: String },
+        action: String,
+        note: String,
+        details: mongoose.Schema.Types.Mixed,
+      },
+    ],
   },
   { timestamps: true }
 );

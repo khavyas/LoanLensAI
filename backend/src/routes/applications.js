@@ -6,6 +6,10 @@ import { missingDocuments, openExceptions, withCrossDocumentChecks } from '../se
 import { withoutCredits } from '../services/statementAnalysis.js';
 import { REQUIRED_DOCS_BY_PRODUCT, PRODUCT_TYPES } from '../config/requiredDocs.js';
 import { AFFORDABILITY, maxAffordableAmount, maxAffordableBusinessAmount } from '../config/affordability.js';
+import { isStaff } from '../config/roles.js';
+import { assessApplication, borrowerNotice } from '../services/decisionRules.js';
+import { validateResidency } from '../services/residency.js';
+import { duplicateMatchesFor } from '../services/duplicateCheck.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -20,6 +24,15 @@ function ageOnDate(dateOfBirth, on = new Date()) {
   return age;
 }
 
+// A borrower must never receive the internal review record: the credit score
+// entry, the audit trail, or an underwriter's exception rationale and
+// relationship note. They get the outcome and plain-language notice instead.
+export function forViewer(app, role) {
+  if (isStaff(role)) return app;
+  const { creditProfile, reviewHistory, decision, verificationReport, ...safe } = app; // eslint-disable-line no-unused-vars
+  return { ...safe, decisionNotice: borrowerNotice(app) };
+}
+
 // Officers see all applications; borrowers see only their own.
 // 'submitted' only ever meant "the application was filed" — it says nothing
 // about whether required documents are still outstanding, which is exactly
@@ -28,7 +41,7 @@ function ageOnDate(dateOfBirth, on = new Date()) {
 // missingDocumentsCount lets the list view show that at a glance.
 router.get('/', async (req, res, next) => {
   try {
-    const filter = req.user.role === 'officer' ? {} : { applicantEmail: req.user.email };
+    const filter = isStaff(req.user.role) ? {} : { applicantEmail: req.user.email };
     const apps = await Application.find(filter).sort({ createdAt: -1 }).lean();
 
     const appIds = apps.map((a) => a._id);
@@ -40,10 +53,15 @@ router.get('/', async (req, res, next) => {
       docsByApp.get(key).push(doc);
     }
 
-    const withMissing = apps.map((app) => ({
-      ...app,
-      missingDocumentsCount: missingDocuments(app, docsByApp.get(app._id.toString()) || []).length,
-    }));
+    const withMissing = apps.map((app) =>
+      forViewer(
+        {
+          ...app,
+          missingDocumentsCount: missingDocuments(app, docsByApp.get(app._id.toString()) || []).length,
+        },
+        req.user.role
+      )
+    );
 
     res.json(withMissing);
   } catch (err) {
@@ -76,7 +94,11 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: 'You must authorize identity/credit verification and e-sign consent to apply' });
     }
 
+    const residency = validateResidency(req.body);
+    if (residency.error) return res.status(residency.error).json({ error: residency.message });
+
     const application = {
+      ...residency,
       applicantName: req.user.name,
       applicantEmail: req.user.email,
       productType,
@@ -125,6 +147,7 @@ router.post('/', async (req, res, next) => {
       loanReason,
       requiredDocTypes: REQUIRED_DOCS_BY_PRODUCT[productType],
       status: 'submitted',
+      reviewHistory: [{ at: new Date(), actor: { name: req.user.name, email: req.user.email, role: req.user.role }, action: 'submitted', note: '' }],
     });
     res.status(201).json(app);
   } catch (err) {
@@ -136,19 +159,28 @@ router.get('/:id', async (req, res, next) => {
   try {
     const app = await Application.findById(req.params.id).lean();
     if (!app) return res.status(404).json({ error: 'Application not found' });
-    if (req.user.role !== 'officer' && app.applicantEmail !== req.user.email) {
+    if (!isStaff(req.user.role) && app.applicantEmail !== req.user.email) {
       return res.status(403).json({ error: 'Not your application' });
     }
     // Never include the raw file bytes here — the frontend fetches those on
     // demand from GET /documents/:id/file, not inline with the whole app.
     const rawDocuments = await Document.find({ applicationId: app._id }).select('-fileData -storageKey').lean();
     const documents = withCrossDocumentChecks(app, rawDocuments);
-    res.json({
-      ...app,
-      documents: documents.map(withoutCredits),
-      missingDocuments: missingDocuments(app, documents),
-      openExceptions: openExceptions(app, documents),
-    });
+    res.json(
+      forViewer(
+        {
+          ...app,
+          documents: documents.map(withoutCredits),
+          missingDocuments: missingDocuments(app, documents),
+          openExceptions: openExceptions(app, documents),
+          // Staff-only: which of the bank's parameters this file meets.
+          ...(isStaff(req.user.role)
+            ? { assessment: assessApplication(app, documents, { duplicates: await duplicateMatchesFor(app) }) }
+            : {}),
+        },
+        req.user.role
+      )
+    );
   } catch (err) {
     next(err);
   }

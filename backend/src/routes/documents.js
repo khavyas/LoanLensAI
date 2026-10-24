@@ -11,6 +11,15 @@ import { readPdfPages } from '../services/pdfText.js';
 import { analyzeStatement, withoutCredits } from '../services/statementAnalysis.js';
 import { verifyDocument, openExceptions, withCrossDocumentChecks } from '../services/verification.js';
 
+// Once an application is with the underwriter or decided, its documents are
+// the record the decision rests on — no uploads or deletions until it is
+// returned to the loan officer.
+const LOCKED_STATUSES = ['referred', 'approved', 'rejected'];
+const lockedMessage = (status) =>
+  status === 'referred'
+    ? 'This application is with the underwriter, so its documents are locked.'
+    : `This application is ${status}; its documents can no longer be changed.`;
+
 // Server-side allowlist — the frontend picker already only offers image/PDF,
 // but that's a UI convenience, not a security boundary. Without this, a
 // direct API call (bypassing the picker entirely) could push any file type
@@ -59,12 +68,14 @@ async function describePages(mimeType, bytes, extracted) {
 }
 
 // A borrower may only touch documents on their own application; an officer
-// may touch any. Shared by the file/delete routes below (the upload route
-// has its own inline copy since it needs the application object anyway).
-async function loadOwnedApplication(applicationId, user) {
+// may touch any, and an underwriter may only view (`readOnlyStaff`). Shared by
+// the file/delete routes below (the upload route has its own inline copy since
+// it needs the application object anyway).
+async function loadOwnedApplication(applicationId, user, { readOnlyStaff = false } = {}) {
   const application = await Application.findById(applicationId);
   if (!application) return { error: 404, message: 'Application not found' };
-  if (user.role !== 'officer' && application.applicantEmail !== user.email) {
+  const staffAllowed = user.role === 'officer' || (readOnlyStaff && user.role === 'underwriter');
+  if (!staffAllowed && application.applicantEmail !== user.email) {
     return { error: 403, message: 'Not your application' };
   }
   return { application };
@@ -81,6 +92,9 @@ router.post('/:applicationId', upload.single('file'), async (req, res, next) => 
     if (!application) return res.status(404).json({ error: 'Application not found' });
     if (req.user.role !== 'officer' && application.applicantEmail !== req.user.email) {
       return res.status(403).json({ error: 'Not your application' });
+    }
+    if (LOCKED_STATUSES.includes(application.status)) {
+      return res.status(409).json({ error: lockedMessage(application.status) });
     }
     if (!req.file) return res.status(400).json({ error: 'No file uploaded (field name: file)' });
 
@@ -185,7 +199,7 @@ router.get('/:documentId/file', async (req, res, next) => {
   try {
     const doc = await Document.findById(req.params.documentId);
     if (!doc) return res.status(404).json({ error: 'Document not found' });
-    const owned = await loadOwnedApplication(doc.applicationId, req.user);
+    const owned = await loadOwnedApplication(doc.applicationId, req.user, { readOnlyStaff: true });
     if (owned.error) return res.status(owned.error).json({ error: owned.message });
     // Proxied through the server (not a redirect to a storage URL) so the
     // browser's authenticated fetch keeps working with no CORS setup and the
@@ -216,6 +230,9 @@ router.delete('/:documentId', async (req, res, next) => {
     if (!doc) return res.status(404).json({ error: 'Document not found' });
     const owned = await loadOwnedApplication(doc.applicationId, req.user);
     if (owned.error) return res.status(owned.error).json({ error: owned.message });
+    if (LOCKED_STATUSES.includes(owned.application.status)) {
+      return res.status(409).json({ error: lockedMessage(owned.application.status) });
+    }
 
     await Document.deleteOne({ _id: doc._id });
     await deleteStoredFile(doc); // best effort; never fails the request

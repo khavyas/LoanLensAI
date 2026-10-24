@@ -53,6 +53,9 @@ export const api = {
   register: (payload) => request('/auth/register', { method: 'POST', body: payload }),
   applications: () => request('/applications'),
   application: (id) => request(`/applications/${id}`),
+  setCreditScore: (id, score) => request(`/applications/${id}/credit-score`, { method: 'PUT', body: { score } }),
+  runChecks: (id) => request(`/applications/${id}/verify`, { method: 'POST' }),
+  decide: (id, body) => request(`/applications/${id}/decision`, { method: 'POST', body }),
   createApplication: (payload) => request('/applications', { method: 'POST', body: payload }),
   uploadDocument: (applicationId, formData) =>
     request(`/documents/${applicationId}`, { method: 'POST', body: formData }),

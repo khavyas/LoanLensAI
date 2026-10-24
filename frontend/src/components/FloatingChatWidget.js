@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { api } from '../api/client';
+import { chatBus } from '../chatBus';
 import AssistantTab from '../screens/tabs/AssistantTab';
 import { colors, shadow } from '../theme';
 
@@ -20,6 +21,7 @@ export default function FloatingChatWidget({
   dockable = false,
   dockWidth = 400,
   onOpenChange,
+  hideLauncher = false,
 }) {
   const { width, height } = useWindowDimensions();
   const [open, setOpen] = useState(false);
@@ -37,6 +39,17 @@ export default function FloatingChatWidget({
     setMinimized(true);
     onOpenChange?.(false);
   }
+
+  // Lets the sidebar's "Ask LoanLens" entry open the chat.
+  useEffect(
+    () =>
+      chatBus.subscribe(() => {
+        setMinimized(false);
+        setOpen(true);
+        onOpenChange?.(true);
+      }),
+    [onOpenChange]
+  );
 
   useEffect(() => {
     if (!open || !user) return undefined;
@@ -109,7 +122,7 @@ export default function FloatingChatWidget({
           </View>
         </View>
       )}
-      {(!open || minimized) && (
+      {(!open || minimized) && !hideLauncher && (
         <TouchableOpacity
           style={styles.launcher}
           onPress={() => {

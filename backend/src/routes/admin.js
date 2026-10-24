@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import bcrypt from 'bcryptjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -7,11 +6,9 @@ import User from '../models/User.js';
 import Application from '../models/Application.js';
 import Document from '../models/Document.js';
 import PolicyChunk from '../models/PolicyChunk.js';
-import { REQUIRED_DOCS_BY_PRODUCT } from '../config/requiredDocs.js';
-import { mockClassifyAndExtract } from '../services/mockFixtures.js';
-import { verifyDocument } from '../services/verification.js';
 import { checkStorage } from '../services/storage.js';
 import { ingestApprovedPolicies } from '../services/policyIngestion.js';
+import { seedAll } from '../services/seedData.js';
 
 // One-time setup endpoints for environments with no shell access (Render free tier).
 // Guarded by SETUP_SECRET; disable by unsetting the env var after setup.
@@ -26,105 +23,9 @@ router.use((req, res, next) => {
   next();
 });
 
-const REQUIRED_DOCS = REQUIRED_DOCS_BY_PRODUCT['auto-loan'];
-const SMB_REQUIRED_DOCS = REQUIRED_DOCS_BY_PRODUCT['small-business-loan'];
-
-// Priya Nair is pre-seeded with all three required documents already
-// uploaded and verified clean — a "one perfect application" reference,
-// consistent with the local seed.js script. Reuses the same MOCK_AI
-// fixture data so it's guaranteed to match what a live upload of these
-// same files would produce.
-const PRIYA_FILES = [
-  'priya-nair-pay-stub.png',
-  'priya-nair-drivers-license.png',
-  'priya-nair-bank-statement.png',
-];
-
-async function seedPriyaDocuments(priyaApp) {
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  const docsDir = path.resolve(__dirname, '../../../data/seed/documents');
-  for (const fileName of PRIYA_FILES) {
-    const extracted = mockClassifyAndExtract(fileName);
-    const verification = verifyDocument(priyaApp, extracted);
-    await Document.create({
-      applicationId: priyaApp._id,
-      fileName,
-      docType: extracted.docType,
-      fileData: fs.readFileSync(path.join(docsDir, fileName)),
-      mimeType: 'image/png',
-      extractedFields: extracted.fields,
-      confidence: extracted.confidence,
-      extractionSource: 'mock',
-      verification,
-      status: 'current',
-    });
-  }
-}
-
 async function runSeed() {
-  await Promise.all([User.deleteMany({}), Application.deleteMany({}), Document.deleteMany({})]);
-  const passwordHash = await bcrypt.hash('demo1234', 10);
-  await User.create([
-    { email: 'officer@loanlens.demo', passwordHash, name: 'Olivia Officer', role: 'officer' },
-    { email: 'borrower@loanlens.demo', passwordHash, name: 'Jordan Rivera', role: 'borrower' },
-    { email: 'dana.whitfield@example.demo', passwordHash, name: 'Dana Whitfield', role: 'borrower' },
-    { email: 'priya.nair@example.demo', passwordHash, name: 'Priya Nair', role: 'borrower' },
-    { email: 'arjun.mehta@example.demo', passwordHash, name: 'Arjun Mehta', role: 'borrower' },
-  ]);
-  const apps = await Application.create([
-    {
-      applicantName: 'Dana Whitfield',
-      applicantEmail: 'dana.whitfield@example.demo',
-      productType: 'small-business-loan',
-      businessName: 'Whitfield & Co. Bakery LLC',
-      statedAnnualBusinessRevenue: 340000, // planted mismatch: tax return will show $275,400
-      address: '14 Crestline Rd, Springfield',
-      ssnLast4: '6672',
-      // Planted affordability flag: 30% of documented revenue ($275,400 on the
-      // tax return) caps this at ~$82,620 — $110,000 is a clear, demo-able breach.
-      requestedAmount: 110000,
-      requiredDocTypes: SMB_REQUIRED_DOCS,
-      status: 'submitted',
-    },
-    {
-      applicantName: 'Jordan Rivera',
-      applicantEmail: 'borrower@loanlens.demo',
-      productType: 'auto-loan',
-      statedMonthlyIncome: 5000,
-      employerName: 'Brightline Logistics',
-      address: '412 Maple Court, Springfield',
-      ssnLast4: '4821',
-      requestedAmount: 28000,
-      requiredDocTypes: REQUIRED_DOCS,
-    },
-    {
-      applicantName: 'Priya Nair',
-      applicantEmail: 'priya.nair@example.demo',
-      productType: 'personal-loan',
-      statedMonthlyIncome: 7200,
-      employerName: 'Cedar Health Systems',
-      address: '88 Lakeview Drive, Springfield',
-      ssnLast4: '9034',
-      requestedAmount: 15000,
-      requiredDocTypes: REQUIRED_DOCS,
-    },
-    {
-      applicantName: 'Arjun Mehta',
-      applicantEmail: 'arjun.mehta@example.demo',
-      productType: 'auto-loan',
-      statedMonthlyIncome: 3900,
-      employerName: 'Ironwood Manufacturing',
-      address: '17 Birch Street, Springfield',
-      ssnLast4: '5567',
-      requestedAmount: 19500,
-      requiredDocTypes: REQUIRED_DOCS,
-    },
-  ]);
-
-  const priyaApp = apps.find((a) => a.applicantName === 'Priya Nair');
-  await seedPriyaDocuments(priyaApp);
-
-  return { users: 5, applications: apps.length };
+  const result = await seedAll();
+  return { users: result.users, applications: result.applications };
 }
 
 async function runIngest() {

@@ -92,10 +92,16 @@ export default function LoginScreen({ navigation }) {
         {!adminMode && <View style={styles.demoBox}>
           <Text style={styles.demoTitle}>Demo accounts</Text>
           <Text style={styles.demoLine}>Loan officer · officer@loanlens.demo</Text>
+          <Text style={styles.demoLine}>Underwriter · underwriter@loanlens.demo</Text>
           <Text style={styles.demoLine}>Jordan Rivera (auto-loan) · borrower@loanlens.demo</Text>
           <Text style={styles.demoLine}>Priya Nair (personal-loan, clean) · priya.nair@example.demo</Text>
-          <Text style={styles.demoLine}>Arjun Mehta (auto-loan) · arjun.mehta@example.demo</Text>
+          <Text style={styles.demoLine}>Arjun Mehta (low credit score) · arjun.mehta@example.demo</Text>
           <Text style={styles.demoLine}>Dana Whitfield (small-business) · dana.whitfield@example.demo</Text>
+          <Text style={styles.demoLine}>Rohan Desai (SSN mismatch) · rohan.desai@example.demo</Text>
+          <Text style={styles.demoLine}>Meera Iyer (expired ID) · meera.iyer@example.demo</Text>
+          <Text style={styles.demoLine}>Kavya Reddy (no credit history) · kavya.reddy@example.demo</Text>
+          <Text style={styles.demoLine}>Anil Kapoor (reused identity) · anil.kapoor@example.demo</Text>
+          <Text style={styles.demoLine}>Lakshmi Pillai (visa ends before loan) · lakshmi.pillai@example.demo</Text>
           <Text style={styles.demoLine}>Password (all accounts) · demo1234</Text>
         </View>}
       </View>
