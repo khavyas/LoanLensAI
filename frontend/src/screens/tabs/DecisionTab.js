@@ -14,6 +14,12 @@ const PARAM_ACCENT = { met: colors.success, unmet: colors.danger, pending: color
 const CHECK_TONE = { verified: 'success', clear: 'success', scored: 'success', failed: 'danger', 'potential-match': 'danger', frozen: 'warning', 'thin-file': 'warning', 'not-run': 'neutral' };
 const CHECK_LABEL = { verified: 'Verified', clear: 'Clear', scored: 'Score returned', failed: 'Failed', 'potential-match': 'Possible match', frozen: 'Frozen', 'thin-file': 'No history', 'not-run': 'Skipped' };
 
+// Approve is green and Decline is red, always — tinted until chosen, solid once chosen.
+const MODE_TONE = {
+  approve: { fg: colors.success, tint: colors.successBg },
+  reject: { fg: colors.danger, tint: colors.dangerBg },
+};
+
 const ACTION_LABEL = {
   'verification-run': 'Identity and credit checks run (simulated)',
   submitted: 'Application submitted',
@@ -291,14 +297,29 @@ export default function DecisionTab({ app, onChanged }) {
           <View style={styles.modeRow}>
             {modes.map((m) => {
               const disabled = !allowed[m.key];
+              const tone = MODE_TONE[m.key];
+              const selected = mode === m.key;
               return (
                 <TouchableOpacity
                   key={m.key}
-                  style={[styles.modeBtn, mode === m.key && styles.modeBtnActive, disabled && { opacity: 0.4 }]}
+                  style={[
+                    styles.modeBtn,
+                    selected && styles.modeBtnActive,
+                    tone && { borderColor: tone.fg, backgroundColor: selected ? tone.fg : tone.tint },
+                    disabled && { opacity: 0.4 },
+                  ]}
                   onPress={() => setMode(m.key)}
                   disabled={disabled}
                 >
-                  <Text style={[styles.modeText, mode === m.key && styles.modeTextActive]}>{m.label}</Text>
+                  <Text
+                    style={[
+                      styles.modeText,
+                      selected && styles.modeTextActive,
+                      tone && { color: selected ? '#fff' : tone.fg, fontWeight: '700' },
+                    ]}
+                  >
+                    {m.label}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
@@ -362,7 +383,11 @@ export default function DecisionTab({ app, onChanged }) {
 
           {mode && (
             <TouchableOpacity
-              style={[styles.primaryBtn, mode === 'reject' && { backgroundColor: colors.danger }]}
+              style={[
+                styles.primaryBtn,
+                mode === 'reject' && { backgroundColor: colors.danger },
+                mode === 'approve' && { backgroundColor: colors.success },
+              ]}
               onPress={submit}
               disabled={busy}
             >
