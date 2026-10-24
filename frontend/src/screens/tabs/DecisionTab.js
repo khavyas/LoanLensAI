@@ -227,22 +227,45 @@ export default function DecisionTab({ app, onChanged }) {
       {canAct && (
         <Card style={{ marginTop: 12 }}>
           <Overline>Credit score (manual entry)</Overline>
-          <Text style={styles.help}>
-            {app.creditProfile?.score != null
-              ? `Recorded: ${app.creditProfile.score}${app.creditProfile.source === 'simulated' ? ' (from the simulated bureau)' : app.creditProfile.enteredBy ? ` (entered by ${app.creditProfile.enteredBy})` : ''}.`
-              : 'No score yet. Run the credit check above, or type one in here — for example after reviewing a thin-file borrower by other means.'}
+          {app.creditProfile?.score != null ? (
+            <View style={styles.scoreRecorded}>
+              <Text style={styles.scoreValue}>{app.creditProfile.score}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.scoreLabel}>Recorded credit score</Text>
+                <Text style={styles.scoreMeta}>
+                  {app.creditProfile.source === 'simulated'
+                    ? 'From the simulated bureau'
+                    : app.creditProfile.enteredBy
+                      ? `Entered by ${app.creditProfile.enteredBy}`
+                      : ''}
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <Text style={styles.help}>
+              No score yet. Run the credit check above, or type one in here — for example after reviewing a thin-file borrower by other means.
+            </Text>
+          )}
+          <Text style={styles.scoreHint}>
+            {app.creditProfile?.score != null ? 'Enter a different score to replace it (300–850):' : 'Enter a score (300–850):'}
           </Text>
           <View style={styles.scoreRow}>
             <TextInput
-              style={[styles.input, { width: 120 }]}
+              style={styles.scoreInput}
               value={score}
               onChangeText={setScore}
               keyboardType="number-pad"
-              placeholder="300–850"
-              placeholderTextColor={colors.faint}
+              placeholder="e.g. 700"
+              placeholderTextColor={colors.muted}
             />
-            <TouchableOpacity style={styles.secondaryBtn} onPress={saveScore} disabled={busy || !score}>
-              <Text style={styles.secondaryText}>{app.creditProfile?.score != null ? 'Update score' : 'Save score'}</Text>
+            <TouchableOpacity
+              style={[styles.scoreBtn, (busy || !score) && styles.scoreBtnOff]}
+              onPress={saveScore}
+              disabled={busy || !score}
+            >
+              <Text style={[styles.scoreBtnText, (busy || !score) && styles.scoreBtnTextOff]}>
+                {app.creditProfile?.score != null ? 'Update score' : 'Save score'}
+              </Text>
             </TouchableOpacity>
           </View>
         </Card>
@@ -462,7 +485,29 @@ const styles = StyleSheet.create({
   body: { color: colors.text, fontSize: 13, marginTop: 6, lineHeight: 19 },
   notice: { color: colors.warning, backgroundColor: colors.warningBg, borderRadius: 8, padding: 10, fontSize: 13, marginTop: 10, lineHeight: 19 },
   waiveBox: { color: colors.info, backgroundColor: colors.infoBg, borderRadius: 8, padding: 10, fontSize: 13, marginTop: 12, lineHeight: 19 },
-  scoreRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
+  scoreRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
+  // The recorded score is the fact on this card, so it is large, bold and black —
+  // never faded, so the section cannot be mistaken for a disabled one.
+  scoreRecorded: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 10 },
+  scoreValue: { fontSize: 34, fontWeight: '800', color: '#000' },
+  scoreLabel: { fontSize: 14, fontWeight: '700', color: '#000' },
+  scoreMeta: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  scoreHint: { fontSize: 13, color: colors.text, marginTop: 14 },
+  scoreInput: {
+    width: 150,
+    borderWidth: 1.5,
+    borderColor: '#667085',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: '#000',
+    backgroundColor: '#fff',
+  },
+  scoreBtn: { backgroundColor: colors.accent, borderRadius: 8, paddingVertical: 11, paddingHorizontal: 16 },
+  scoreBtnOff: { backgroundColor: colors.neutralBg },
+  scoreBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  scoreBtnTextOff: { color: colors.muted },
   modeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   modeBtn: { borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14, backgroundColor: colors.card },
   modeBtnActive: { borderColor: colors.accent, backgroundColor: colors.infoBg },
