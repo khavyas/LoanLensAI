@@ -73,7 +73,7 @@ Local machines with firewall restrictions never run Node — everything runs in 
 1. **Code** lives on GitHub; edit locally or in **GitHub Codespaces** (Node preinstalled).
 2. **Backend** deploys on Render from this repo ([render.yaml](render.yaml)): root dir `backend`, build `npm install`, start `npm start`. Set `MONGODB_URI`, `ANTHROPIC_API_KEY`, `JWT_SECRET`, `SETUP_SECRET` in the Render dashboard.
 3. **First-time setup (and pre-demo reset) without a shell** — one call, replace host + secret:
-   - `POST https://<app>.onrender.com/admin/reset?secret=<SETUP_SECRET>` (seeds users/applications + re-indexes policies)
+   - `POST https://<app>.onrender.com/admin/reset?secret=<SETUP_SECRET>` (seeds users/applications + re-indexes policies). A reset replaces the demo users and applications but keeps administrator accounts; create one with `npm run admin:create` (it prompts for a name, email and a password of at least 12 characters).
    - `GET  https://<app>.onrender.com/admin/status?secret=<SETUP_SECRET>` to verify counts
 4. **Atlas**: Network Access → allow `0.0.0.0/0` (Render free tier has no static IP; demo DB holds synthetic data only).
 5. **Frontend** deploys on Render as a **Static Site**: root dir `frontend`, build `npm install && npx expo export --platform web`, publish directory `dist`, env var `EXPO_PUBLIC_API_URL` = the backend URL. Add a rewrite rule `/*` → `/index.html`. Static sites are free and never cold-start.
