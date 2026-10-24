@@ -212,7 +212,10 @@ async function seedDocuments(application, files) {
 }
 
 export async function seedAll() {
-  await Promise.all([User.deleteMany({}), Application.deleteMany({}), Document.deleteMany({})]);
+  // Administrator accounts are created by hand (`npm run admin:create`) and are never part
+  // of the demo data, so a reset must not delete them — otherwise every reset locks the
+  // administrator out.
+  await Promise.all([User.deleteMany({ role: { $ne: 'admin' } }), Application.deleteMany({}), Document.deleteMany({})]);
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
   await User.create(USERS.map((u) => ({ ...u, passwordHash })));
   // One at a time, in order: the duplicate-identity check treats the earlier
