@@ -10,6 +10,7 @@ import { isStaff } from '../config/roles.js';
 import { assessApplication, borrowerNotice } from '../services/decisionRules.js';
 import { validateResidency } from '../services/residency.js';
 import { duplicateMatchesFor } from '../services/duplicateCheck.js';
+import { EDITABLE_STATUSES, editableFields, reverifyDocuments, statusAfterEdit, validateEdit } from '../services/applicationEdit.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -173,6 +174,11 @@ router.get('/:id', async (req, res, next) => {
           documents: documents.map(withoutCredits),
           missingDocuments: missingDocuments(app, documents),
           openExceptions: openExceptions(app, documents),
+          edit: {
+            allowed: EDITABLE_STATUSES.includes(app.status),
+            fields: editableFields(app.productType),
+            termOptions: AFFORDABILITY[app.productType]?.termOptions || null,
+          },
           // Staff-only: which of the bank's parameters this file meets.
           ...(isStaff(req.user.role)
             ? { assessment: assessApplication(app, documents, { duplicates: await duplicateMatchesFor(app) }) }
@@ -181,6 +187,51 @@ router.get('/:id', async (req, res, next) => {
         req.user.role
       )
     );
+  } catch (err) {
+    next(err);
+  }
+});
+
+// A borrower correcting their own application (see services/applicationEdit.js for the
+// rules). Every document is re-verified against the corrected values and the change is
+// written to the review history, old value -> new value.
+router.put('/:id', async (req, res, next) => {
+  try {
+    if (req.user.role !== 'borrower') {
+      return res.status(403).json({ error: 'Only the applicant can edit their application.' });
+    }
+    const application = await Application.findById(req.params.id);
+    if (!application || application.applicantEmail !== req.user.email) {
+      // Same answer for "not found" and "not yours", so ids cannot be probed.
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    const checked = validateEdit(application.toObject(), req.body);
+    if (checked.error) return res.status(checked.error).json({ error: checked.message });
+
+    application.set(checked.updates);
+    const plain = application.toObject();
+
+    const documents = await Document.find({ applicationId: application._id }).select('-fileData -storageKey');
+    const reverified = reverifyDocuments(plain, documents.map((d) => d.toObject()));
+    const byId = new Map(reverified.map((r) => [String(r.id), r.verification]));
+    for (const doc of documents) {
+      if (byId.has(String(doc._id))) {
+        doc.verification = byId.get(String(doc._id));
+        await doc.save();
+      }
+    }
+
+    application.status = statusAfterEdit(plain, documents.map((d) => d.toObject()));
+    application.reviewHistory.push({
+      at: new Date(),
+      actor: { name: req.user.name, email: req.user.email, role: req.user.role },
+      action: 'application-edited',
+      note: '',
+      details: { changes: checked.diff },
+    });
+    await application.save();
+    res.json({ ok: true, status: application.status, changes: checked.diff });
   } catch (err) {
     next(err);
   }
