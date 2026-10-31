@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     alignSelf: 'flex-start',
   },
-  pillText: { fontSize: 12, fontWeight: '700', textTransform: 'capitalize' },
+  pillText: { fontSize: 13, fontWeight: '700', textTransform: 'capitalize' },
   card: {
     backgroundColor: colors.card,
     borderRadius: 12,
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     ...shadow,
   },
   overline: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '700',
     letterSpacing: 1,
     color: colors.faint,

@@ -144,8 +144,8 @@ const styles = StyleSheet.create({
   name: { fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 2 },
   factsRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 14, gap: 24 },
   fact: { minWidth: 120 },
-  factLabel: { fontSize: 12, color: colors.faint, marginBottom: 2 },
-  factValue: { fontSize: 14, fontWeight: '700', color: colors.text },
+  factLabel: { fontSize: 14, color: colors.muted, marginBottom: 3, fontWeight: '600' },
+  factValue: { fontSize: 17, fontWeight: '800', color: '#000' },
   tabBarWrap: {
     backgroundColor: colors.card,
     borderBottomWidth: 1,
