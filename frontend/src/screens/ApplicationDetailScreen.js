@@ -11,6 +11,8 @@ import ProgressTab from './tabs/ProgressTab';
 import ActionNeededTab from './tabs/ActionNeededTab';
 import AssistantTab from './tabs/AssistantTab';
 import DecisionTab from './tabs/DecisionTab';
+import EditApplicationPanel from '../components/EditApplicationPanel';
+import { formatChange } from '../utils/formatChange';
 import { DEFAULT_TAB, tabsForRole } from '../navigationRef';
 
 const RESIDENCY_LABEL = { 'us-citizen': 'U.S. citizen', 'permanent-resident': 'Permanent resident', 'visa-holder': 'Visa holder' };
@@ -27,11 +29,16 @@ export default function ApplicationDetailScreen({ route, navigation }) {
   const { user } = useAuth();
   const tabs = tabsForRole(user.role);
   const [app, setApp] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [notice, setNotice] = useState(null); // what the last edit changed
   // The page is part of the URL (/applications/:id/<tab>), so it can be
   // bookmarked, shared and opened directly by the chat assistant.
   const requested = route.params?.tab;
   const tab = tabs.some((t) => t.key === requested) ? requested : DEFAULT_TAB;
-  const setTab = (key) => navigation.setParams({ tab: key });
+  const setTab = (key) => {
+    setEditing(false);
+    navigation.setParams({ tab: key });
+  };
 
   const load = useCallback(async () => {
     try {
@@ -82,7 +89,14 @@ export default function ApplicationDetailScreen({ route, navigation }) {
               <Overline>Application</Overline>
               <Text style={styles.name}>{app.applicantName}</Text>
             </View>
-            <Pill tone={STATUS_TONE[app.status] || 'neutral'}>{statusLabel(app.status)}</Pill>
+            <View style={{ alignItems: 'flex-end', gap: 10 }}>
+              <Pill tone={STATUS_TONE[app.status] || 'neutral'}>{statusLabel(app.status)}</Pill>
+              {user.role === 'borrower' && app.edit?.allowed && !editing && (
+                <TouchableOpacity style={styles.editBtn} onPress={() => { setNotice(null); setEditing(true); }}>
+                  <Text style={styles.editBtnText}>Edit application</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
           <View style={styles.factsRow}>
             {facts.map((f) => (
@@ -93,6 +107,20 @@ export default function ApplicationDetailScreen({ route, navigation }) {
             ))}
           </View>
         </View>
+
+        {notice && (
+          <View style={styles.notice}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.noticeTitle}>Application updated. We re-checked your documents.</Text>
+              {notice.changes.map((c) => (
+                <Text key={c.field} style={styles.noticeLine}>{formatChange(c)}</Text>
+              ))}
+            </View>
+            <TouchableOpacity onPress={() => setNotice(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Text style={styles.noticeClose}>{'\u00D7'}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.tabBarWrap}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabBar}>
@@ -115,12 +143,23 @@ export default function ApplicationDetailScreen({ route, navigation }) {
         </View>
 
         <View style={{ flex: 1 }}>
-          {tab === 'progress' && <ProgressTab app={app} />}
-          {tab === 'documents' && <DocumentsTab app={app} onChanged={load} />}
-          {tab === 'verification' && <VerificationTab app={app} />}
-          {tab === 'action-needed' && <ActionNeededTab app={app} onChanged={load} />}
-          {tab === 'assistant' && <AssistantTab app={app} autoNavigate={false} />}
-          {tab === 'decision' && <DecisionTab app={app} onChanged={load} />}
+          {editing && (
+            <EditApplicationPanel
+              app={app}
+              onCancel={() => setEditing(false)}
+              onSaved={(result) => {
+                setEditing(false);
+                setNotice(result);
+                load();
+              }}
+            />
+          )}
+          {!editing && tab === 'progress' && <ProgressTab app={app} />}
+          {!editing && tab === 'documents' && <DocumentsTab app={app} onChanged={load} />}
+          {!editing && tab === 'verification' && <VerificationTab app={app} />}
+          {!editing && tab === 'action-needed' && <ActionNeededTab app={app} onChanged={load} />}
+          {!editing && tab === 'assistant' && <AssistantTab app={app} autoNavigate={false} />}
+          {!editing && tab === 'decision' && <DecisionTab app={app} onChanged={load} />}
         </View>
       </View>
     </View>
@@ -146,6 +185,12 @@ const styles = StyleSheet.create({
   fact: { minWidth: 120 },
   factLabel: { fontSize: 12, color: colors.faint, marginBottom: 2 },
   factValue: { fontSize: 14, fontWeight: '700', color: colors.text },
+  editBtn: { borderWidth: 1.5, borderColor: colors.accent, borderRadius: 8, paddingVertical: 9, paddingHorizontal: 16, backgroundColor: colors.card },
+  editBtnText: { color: colors.accent, fontWeight: '800', fontSize: 15 },
+  notice: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, backgroundColor: colors.successBg, borderBottomWidth: 1, borderColor: colors.success, paddingVertical: 12, paddingHorizontal: 20 },
+  noticeTitle: { color: colors.success, fontWeight: '800', fontSize: 16 },
+  noticeLine: { color: colors.text, fontSize: 15, marginTop: 4 },
+  noticeClose: { color: colors.muted, fontSize: 28, lineHeight: 28 },
   tabBarWrap: {
     backgroundColor: colors.card,
     borderBottomWidth: 1,

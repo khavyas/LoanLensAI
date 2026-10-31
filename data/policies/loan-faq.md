@@ -16,7 +16,7 @@ Auto loans: within 2 business days of a complete application. Personal loans: wi
 
 ## Can I update my application after submitting?
 
-Yes. If a document shows different information than your application (for example, a different income figure), you can correct the application to match the documentation. Corrections restart verification for the affected fields only.
+Yes, while your application is Submitted or Needs Review. Use the "Edit application" button on your application page to correct details such as requested amount, term, stated income, employer, address or reason for the loan (business loans: business name and annual revenue). All of your uploaded documents are re-checked straight away against the corrected values, and every change is recorded (old value to new value) for your loan officer. Your name, date of birth, SSN digits and residency status cannot be changed online; contact your loan officer for those. Once your file is with an underwriter or has been decided, it can no longer be edited.
 
 ## I'm applying for a small business loan — why was my business name flagged?
 

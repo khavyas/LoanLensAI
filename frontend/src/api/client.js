@@ -56,6 +56,7 @@ export const api = {
   setCreditScore: (id, score) => request(`/applications/${id}/credit-score`, { method: 'PUT', body: { score } }),
   runChecks: (id) => request(`/applications/${id}/verify`, { method: 'POST' }),
   decide: (id, body) => request(`/applications/${id}/decision`, { method: 'POST', body }),
+  updateApplication: (id, changes) => request(`/applications/${id}`, { method: 'PUT', body: changes }),
   createApplication: (payload) => request('/applications', { method: 'POST', body: payload }),
   uploadDocument: (applicationId, formData) =>
     request(`/documents/${applicationId}`, { method: 'POST', body: formData }),
