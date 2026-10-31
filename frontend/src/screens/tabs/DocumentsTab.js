@@ -288,15 +288,6 @@ export default function DocumentsTab({ app, onChanged }) {
               </View>
             </View>
 
-            {doc.extractionSource === 'fallback' && (
-              <View style={styles.fallbackNotice}>
-                <Text style={styles.fallbackNoticeText}>
-                  ⚠ Live AI extraction failed for this upload — the fields below are placeholder
-                  fallback data, not actually read from this document. Re-upload once the extraction
-                  service is working again.
-                </Text>
-              </View>
-            )}
             <Text style={styles.confidence}>
               Extraction confidence · {Math.round((doc.confidence || 0) * 100)}%
             </Text>
@@ -441,15 +432,6 @@ const styles = StyleSheet.create({
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   docType: { fontWeight: '800', fontSize: 16, color: colors.text },
   confidence: { color: colors.faint, fontSize: 12, marginTop: 4, marginBottom: 8 },
-  fallbackNotice: {
-    backgroundColor: colors.dangerBg,
-    borderWidth: 1,
-    borderColor: colors.danger,
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 10,
-  },
-  fallbackNoticeText: { color: colors.danger, fontSize: 12, lineHeight: 17, fontWeight: '600' },
   pageNotice: {
     backgroundColor: colors.warningBg,
     borderWidth: 1,
