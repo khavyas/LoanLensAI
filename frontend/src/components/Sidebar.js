@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   sectionLabel: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '700',
     letterSpacing: 1,
     color: colors.faint,
@@ -100,6 +100,6 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontWeight: '600', color: colors.muted },
   subItem: { paddingVertical: 7, paddingLeft: 36, paddingRight: 8, borderRadius: 8, marginBottom: 1 },
   subItemActive: { backgroundColor: colors.infoBg },
-  subLabel: { fontSize: 13, fontWeight: '600', color: colors.muted },
+  subLabel: { fontSize: 15, fontWeight: '600', color: colors.muted },
   chatItem: { marginTop: 14, borderTopWidth: 1, borderColor: colors.border, borderRadius: 0, paddingTop: 14 },
 });
