@@ -5,6 +5,7 @@ import { embedTexts } from './embeddingClient.js';
 import { generateChatText } from './ollamaClient.js';
 import { getOrCreatePolicyCollection, queryPolicyRecords } from './chromaService.js';
 import { classifyLoanQuestion } from './loanQuestionRouter.js';
+import { buildStatusNarrative } from './statusNarrative.js';
 import { createCircuitBreaker } from './circuitBreaker.js';
 import { createFailover, AllProvidersFailedError } from './chatFailover.js';
 import { buildDegradedAnswer } from './degradedAnswer.js';
@@ -31,18 +32,12 @@ const generate = async (messages, signal) => {
   return text;
 };
 
-function statusAnswer(application, documents, role = 'borrower') {
-  const status = String(application.status || "unknown").replace(/[-_]/g, " ");
-  const missing = missingDocuments(application, documents);
-  const subject = role === 'officer'
-    ? `${application.applicantName}'s application`
-    : 'your application';
-  let answer = `The status recorded for ${subject} is **${status}**.`;
-  if (missing.length) {
-    answer += " Our records show these required documents are still missing: " +
-      `**${missing.map((type) => type.replace(/[-_]/g, " ")).join(", ")}**.`;
-  }
-  return { answer, sources: [{ doc: "Application status" }] };
+// The full "where do I stand" narrative (statusNarrative.js), the same words the web assistant and
+// any future messaging channel show. Mixed status + policy questions get the short form.
+function statusAnswer(application, documents, role = 'borrower', compact = false) {
+  const plain = typeof application.toObject === 'function' ? application.toObject() : application;
+  const { text } = buildStatusNarrative({ application: plain, documents, role, compact });
+  return { answer: text, sources: [{ doc: 'Application state' }] };
 }
 
 const PRODUCT_LABELS = {
@@ -223,7 +218,7 @@ export async function answerQuestionWithOllama({ question, application, role, hi
       if (error?.name === 'AbortError' || signal?.aborted) throw error;
       // Policy search is down: still give the application status (it comes from the database).
       console.error('[ragOllama] retrieval failed, degrading:', error.message);
-      return buildDegradedAnswer({ statusText: needsStatus ? statusAnswer(application, documents, role).answer : '' });
+      return buildDegradedAnswer({ statusText: needsStatus ? statusAnswer(application, documents, role, true).answer : '' });
     }
   }
   if (needsPolicy && evidence.length === 0) {
@@ -234,7 +229,7 @@ export async function answerQuestionWithOllama({ question, application, role, hi
     });
     const unavailable = 'I could not find relevant information in the approved loan policies. Please contact your loan officer for help.';
     if (needsStatus) {
-      const status = statusAnswer(application, documents, role);
+      const status = statusAnswer(application, documents, role, true);
       return { answer: status.answer + '\n\n' + unavailable, sources: status.sources };
     }
     return { answer: unavailable, sources: [] };
@@ -281,10 +276,10 @@ export async function answerQuestionWithOllama({ question, application, role, hi
     }
     if (needsPolicy && evidence.length > 0 && answer.sources.length === 0 && needsStatus) {
       // Status remains authoritative; policy explanation is omitted if the model cites invalid source IDs.
-      return statusAnswer(application, documents, role);
+      return statusAnswer(application, documents, role, true);
     }
     if (needsStatus) {
-      const status = statusAnswer(application, documents, role);
+      const status = statusAnswer(application, documents, role, true);
       return {
         answer: status.answer + "\n\n" + answer.answer,
         sources: [...status.sources, ...answer.sources],
@@ -295,7 +290,7 @@ export async function answerQuestionWithOllama({ question, application, role, hi
   } catch (error) {
     console.error('[ragOllama] request failed:', error.message);
     if (error instanceof AllProvidersFailedError) {
-      return buildDegradedAnswer({ evidence, statusText: needsStatus ? statusAnswer(application, documents, role).answer : '' });
+      return buildDegradedAnswer({ evidence, statusText: needsStatus ? statusAnswer(application, documents, role, true).answer : '' });
     }
     throw new Error('The loan assistant is temporarily unavailable. Check the configured Ollama endpoint, API key, model access, and Chroma Cloud settings.');
   }

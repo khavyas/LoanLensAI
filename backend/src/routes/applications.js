@@ -10,7 +10,11 @@ import { isStaff } from '../config/roles.js';
 import { assessApplication, borrowerNotice } from '../services/decisionRules.js';
 import { validateResidency } from '../services/residency.js';
 import { duplicateMatchesFor } from '../services/duplicateCheck.js';
+<<<<<<< HEAD
 import { EDITABLE_STATUSES, editableFields, reverifyDocuments, statusAfterEdit, validateEdit } from '../services/applicationEdit.js';
+=======
+import { buildStatusNarrative } from '../services/statusNarrative.js';
+>>>>>>> feat/chat-status-narrative
 
 const router = Router();
 router.use(requireAuth);
@@ -151,6 +155,23 @@ router.post('/', async (req, res, next) => {
       reviewHistory: [{ at: new Date(), actor: { name: req.user.name, email: req.user.email, role: req.user.role }, action: 'submitted', note: '' }],
     });
     res.status(201).json(app);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// "Where do I stand?" in words: what is done, what is wrong, what to do, what happens next and the
+// recent activity. Built on the server so every channel (web chat, a future WhatsApp bot) shows the
+// same answer, and so a borrower only ever gets what a borrower may see.
+router.get('/:id/status-summary', async (req, res, next) => {
+  try {
+    const app = await Application.findById(req.params.id).lean();
+    if (!app) return res.status(404).json({ error: 'Application not found' });
+    if (!isStaff(req.user.role) && app.applicantEmail !== req.user.email) {
+      return res.status(403).json({ error: 'Not your application' });
+    }
+    const documents = withCrossDocumentChecks(app, await Document.find({ applicationId: app._id }).select('-fileData -storageKey').lean());
+    res.json(buildStatusNarrative({ application: app, documents, role: req.user.role }));
   } catch (err) {
     next(err);
   }
