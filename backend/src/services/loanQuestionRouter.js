@@ -4,7 +4,8 @@ const STATUS_PATTERN = /\bmy\s+(?:application\s+|loan\s+)?status\b|\b(?:my|this)
 // otherwise every status question is misrouted as mixed and a model can
 // paraphrase authoritative database state.
 const GENERAL_PATTERN = /\b(?:policy|policies|apply|application process|application.{0,30}required|requirements? (?:for|to)|document requirements|required documents|documents? (?:are )?required|documents? (?:do i need|to apply|needed for)|income(?: verification| proof)?|self[- ]employed|employment verification|proof of employment|eligibility|eligible|qualify|interest|rate|emi|repayment|repay|fees?|charges?|foreclosure|prepayment|terms?|timeline|decision|approval process|business days|co[- ]?signer|collateral|credit score)\b/i;
-const UNRELATED_PATTERN = /\b(?:weather|recipe|football|movie|music|stock price|politics|joke)\b/i;
+const CONNECTOR_START = /^\s*(?:and|also|then|so|what about|how about)\b/i;
+const UNRELATED_PATTERN =/\b(?:weather|recipe|football|movie|music|stock price|politics|joke)\b/i;
 const FOLLOW_UP_PATTERN = /\b(?:it|that|those|them|there|they|what about|how about|and then|why is that|tell me more)\b/i;
 
 function rawKind(text) {
@@ -30,8 +31,12 @@ export function classifyLoanQuestion(question, history = []) {
   // required for a personal loan") must stand on their own so an earlier
   // application-status question cannot override their intent or retrieval.
   const currentKind = rawKind(current);
+  // A question is a follow-up only if it says so ("and for a personal loan?", "how about that?"),
+  // is a tiny fragment ("How long?"), or leans on a pronoun in a short sentence. A complete
+  // question like "What employer is on my pay stub?" must not drag the previous question along.
+  const wordCount = current.split(/\s+/).length;
   const needsContext = currentKind === 'clarification'
-    && (current.split(/\s+/).length <= 7 || FOLLOW_UP_PATTERN.test(current));
+    && (wordCount <= 3 || CONNECTOR_START.test(current) || (wordCount <= 6 && FOLLOW_UP_PATTERN.test(current)));
   const usedHistory = needsContext && priorUserQuestions.length > 0;
   const effectiveQuestion = usedHistory
     ? `${priorUserQuestions.slice(-2).join('\n')}\n${current}`.slice(-2000)
