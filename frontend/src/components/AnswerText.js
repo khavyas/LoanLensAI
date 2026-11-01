@@ -5,6 +5,8 @@ import { colors } from '../theme';
 //
 //   ## Heading          a bold title line
 //   - item              a bullet
+//   - [x] / [!] / [ ]   a step: done, needs attention, not yet
+//     two-space indent   a detail line under the item above
 //   1. item             a numbered item
 //   > note              a highlighted callout (next step, what is still needed)
 //   **bold**            emphasis; status words are also coloured
@@ -43,8 +45,12 @@ function parseBlocks(text) {
       blocks.push({ type: 'gap' });
     } else if (line.startsWith('## ')) {
       blocks.push({ type: 'heading', text: line.slice(3) });
+    } else if (/^- \[[x! ]\] /.test(line)) {
+      blocks.push({ type: 'step', state: line[3], text: line.slice(6) });
     } else if (line.startsWith('- ')) {
       blocks.push({ type: 'bullet', text: line.slice(2) });
+    } else if (/^ {2}\S/.test(line)) {
+      blocks.push({ type: 'detail', text: line.trim() });
     } else if (/^\d+[.)]\s/.test(line)) {
       blocks.push({ type: 'number', n: line.match(/^(\d+)/)[1], text: line.replace(/^\d+[.)]\s+/, '') });
     } else if (line.startsWith('> ')) {
@@ -87,6 +93,19 @@ export default function AnswerText({ text }) {
             </View>
           );
         }
+        if (b.type === 'detail') {
+          return <Inline key={i} text={b.text} style={styles.detail} />;
+        }
+        if (b.type === 'step') {
+          const icon = b.state === 'x' ? '✓' : b.state === '!' ? '!' : '○';
+          const tone = b.state === 'x' ? colors.success : b.state === '!' ? colors.warning : colors.faint;
+          return (
+            <View key={i} style={styles.listRow}>
+              <Text style={[styles.marker, { color: tone, fontSize: 16 }]}>{icon}</Text>
+              <Inline text={b.text} style={[styles.body, { flex: 1 }, b.state === '!' && { fontWeight: '700' }]} />
+            </View>
+          );
+        }
         if (b.type === 'bullet' || b.type === 'number') {
           return (
             <View key={i} style={styles.listRow}>
@@ -104,6 +123,7 @@ export default function AnswerText({ text }) {
 const styles = StyleSheet.create({
   heading: { color: colors.primary, fontSize: 17, fontWeight: '800', lineHeight: 21, marginBottom: 4 },
   body: { color: colors.text, fontSize: 15, lineHeight: 23 },
+  detail: { color: colors.muted, fontSize: 14, lineHeight: 20, marginLeft: 26 },
   bold: { fontWeight: '800', color: colors.primary },
   listRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 4, paddingLeft: 2 },
   marker: { color: colors.accent, fontSize: 14, lineHeight: 21, fontWeight: '800', minWidth: 14 },
