@@ -1,4 +1,29 @@
 // NEW: Builds a constrained Ollama prompt and validates citations against retrieved Chroma records.
+
+// Bump when the system prompt or its output rules change, so an answer can be traced to the
+// prompt that produced it (returned with each policy answer and written to the RAG log).
+export const PROMPT_VERSION = 'policy-qa-v2';
+
+const SNIPPET_CHARS = 220;
+const snippetOf = (text) => {
+  const flat = String(text || '').replace(/\s+/g, ' ').trim();
+  return flat.length > SNIPPET_CHARS ? flat.slice(0, SNIPPET_CHARS).trimEnd() + '...' : flat;
+};
+
+// Numbers (amounts, percentages, days, counts) in a piece of text, as bare digit strings:
+// "$15,000" -> "15000", "5%" -> "5", "2 business days" -> "2". List markers ("1.", "2)") are ignored.
+export function numbersIn(text) {
+  const withoutMarkers = String(text || '').replace(/^\s*\d+[.)]\s+/gm, '');
+  return (withoutMarkers.match(/\d[\d,]*(?:\.\d+)?/g) || []).map((n) => n.replace(/,/g, '').replace(/\.0+$/, ''));
+}
+
+// Exact-number safety: every number the model states must appear in the evidence it was given
+// (or in the borrower's own question). Returns the numbers that do not.
+export function ungroundedNumbers(answerText, evidence, question = '') {
+  const known = new Set([...evidence.flatMap((item) => numbersIn(item.text)), ...numbersIn(question)]);
+  return [...new Set(numbersIn(answerText))].filter((n) => !known.has(n));
+}
+
 export function buildRagMessages({ question, history = [], role, route, evidence = [], applicationStatus = null }) {
   const system = `You are LoanLens, a helpful loan information assistant for a fictional demo bank.
 Answer only from the approved evidence and, for status questions, the authorized application status data supplied in the user message.
@@ -27,7 +52,7 @@ For policy answers, write a concise plain-text response and include one or more 
   ];
 }
 
-export function parseGroundedAnswer(raw, evidence, { citationsRequired = true } = {}) {
+export function parseGroundedAnswer(raw, evidence, { citationsRequired = true, question = '' } = {}) {
   const fallback = (validationError) => ({
     answer: 'I could not verify a reliable answer from the approved information. Please contact your loan officer.',
     sources: [],
@@ -66,6 +91,16 @@ export function parseGroundedAnswer(raw, evidence, { citationsRequired = true } 
       validationError: citationIds.length ? 'no-valid-citation' : 'missing-citation',
     };
   }
+  if (citationsRequired) {
+    const invented = ungroundedNumbers(answerText, validEvidence, question);
+    if (invented.length) {
+      return {
+        answer: 'I could not verify the figures in that answer against the approved policies. Please contact your loan officer.',
+        sources: [],
+        validationError: 'ungrounded-number',
+      };
+    }
+  }
   return {
     answer: answerText,
     sources: validEvidence.map((item) => ({
@@ -73,6 +108,7 @@ export function parseGroundedAnswer(raw, evidence, { citationsRequired = true } 
       section: item.section,
       source: item.sourceFile,
       chunkId: item.id,
+      snippet: snippetOf(item.text),
     })),
     validationError: null,
   };

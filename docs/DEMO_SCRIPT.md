@@ -29,6 +29,133 @@ it's simpler to narrate live if something goes wrong with the business-loan uplo
 it's useful to show breadth (the same engine handles both loan types) if you have time
 for a second pass.
 
+## Opening — apply for a loan from scratch (about 7 minutes)
+
+Start here. Nothing is pre-loaded: you create a borrower, apply, upload three documents live, then
+hand the file to the loan officer and show the borrower's result. The applicant is **Nisha Rao**,
+a demo-only borrower whose documents are *not* seeded, so every step is real.
+
+**Have ready**
+
+- The three files on the demo machine (Desktop or Downloads), from `data/seed/documents/`:
+  `nisha-rao-pay-stub.png`, `nisha-rao-drivers-license.png`, `nisha-rao-bank-statement.png`.
+- A fresh reset (see "Before you're on stage"). A reset also removes Nisha's account, so you can rehearse again.
+- Document extraction working (Groq, or Anthropic with credits). If it is not, skip steps 6–7 and
+  use the pre-loaded **Priya Nair** application, which shows the same screens.
+
+**The pitch (15 seconds)**
+
+> "A borrower applies in minutes. The system tells them exactly what it still needs, reads each
+> document, checks it against what they told us, and only then does a person decide."
+
+### Step 1 — Create the borrower (45 s)
+
+1. Open the app. On the login page click **New here? Create a test account**.
+2. Fill in: Full name **Nisha Rao** · Email **nisha.rao@example.demo** · Password **demo1234** · role **Borrower**.
+3. Click **Create account**. You land on **My Applications**, empty: *"No applications yet — tap New application to apply."*
+4. Point at the header: the **Borrower** badge, so everyone knows which screen this is.
+
+*Say:* "A real customer would register once. Everything from here is what they see."
+
+### Step 2 — Choose the product (20 s)
+
+1. Click **New application**. The wizard has four steps: Select Product · Tell Us About Yourself · Tell Us More About Yourself · Disclosures & Submit.
+2. Choose **Personal Loan**, click **Continue**.
+
+*Say:* "Three products — auto, personal, small business — each with its own rules and required documents."
+
+### Step 3 — Tell us about yourself (90 s)
+
+| Field | Type |
+|---|---|
+| Employer name | **Harbor Analytics** |
+| Employer phone | **(555) 014-2290** |
+| Stated gross monthly income ($) | **6500** |
+| Repayment term | **36 mo** |
+| Reason for loan | **Home office upgrade** |
+| Requested amount ($) | **12000** |
+
+1. *Optional beat (15 s):* first type **40000** as the requested amount and click **Continue**. It is stopped with
+   a message that the maximum is about **$25,000**, which is the personal-loan limit. Then change it back to **12000**.
+2. Click **Continue**.
+
+*Say:* "The affordability ceiling is checked before anyone uploads a single document, so a typo or an
+impossible request never wastes anyone's time. It is a rough estimate, never an automatic decline."
+
+### Step 4 — Tell us more about yourself (60 s)
+
+| Field | Type |
+|---|---|
+| Address | **27 Garden Street, Springfield** |
+| SSN (last 4) | **8842** |
+| Date of birth | **1993-02-15** (type it, or pick 15 Feb 1993) |
+| Residency status | **U.S. citizen** |
+
+1. Point at the note under residency: *"We do not verify citizenship."*
+2. Click **Continue**.
+
+*Say:* "We ask only what lending rules need. Residency is a declared fact the policy applies to the loan
+term — we never check citizenship against a government database."
+
+### Step 5 — Disclosures and submit (30 s)
+
+1. Tick the consent box (identity and credit-report authorisation, e-sign) and click **Submit application**.
+2. You land on the application's **Documents** tab.
+3. Point at **Required documents** (three, all *Pending*) and the **Action needed · 3** card with an **Upload** button for each.
+
+*Say:* "The moment the application is filed, the borrower sees exactly what is outstanding."
+
+### Step 6 — Upload the three documents live (2 min)
+
+1. Click **Upload document**, choose `nisha-rao-pay-stub.png`. While it works the page says *"AI is classifying and extracting…"*.
+2. A card appears: **Pay Stub**, extraction confidence, extracted fields, and a **Verification checks** list
+   (name, income, employer, payroll-tax math, year-to-date, affordability — all green).
+3. Upload `nisha-rao-drivers-license.png`: its card shows four checks — **name, date of birth, address, ID expiry**.
+4. Upload `nisha-rao-bank-statement.png`: it adds a cross-document check, **Bank deposit vs. pay stub net pay** ($2,200.50 matches).
+5. Point at the **Verification summary**: **3 documents · 14 checks run · 14 matched · 0 flagged**, and
+   that **Action needed** has cleared.
+
+*Say:* "One AI call reads each document. Then plain, fixed rules compare it with what she told us — not AI
+guessing. The bank deposit proves the pay stub is real money, not just a claim."
+
+### Step 7 — Show where she is (30 s)
+
+1. Click **Progress**. Steps one to four are ticked; **Officer review** shows **You are here**; about 67% complete.
+2. Click **Assistant** if you want a quick taste: ask *"What is my application status?"* — the answer is
+   formatted and opens the Progress page.
+
+*Say:* "She is never left wondering where her application is."
+
+### Step 8 — Hand over to the loan officer (2 min)
+
+1. In a second window, sign in as **officer@loanlens.demo** / **demo1234**. Point at the **Loan Officer** badge.
+2. **Loan Applications** lists **Nisha Rao** first. Open her and go to the **Decision** tab.
+3. Show that *Identity verified* and *Sanctions screening* say **Needs entry**, and **Approve** is greyed out.
+4. Click **Run identity and credit checks** (the card says **Simulated**): identity verified, sanctions clear,
+   **credit score 720**. Every parameter is now **Met**.
+5. Click **Approve**, then **Confirm: Approve**. The status becomes **Approved** and the history records who and when.
+
+*Say:* "Nothing can be approved until identity and credit are checked. The documents and decision rules are
+real; the credit bureau and ID match are simulated here with test data, and this is where a real provider plugs in."
+
+### Step 9 — The borrower's view (30 s)
+
+1. Back in Nisha's window, refresh and open the **Progress** tab. It starts with **"Your loan has been approved."**
+2. Point out what is *not* there: no credit score, no internal notes, no reviewer reasoning.
+
+*Say:* "The borrower gets the outcome. Scores and reasoning stay with the bank."
+
+**Transition:** "That was the happy path. Now what happens when something is wrong?" — continue with
+the scenarios below (Jordan Rivera, the small-business case, then Act 2).
+
+**If something goes wrong in the opening**
+
+- *Email already exists* — you did not reset since the last run. Reset, or use another email. Do not reuse
+  Nisha's SSN digits and date of birth on a second account: the duplicate check will, correctly, stop it.
+- *An upload fails or says extraction is unavailable* — say the extraction service is offline and switch to
+  the pre-loaded **Priya Nair** (officer login); every later step still works.
+- *Approve is greyed out* — the checks were not run yet. Click **Run identity and credit checks** first.
+
 ## Before you're on stage
 
 1. Reset the demo data so it's clean: `npm run reset` (local) or hit
@@ -36,6 +163,7 @@ for a second pass.
 2. If deployed on Render free tier, open `/health` ~5 minutes early to wake the backend.
 3. Have `data/seed/documents/jordan-rivera-pay-stub.png` easy to reach on the machine
    you're demoing from (Downloads or Desktop) — you'll upload it live.
+   For the opening also copy the three `nisha-rao-*.png` files from the same folder.
 4. Two browser tabs (or one you'll log out/in on): one for the **officer**, one for the
    **borrower**. Logins: `officer@loanlens.demo` / `demo1234`, `borrower@loanlens.demo` / `demo1234`.
    For Act 2 also have `underwriter@loanlens.demo` / `demo1234` ready (the borrower logins are in

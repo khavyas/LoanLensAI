@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
   leftCol: { width: 380, flexShrink: 0 },
   rightCol: { flex: 1, minWidth: 0 },
   sectionHeading: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '700',
     color: colors.muted,
     marginTop: 20,
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: colors.border,
   },
-  fileName: { flex: 1, color: colors.text, fontSize: 13, fontWeight: '600', marginRight: 10 },
+  fileName: { flex: 1, color: colors.text, fontSize: 15, fontWeight: '600', marginRight: 10 },
   fileActionBtn: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -387,9 +387,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   fileActionBtnDanger: { borderColor: colors.dangerBg },
-  fileActionText: { color: colors.accent, fontWeight: '600', fontSize: 12 },
+  fileActionText: { color: colors.accent, fontWeight: '600', fontSize: 14 },
   fieldsHeading: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '700',
     color: colors.faint,
     textTransform: 'uppercase',
@@ -411,15 +411,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   exceptionTitle: { fontWeight: '700', fontSize: 14, color: colors.text },
-  exceptionMsg: { color: colors.muted, fontSize: 12, marginTop: 6, lineHeight: 17 },
+  exceptionMsg: { color: colors.muted, fontSize: 14, marginTop: 6, lineHeight: 17 },
   issueRow: {
     borderLeftWidth: 3,
     paddingLeft: 10,
     marginTop: 10,
   },
   issueHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  issueField: { fontWeight: '700', fontSize: 13, color: colors.text },
-  issueExplain: { color: colors.muted, fontSize: 12, marginTop: 3, lineHeight: 17 },
+  issueField: { fontWeight: '700', fontSize: 15, color: colors.text },
+  issueExplain: { color: colors.muted, fontSize: 14, marginTop: 3, lineHeight: 17 },
   fixBtn: {
     backgroundColor: colors.warning,
     borderRadius: 8,
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     minWidth: 88,
     alignItems: 'center',
   },
-  fixBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  fixBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   uploadBtn: {
     backgroundColor: colors.accent,
     borderRadius: 8,
@@ -436,11 +436,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   uploadText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  busyHint: { textAlign: 'center', color: colors.muted, marginTop: 8, fontSize: 13 },
-  error: { color: colors.danger, marginTop: 8, fontSize: 13 },
+  busyHint: { textAlign: 'center', color: colors.muted, marginTop: 8, fontSize: 15 },
+  error: { color: colors.danger, marginTop: 8, fontSize: 15 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  docType: { fontWeight: '800', fontSize: 16, color: colors.text },
-  confidence: { color: colors.faint, fontSize: 12, marginTop: 4, marginBottom: 8 },
+  docType: { fontWeight: '800', fontSize: 19, color: colors.text },
+  confidence: { color: colors.faint, fontSize: 14, marginTop: 4, marginBottom: 8 },
   fallbackNotice: {
     backgroundColor: colors.dangerBg,
     borderWidth: 1,
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginTop: 10,
   },
-  fallbackNoticeText: { color: colors.danger, fontSize: 12, lineHeight: 17, fontWeight: '600' },
+  fallbackNoticeText: { color: colors.danger, fontSize: 14, lineHeight: 17, fontWeight: '600' },
   pageNotice: {
     backgroundColor: colors.warningBg,
     borderWidth: 1,
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 6,
   },
-  pageNoticeText: { color: colors.warning, fontSize: 12, lineHeight: 17, fontWeight: '600' },
+  pageNoticeText: { color: colors.warning, fontSize: 14, lineHeight: 17, fontWeight: '600' },
   // A 2-up grid instead of one long label/value-per-row list — a document
   // can have a dozen extracted fields, and on a wide screen that made for a
   // tall, sparse single column when the page itself already had room to spare.
@@ -470,7 +470,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: colors.border,
   },
-  fieldKey: { color: colors.faint, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4 },
-  fieldVal: { color: colors.text, fontWeight: '600', fontSize: 13, marginTop: 2 },
-  historyToggle: { color: colors.accent, fontWeight: '600', fontSize: 13, textAlign: 'center' },
+  // Label: small, capitalised, mid-grey. Value: large, bold, near-black — so what the document SAYS
+  // is the first thing the eye lands on.
+  fieldKey: { color: colors.muted, fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  fieldVal: { color: '#000', fontWeight: '700', fontSize: 17, marginTop: 3 },
+  historyToggle: { color: colors.accent, fontWeight: '600', fontSize: 15, textAlign: 'center' },
 });

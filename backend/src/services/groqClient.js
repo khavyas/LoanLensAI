@@ -30,3 +30,16 @@ export function parseJsonResponse(text) {
   const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
   return JSON.parse(cleaned);
 }
+
+// Plain-text chat completion, used as the standby when the main chat model is down
+// (CHAT_FALLBACK_PROVIDER=groq). Picks a text model from the account's /models list.
+export const GROQ_CHAT_MODEL = process.env.GROQ_CHAT_MODEL || 'openai/gpt-oss-20b';
+export async function generateGroqChatText(messages, signal) {
+  const response = await getGroqClient().chat.completions.create(
+    { model: GROQ_CHAT_MODEL, max_tokens: 768, temperature: 0, messages },
+    signal ? { signal } : undefined
+  );
+  const content = response.choices[0]?.message?.content;
+  if (typeof content !== 'string' || !content.trim()) throw new Error('Groq returned an empty chat response.');
+  return content;
+}

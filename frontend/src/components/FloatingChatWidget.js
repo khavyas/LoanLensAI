@@ -115,7 +115,7 @@ export default function FloatingChatWidget({
             ) : error ? (
               <Text style={styles.message}>{error}</Text>
             ) : app ? (
-              <AssistantTab app={app} />
+              <AssistantTab key={app._id} app={app} />
             ) : (
               <Text style={styles.message}>A loan application is needed before I can answer application questions.</Text>
             )}

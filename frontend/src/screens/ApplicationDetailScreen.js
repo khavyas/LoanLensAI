@@ -158,7 +158,7 @@ export default function ApplicationDetailScreen({ route, navigation }) {
           {!editing && tab === 'documents' && <DocumentsTab app={app} onChanged={load} />}
           {!editing && tab === 'verification' && <VerificationTab app={app} />}
           {!editing && tab === 'action-needed' && <ActionNeededTab app={app} onChanged={load} />}
-          {!editing && tab === 'assistant' && <AssistantTab app={app} autoNavigate={false} />}
+          {!editing && tab === 'assistant' && <AssistantTab key={app._id} app={app} autoNavigate={false} />}
           {!editing && tab === 'decision' && <DecisionTab app={app} onChanged={load} />}
         </View>
       </View>
@@ -183,8 +183,8 @@ const styles = StyleSheet.create({
   name: { fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 2 },
   factsRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 14, gap: 24 },
   fact: { minWidth: 120 },
-  factLabel: { fontSize: 12, color: colors.faint, marginBottom: 2 },
-  factValue: { fontSize: 14, fontWeight: '700', color: colors.text },
+  factLabel: { fontSize: 14, color: colors.muted, marginBottom: 3, fontWeight: '600' },
+  factValue: { fontSize: 17, fontWeight: '800', color: '#000' },
   editBtn: { borderWidth: 1.5, borderColor: colors.accent, borderRadius: 8, paddingVertical: 9, paddingHorizontal: 16, backgroundColor: colors.card },
   editBtnText: { color: colors.accent, fontWeight: '800', fontSize: 15 },
   notice: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, backgroundColor: colors.successBg, borderBottomWidth: 1, borderColor: colors.success, paddingVertical: 12, paddingHorizontal: 20 },
