@@ -4,6 +4,7 @@ import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { colors, labelize } from '../../theme';
 import { goToApplicationTab } from '../../navigationRef';
+import { formatChange } from '../../utils/formatChange';
 import { Pill, Card, Overline } from '../../components/ui';
 
 const PARAM_TONE = { met: 'success', unmet: 'danger', pending: 'warning' };
@@ -25,6 +26,7 @@ const MODE_TONE = {
 };
 
 const ACTION_LABEL = {
+  'application-edited': 'Application edited by the borrower',
   'verification-run': 'Identity and credit checks run (simulated)',
   submitted: 'Application submitted',
   'credit-score-entered': 'Credit score entered',
@@ -453,6 +455,9 @@ export default function DecisionTab({ app, onChanged }) {
                 </Text>
               </Text>
               {e.note ? <Text style={styles.body}>{e.note}</Text> : null}
+              {(e.details?.changes || []).map((c) => (
+                <Text key={c.field} style={styles.body}>{formatChange(c)}</Text>
+              ))}
               {e.details?.score != null ? <Text style={styles.body}>Score {e.details.score}</Text> : null}
               {e.details?.unmetParameters?.length ? (
                 <Text style={styles.body}>Unmet: {e.details.unmetParameters.map((k) => labelize(k)).join(', ')}</Text>
