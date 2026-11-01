@@ -4,11 +4,13 @@ Written for the jury demo. It describes what the code does today, including what
 
 ## The short answer
 
-- **RAG answers questions about the bank's policies.** The approved policy documents (loan requirements, income rules, residency, FAQ) are split into sections, turned into vectors and stored in Chroma Cloud. When someone asks a policy question, the assistant finds the closest sections, gives only those to the language model, and the answer must cite them.
-- **Facts about an application do not go through RAG.** What a borrower uploaded, what was extracted, what was flagged and the status are exact data. They are read from MongoDB by ordinary code and written out as text. A language model is never asked to remember or guess a figure.
-- **Uploaded documents are not embedded yet.** Today a borrower's documents are stored (Cloudflare R2 or MongoDB), read by the extraction model, and the extracted fields are saved in MongoDB. They are checked by the rule engine. Indexing them for retrieval is planned work (RAG plan P3 and P5-03).
+- **RAG searches two collections.** (1) The bank's approved policy documents (loan requirements, income rules, residency, FAQ). (2) The applicant's own file: their documents' extracted values, verification results, the text of PDFs that have a text layer (page by page) and the review record. Both are split into sections, turned into vectors and stored in Chroma Cloud. For a question, the assistant finds the closest sections from each, gives only those to the language model, and the answer must cite them (P1, P2 for policy; F1, F2 for the file).
+- **The applicant's file is searched under hard rules.** Every search is pinned to one application ID and the caller's role by the server. A borrower can only retrieve their own borrower-visible text; officer notes and referrals are staff-only. Identifiers (SSN, account numbers, dates of birth, addresses, phone numbers, emails) are removed before anything is embedded.
+- **Exact facts still come from the database.** Status, the "what to fix" narrative, amounts and flags are read from MongoDB by ordinary code and written out as text. A language model is never asked to remember or guess a figure, and every number in a RAG answer must appear in the evidence it was given.
 
-So the mental model "the LLM goes to MongoDB and retrieves" is not quite what happens. The LLM never queries MongoDB. Our code does, then decides whether the question needs the LLM at all.
+So the mental model "the LLM goes to MongoDB and retrieves" is not what happens. The LLM never queries MongoDB. Our code does, then decides whether the question needs the LLM at all, and what the LLM is allowed to see.
+
+**Limits to know:** an uploaded image has no stored transcript. For images, only the values the extraction model read are searchable. PDFs with a text layer are searchable page by page. Loan-file search needs `CHAT_PROVIDER=ollama` and a one-time index build (`/admin/index-applications`, also done by `/admin/reset`).
 
 ## What happens at each step
 
@@ -17,6 +19,7 @@ So the mental model "the LLM goes to MongoDB and retrieves" is not quite what ha
 2. A vision model reads it and returns fields (name, income, employer, expiry date...). Page text is also read for bank statements.
 3. The rule engine compares those fields with the application and records each check as match, warning or mismatch.
 4. Results are stored on the Document in MongoDB and drive the Verification and Action Needed pages.
+5. The application's file is re-indexed in the background so the assistant can search it: identifiers are removed first, only current documents are kept, and a replaced or deleted document disappears from search. The same re-index runs after an edit, a verification run or a decision.
 
 **2. Someone asks the assistant a question**
 
@@ -26,15 +29,16 @@ So the mental model "the LLM goes to MongoDB and retrieves" is not quite what ha
 | Amount requested, which documents are uploaded, pay-stub net pay | Fixed answers computed from stored fields | No | MongoDB |
 | Open the documents / verification / progress page | Browser recognises the intent and navigates | No | MongoDB |
 | Policy and process: requirements, tolerances, timelines, eligibility, residency, what a flag means | **Retrieve, then generate, then check** (below) | **Yes** | Chroma Cloud (policy vectors) |
+| What is in my documents: employer on the pay stub, license expiry, what a check found, what a long statement says on a given page, what the officer noted (staff) | **Same path, searching the applicant's own file** (filtered to this application and role) | **Yes** | Chroma Cloud (loan-file vectors), built from MongoDB |
 | Status and a policy question together | Short status from MongoDB, then the policy answer from RAG | Partly | Both |
 | Another applicant's data, secrets, jailbreaks | Refused by server rules before any model is called, or the prompt treats it as untrusted text | No | None |
 
-**3. The RAG path for a policy question**
-1. **Route.** A rules-based router decides this is a policy question. The model does not choose what to query or who may see what.
+**3. The RAG path for a policy or file question**
+1. **Route.** A rules-based router decides this needs retrieval. The model does not choose what to query or who may see what.
 2. **Embed.** The question is turned into a vector (Qwen3-Embedding on Chroma Cloud on Render, `nomic-embed-text`/`embeddinggemma` locally).
-3. **Retrieve.** Chroma returns the nearest policy sections. Anything farther than the distance cutoff is dropped. Duplicates are removed. At most 5 are kept.
-4. **No evidence, no answer.** If nothing is close enough, the assistant says it could not find it in the approved policies and points to the loan officer. It does not guess.
-5. **Generate.** The model gets the question and the numbered evidence (P1, P2...) with strict rules: answer only from the evidence, cite labels, treat everything as untrusted text.
+3. **Retrieve.** Chroma returns the nearest policy sections, and the nearest sections of this applicant's file (filtered by the server to this application, current documents only, and the caller's role). Anything farther than the distance cutoff is dropped. Duplicates are removed.
+4. **No evidence, no answer.** If nothing is close enough, the assistant says it could not find it in the approved policies or this application's file and points to the loan officer. It does not guess.
+5. **Generate.** The model gets the question and the numbered evidence (P1, P2 for policy; F1, F2 for the file) with strict rules: answer only from the evidence, cite labels, treat everything as untrusted text.
 6. **Verify.** The server checks that every citation is a real retrieved section and that every number in the answer appears in that evidence. One retry, then a safe refusal.
 7. **Show sources.** The answer comes back with source chips (document, section, snippet).
 8. **If the model is down:** a standby model (Groq, if configured) answers; if both fail, the top policy passages are shown as they are, with sources, flagged as a limited answer.
@@ -48,10 +52,12 @@ So the mental model "the LLM goes to MongoDB and retrieves" is not quite what ha
 
 ## What not to claim
 
-- Do not say the assistant searches the borrower's uploaded documents with RAG. It does not yet. Say: "document facts are extracted and verified by rules; indexing document text for retrieval is the next phase".
-- Do not say multi-bank isolation is built. It is a single-bank build with the design for tenants documented (`docs/RAG_GOVERNANCE.md`).
+- Do not say every uploaded document is searched word for word. Scanned images have no stored transcript; for them the assistant searches the values the extraction model read and the verification results. PDFs with a text layer are searched page by page.
+- Do not say document checks are done by RAG. Verification is rules plus extraction; RAG answers questions about the results and the documents.
+- Do not say multi-bank isolation is built. It is a single-bank build with the design for tenants documented (`docs/RAG_GOVERNANCE.md`). The per-application filter is built, though.
 - Do not promise WhatsApp. The reply text is channel-ready; the WhatsApp connection is future work.
-- If a juror asks "why not put document text in RAG?": the numbers a lender relies on are better read from structured fields than from similarity search. Indexing redacted document text is planned for narrative questions ("what does the letter of explanation say?"), with strict per-application filters and PII redaction first.
+- Do not claim measured accuracy until `npm run eval:retrieval` has been run live. The loan-file search is unit tested (redaction, filters, leak tests, re-indexing) but has not yet been run against live Chroma.
+- If a juror asks "why not just read exact numbers from the database?": we do, for status, flags and amounts. RAG is for questions where the answer sits in text: a policy clause, a line on page 87 of a statement, an officer's note.
 
 ## A five-minute RAG-led demo
 
@@ -59,8 +65,9 @@ So the mental model "the LLM goes to MongoDB and retrieves" is not quite what ha
 2. **Ask about it as a borrower.** The answer quotes the new rule with a source chip. Delete the file and ask again: "I could not find that."
 3. **Ask the standard policy questions.** Car-loan documents, decision time, income tolerance. Open a source chip to show the cited section.
 4. **Show it refusing to guess.** Ask for the routing number or a mortgage. It says it has no source.
-5. **Show the split.** Ask "what is the status of my application?" as Meera Iyer: exact, specific, from the database (not a model guess). Then a mixed question: status and a policy together.
-6. **Show the safety net.** Ask it to ignore its rules, or ask about another applicant. It refuses. If time allows, stop the model and show the limited answer with passages and sources.
-7. **Show measurement.** Run `npm run eval:retrieval` and read recall@5, precision@5 and MRR over the 18 golden questions.
+5. **Ask about the applicant's own file.** As Meera Iyer ask "When does my driver license expire?" and "What employer is on my pay stub?". The answer cites the document and section (for example "Driver's license · Verification checks"). As the officer, ask the same about her file, then show that Meera, signed in as a borrower, cannot see the officer's notes.
+6. **Show the split.** Ask "what is the status of my application?" as Meera Iyer: exact, specific, from the database (not a model guess). Then a mixed question: status and a policy together.
+7. **Show the safety net.** Ask it to ignore its rules, or ask about another applicant. It refuses. If time allows, stop the model and show the limited answer with passages and sources.
+8. **Show measurement.** Run `npm run eval:retrieval` and read recall@5, precision@5 and MRR over the 18 golden questions.
 
 The full list, with expected results and what each proves, is in `LoanLensAI_RAG_Demo_Test_Scenarios.xlsx`.

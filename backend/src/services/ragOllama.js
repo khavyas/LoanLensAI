@@ -6,6 +6,8 @@ import { generateChatText } from './ollamaClient.js';
 import { getOrCreatePolicyCollection, queryPolicyRecords } from './chromaService.js';
 import { classifyLoanQuestion } from './loanQuestionRouter.js';
 import { buildStatusNarrative } from './statusNarrative.js';
+import { loanFileRagEnabled } from './loanFileIndexer.js';
+import { retrieveFileEvidence } from './loanFileRetrieval.js';
 import { createCircuitBreaker } from './circuitBreaker.js';
 import { createFailover, AllProvidersFailedError } from './chatFailover.js';
 import { buildDegradedAnswer } from './degradedAnswer.js';
@@ -214,6 +216,18 @@ export async function answerQuestionWithOllama({ question, application, role, hi
       const collectionId = await getOrCreatePolicyCollection(signal);
       const result = await queryPolicyRecords(collectionId, queryEmbedding, Math.max(RAG_CONFIG.topK * 3, RAG_CONFIG.topK), undefined, signal);
       evidence = selectEvidence(result);
+      // The applicant's own file (their documents, verification results and review record) is
+      // searched with the same question vector. The filter is built on the server from the
+      // application this request is already authorised for, and from the caller's role.
+      if (loanFileRagEnabled()) {
+        try {
+          const fileEvidence = await retrieveFileEvidence({ application, role, embedding: queryEmbedding, signal });
+          evidence = [...evidence, ...fileEvidence];
+        } catch (fileError) {
+          if (fileError?.name === 'AbortError' || signal?.aborted) throw fileError;
+          console.error('[ragOllama] loan-file search failed; answering from policy only:', fileError.message);
+        }
+      }
     } catch (error) {
       if (error?.name === 'AbortError' || signal?.aborted) throw error;
       // Policy search is down: still give the application status (it comes from the database).
@@ -227,7 +241,9 @@ export async function answerQuestionWithOllama({ question, application, role, hi
       embeddingProvider: RAG_CONFIG.embeddingProvider,
       embeddingModel: RAG_CONFIG.embeddingModel,
     });
-    const unavailable = 'I could not find relevant information in the approved loan policies. Please contact your loan officer for help.';
+    const unavailable = loanFileRagEnabled()
+      ? 'I could not find relevant information in the approved loan policies or in this application\'s file. Please contact your loan officer for help.'
+      : 'I could not find relevant information in the approved loan policies. Please contact your loan officer for help.';
     if (needsStatus) {
       const status = statusAnswer(application, documents, role, true);
       return { answer: status.answer + '\n\n' + unavailable, sources: status.sources };
@@ -262,7 +278,7 @@ export async function answerQuestionWithOllama({ question, application, role, hi
       raw = await generate([
         ...messages,
         { role: 'assistant', content: raw },
-        { role: 'user', content: 'Keep the same evidence-grounded answer, but return plain text and add one or more exact evidence labels in square brackets, such as [P1] or [P2]. Use only labels from the supplied evidence. Do not return JSON.' },
+        { role: 'user', content: 'Keep the same evidence-grounded answer, but return plain text and add one or more exact evidence labels in square brackets, such as [P1] or [F1]. Use only labels from the supplied evidence. Do not return JSON.' },
       ], signal);
       answer = parseGroundedAnswer(raw, evidence, { citationsRequired: true, question: route.effectiveQuestion });
     }

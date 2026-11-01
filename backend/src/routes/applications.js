@@ -12,6 +12,7 @@ import { validateResidency } from '../services/residency.js';
 import { duplicateMatchesFor } from '../services/duplicateCheck.js';
 import { EDITABLE_STATUSES, editableFields, reverifyDocuments, statusAfterEdit, validateEdit } from '../services/applicationEdit.js';
 import { buildStatusNarrative } from '../services/statusNarrative.js';
+import { scheduleIndexApplication } from '../services/loanFileIndexer.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -151,6 +152,7 @@ router.post('/', async (req, res, next) => {
       status: 'submitted',
       reviewHistory: [{ at: new Date(), actor: { name: req.user.name, email: req.user.email, role: req.user.role }, action: 'submitted', note: '' }],
     });
+    scheduleIndexApplication(app._id);
     res.status(201).json(app);
   } catch (err) {
     next(err);
@@ -249,6 +251,7 @@ router.put('/:id', async (req, res, next) => {
       details: { changes: checked.diff },
     });
     await application.save();
+    scheduleIndexApplication(application._id);
     res.json({ ok: true, status: application.status, changes: checked.diff });
   } catch (err) {
     next(err);

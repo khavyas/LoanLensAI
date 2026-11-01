@@ -37,7 +37,7 @@ test('the number check does not apply to status-only answers', () => {
 });
 
 test('the prompt version is exported', () => {
-  assert.match(PROMPT_VERSION, /^policy-qa-v\d+$/);
+  assert.match(PROMPT_VERSION, /^policy(-file)?-qa-v\d+$/);
   assert.ok(buildRagMessages({ question: 'q', role: 'borrower', route: { kind: 'general' }, evidence }));
 });
 

@@ -10,6 +10,7 @@ import { storeFile, readStoredFile, deleteStoredFile } from '../services/storage
 import { readPdfPages } from '../services/pdfText.js';
 import { analyzeStatement, withoutCredits } from '../services/statementAnalysis.js';
 import { verifyDocument, openExceptions, withCrossDocumentChecks } from '../services/verification.js';
+import { scheduleIndexApplication } from '../services/loanFileIndexer.js';
 
 // Once an application is with the underwriter or decided, its documents are
 // the record the decision rests on — no uploads or deletions until it is
@@ -40,12 +41,14 @@ const upload = multer({
 const router = Router();
 router.use(requireAuth);
 
+const PAGE_JOIN = '\n'; // lines of one PDF page, joined for the searchable page text
+
 // How much of the file was looked at, plus (for a bank-statement PDF with a
 // text layer) totals computed from EVERY page. Never fails the upload: if the
 // PDF can't be parsed, the document is still kept, just without page info.
 async function describePages(mimeType, bytes, extracted) {
   const aiRead = extracted.pagesRead ?? null;
-  if (mimeType !== 'application/pdf') return { pageInfo: { total: 1, aiRead: aiRead ?? 1 }, statementSummary: null };
+  if (mimeType !== 'application/pdf') return { pageInfo: { total: 1, aiRead: aiRead ?? 1 }, statementSummary: null, pageTexts: undefined };
   try {
     const parsed = await readPdfPages(bytes);
     const statementSummary =
@@ -60,10 +63,12 @@ async function describePages(mimeType, bytes, extracted) {
         textLayer: parsed.textLayer,
       },
       statementSummary,
+      // Page text for search, only when the PDF really has a text layer.
+      pageTexts: parsed.textLayer ? parsed.pages.map((lines) => lines.join(PAGE_JOIN).slice(0, 6000)) : undefined,
     };
   } catch (err) {
     console.error('[documents] could not read PDF pages:', err.message);
-    return { pageInfo: { total: null, aiRead }, statementSummary: null };
+    return { pageInfo: { total: null, aiRead }, statementSummary: null, pageTexts: undefined };
   }
 }
 
@@ -105,7 +110,7 @@ router.post('/:applicationId', upload.single('file'), async (req, res, next) => 
     // read before the temp file is cleaned up below. Where they end up
     // (MongoDB or the private R2 bucket) is storage.js's decision.
     const fileBytes = fs.readFileSync(req.file.path);
-    const { pageInfo, statementSummary } = await describePages(req.file.mimetype, fileBytes, extracted);
+    const { pageInfo, statementSummary, pageTexts } = await describePages(req.file.mimetype, fileBytes, extracted);
 
     // Supersede whatever previously occupied this slot so the fix replaces it
     // instead of sitting alongside it. A targeted re-upload (expectedDocType
@@ -148,6 +153,7 @@ router.post('/:applicationId', upload.single('file'), async (req, res, next) => 
         mimeType: req.file.mimetype,
         pageInfo,
         statementSummary,
+        pageTexts,
         extractedFields: extracted.fields,
         confidence: extracted.confidence,
         extractionSource: extracted.extractionSource || 'live',
@@ -182,6 +188,7 @@ router.post('/:applicationId', upload.single('file'), async (req, res, next) => 
       await application.save();
     }
 
+    scheduleIndexApplication(application._id); // keep the assistant's view of the file current
     fs.unlink(req.file.path, () => {}); // temp disk copy only — the real copy is in storage
     // Don't echo the raw bytes or the internal storage key back — the
     // frontend only ever needs the dedicated file route below.
@@ -236,6 +243,7 @@ router.delete('/:documentId', async (req, res, next) => {
 
     await Document.deleteOne({ _id: doc._id });
     await deleteStoredFile(doc); // best effort; never fails the request
+    scheduleIndexApplication(doc.applicationId); // its text must stop being searchable
     res.json({ ok: true });
   } catch (err) {
     next(err);

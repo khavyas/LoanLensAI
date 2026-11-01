@@ -11,7 +11,7 @@ Covers RAG plan tasks P0-01 (decisions), P0-02 (data classification), P0-03 (ID 
 | **Public policy** | Loan policies, FAQ, requirements (`data/policies`) | Yes | Yes | Titles and counts only |
 | **Application facts** | Amount, term, product, status, stated income, employer | No (served from the database) | Only the fields a status answer needs | No |
 | **NPI / PII** | Full SSN, SSN last-4, date of birth, address, phone, email, account numbers, credit score | **Never** | **Never** (redact first) | **Never** |
-| **Document content** | Pay stubs, licences, bank statements, extracted text | Not today. Later only after redaction (P3-03) | Not today. Vision extraction sends the image to the extraction provider | Never |
+| **Document content** | Pay stubs, licences, bank statements, extracted text | **Yes, after redaction** (`services/redaction.js`): identifier fields and patterns are removed first | Redacted text only. Vision extraction separately sends the image to the extraction provider | Never |
 | **Internal review** | Exception rationale, waivers, review history, fraud-signal explanations | No | No | Action name only |
 
 Rules:
@@ -20,7 +20,7 @@ Rules:
 3. Borrower answers must not reveal detection logic (audience tag `internal`, plan P5-05).
 4. A new vendor that sees class "Document content" or above needs a vendor review first (P8-02).
 
-Status: policy text is the only thing embedded. The question text goes to the embedding and chat vendors unredacted (decision D10), so the chat should not be used to type SSNs. The borrower API view already hides credit score, audit trail and exception rationale.
+Status: policy text and, since 2026-11-01, each applicant's redacted file (extracted values, verification results, PDF page text, activity and review record) are embedded. Redaction blanks SSN, SSN last-4, date of birth, address, licence and account numbers, phones and emails; the credit score value is never indexed. Chunks carry an audience tag (`borrower` or `staff`), and the server pins every file search to one application ID, current documents and the caller's audience. The question text goes to the embedding and chat vendors unredacted (decision D10), so the chat should not be used to type SSNs. The borrower API view already hides credit score, audit trail and exception rationale.
 
 ## 2. Tenancy and ID scheme (P0-03)
 
@@ -37,17 +37,17 @@ Status: single bank, no tenant model (D01). Keys already use IDs only (`storage.
 
 | # | Threat | Where it could happen | Control today | Gap / planned task |
 |---|---|---|---|---|
-| T1 | Another applicant's data reaches the wrong person | Chat route, retrieval | `chatAccess.js` scope check; unknown and forbidden IDs both return 404; named-applicant guard for borrowers | One `can()` module (P2-05); vector filters by tenant/application (P5-03) |
+| T1 | Another applicant's data reaches the wrong person | Chat route, retrieval | `chatAccess.js` scope check; unknown and forbidden IDs both return 404; named-applicant guard for borrowers; **new:** loan-file search is filtered by application ID, current status and audience, built only in `loanFileRetrieval.js`, and refuses to run without an application ID (leak tests in `test/rag/loanFileSearch.test.js`) | One `can()` module (P2-05); tenant filter (P2-01); live leak test against Chroma |
 | T2 | Cross-tenant leakage | Retrieval, storage | Single tenant, so not yet reachable | Tenant model (P2-01); adapter refuses queries with no tenantId (P3-06) |
 | T3 | Prompt injection through the question or history | Chat | Prompt treats question, history and evidence as untrusted data; model has no tools; citations must map to retrieved chunks | Injection test corpus (P7-04) |
-| T4 | Prompt injection through an uploaded document | Future loan-file retrieval | Not reachable yet: document text is not embedded | Delimiters + output validation before P5-03 ships |
+| T4 | Prompt injection through an uploaded document | Loan-file retrieval | File text goes into the prompt as labelled evidence (F1, F2) under the rule that evidence is untrusted data; the model has no tools; citations and numbers are validated | Injection corpus with hidden instructions inside document text (P7-04) |
 | T5 | Poisoned policy upload | Admin policy ingestion | Admin role only; text/PDF/MD only; 10 files x 10 MB | Review step and version history (P4-06) |
 | T6 | Invented or altered numbers in an answer | Chat answer | Deterministic answers read amounts from the database; **new:** every number in a policy answer must appear in the cited evidence or the question (P5-04) | Tool-computed calculations (E17) |
 | T7 | Invented citation | Chat answer | Citations accepted only if they map to a retrieved chunk; one retry, then a safe refusal | Citation-per-claim check (P6-05) |
-| T8 | PII sent to a vendor or written to logs | Embedding/chat calls, logs | RAG logs record reasons and counts only; PII-bearing content is not embedded | Redaction before indexing (P3-03); log audit of other routes (P8-03) |
+| T8 | PII sent to a vendor or written to logs | Embedding/chat calls, logs | RAG logs record reasons and counts only; **new:** redaction runs before any applicant text is embedded (SSN, last-4, DOB, address, licence/account numbers, phones, emails; credit score never indexed) | Log audit of other routes (P8-03); the question text itself is not redacted |
 | T9 | Abuse or runaway cost (loop of questions) | `/chat` | **New:** per-user limit (20/min, `CHAT_RATE_LIMIT`); client disconnect cancels provider calls | Per-tenant token budgets (P6-08) |
 | T10 | Provider outage hangs the assistant | Ollama / Chroma | Timeouts; circuit breaker per provider (3 failures, 30 s cooldown); optional Groq standby (`CHAT_FALLBACK_PROVIDER=groq`); if all fail, or policy search is down, the answer shows the retrieved policy passages plus the database status (`degraded: true`) | Live kill test of each provider |
-| T11 | Stale or deleted document still retrievable | Future loan-file index | Not reachable yet | Supersede/delete sync (P3-08) |
+| T11 | Stale or deleted document still retrievable | Loan-file index | Only current documents are indexed; every upload, delete, edit, verification run and decision re-indexes the application and removes chunks that no longer exist (tested with a fake store) | Live check; nightly reconciliation of index vs database (E28) |
 | T12 | Exposed secrets (JWT, setup secret, API keys) | Config | Secrets only in env, `.env` ignored by git | Rotate exposed keys; secrets manager (P8-01) |
 
 ## 4. Targets (P0-07)
