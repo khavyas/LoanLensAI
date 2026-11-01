@@ -87,6 +87,21 @@ PERSONAS = [
         "ssn_last4": "6150",
     },
     {
+        # DEMO-ONLY, deliberately NOT seeded: the jury demo creates this account and
+        # application live, then uploads these three files by hand.
+        "slug": "nisha-rao",
+        "name": "Nisha Rao",
+        "employer": "Harbor Analytics",
+        "employer_addr": "14 Harbor Way, Springfield",
+        "address": "27 Garden Street, Springfield",
+        "dob": "02/15/1993",
+        "license_no": "SP-905512-N",
+        "issued": "04/06/2023",
+        "expires": "02/15/2031",
+        "monthly": 6500.00,
+        "ssn_last4": "8842",
+    },
+    {
         "slug": "kavya-reddy",
         "name": "Kavya Reddy",
         "employer": "Greenleaf Pharmacy",

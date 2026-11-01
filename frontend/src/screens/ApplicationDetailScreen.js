@@ -119,7 +119,7 @@ export default function ApplicationDetailScreen({ route, navigation }) {
           {tab === 'documents' && <DocumentsTab app={app} onChanged={load} />}
           {tab === 'verification' && <VerificationTab app={app} />}
           {tab === 'action-needed' && <ActionNeededTab app={app} onChanged={load} />}
-          {tab === 'assistant' && <AssistantTab app={app} autoNavigate={false} />}
+          {tab === 'assistant' && <AssistantTab key={app._id} app={app} autoNavigate={false} />}
           {tab === 'decision' && <DecisionTab app={app} onChanged={load} />}
         </View>
       </View>

@@ -20,6 +20,8 @@ export const TEST_PERSONAS = {
   '7301': { label: 'SSN belongs to someone else', nameOnFile: 'Vikram Nambiar', dobOnFile: '1979-02-02', credit: { status: 'scored', score: 701 }, sanctions: 'clear' },
   '2218': { label: 'Clean at the bureau (expired ID is a document problem)', nameOnFile: 'Meera Iyer', dobOnFile: '1990-09-21', credit: { status: 'scored', score: 715 }, sanctions: 'clear' },
   '4410': { label: 'Thin file, no credit history', nameOnFile: 'Kavya Reddy', dobOnFile: '2003-07-09', credit: { status: 'thin-file' }, sanctions: 'clear' },
+  // Demo-only applicant (not seeded): created live in the jury demo, see docs/DEMO_SCRIPT.md.
+  '8842': { label: 'Clean borrower (live demo applicant)', nameOnFile: 'Nisha Rao', dobOnFile: '1993-02-15', credit: { status: 'scored', score: 720 }, sanctions: 'clear' },
   '6150': { label: 'Clean at the bureau (visa ends before the loan: a residency exception)', nameOnFile: 'Lakshmi Pillai', dobOnFile: '1992-04-18', credit: { status: 'scored', score: 730 }, sanctions: 'clear' },
   '4821': { label: 'Clean borrower', nameOnFile: 'Jordan Rivera', dobOnFile: '1994-03-12', credit: { status: 'scored', score: 705 }, sanctions: 'clear' },
   '6672': { label: 'Clean borrower', nameOnFile: 'Dana Whitfield', dobOnFile: null, credit: { status: 'scored', score: 688 }, sanctions: 'clear' },

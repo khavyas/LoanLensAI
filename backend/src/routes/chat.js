@@ -4,8 +4,11 @@ import { requireAuth } from '../middleware/auth.js';
 import { answerQuestion } from '../services/rag.js';
 import { canAccessChatApplication } from '../services/chatAccess.js';
 import { isStaff } from '../config/roles.js';
+import { createRateLimiter } from '../services/rateLimiter.js';
 
 const router = Router();
+// Each question costs an embedding call plus a model call, so cap them per person.
+const chatLimiter = createRateLimiter({ limit: Number(process.env.CHAT_RATE_LIMIT || 20), windowMs: 60000 });
 router.use(requireAuth);
 
 function normalizeName(value) {
@@ -36,6 +39,11 @@ function hasUnmatchedPersonReference(question) {
 router.post('/:applicationId', async (req, res, next) => {
   try {
     const { question, history } = req.body;
+    const limited = chatLimiter.check(String(req.user.sub || req.user.email));
+    if (!limited.allowed) {
+      res.set('Retry-After', String(limited.retryAfterSec));
+      return res.status(429).json({ error: `You are asking questions too quickly. Please wait ${limited.retryAfterSec} seconds and try again.` });
+    }
     if (!question) return res.status(400).json({ error: 'question is required' });
 
     // NEW: Optional bounded user-only history supports follow-ups without adding conversation storage or schema.
