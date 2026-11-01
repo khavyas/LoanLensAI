@@ -50,3 +50,19 @@ test('"my status" alone is a status question, and with a policy ask it is mixed'
 test('a very short fragment with no history still asks for clarification', () => {
   assert.equal(classifyLoanQuestion('Hmm ok').kind, 'clarification');
 });
+
+test('a complete question does not drag the previous question along', () => {
+  const history = [{ role: 'user', content: 'When does my drivers license expire?' }];
+  for (const q of ['What employer is on my pay stub?', 'My license is expired, can I use it?']) {
+    const route = classifyLoanQuestion(q, history);
+    assert.equal(route.usedHistory, false, q);
+    assert.equal(route.effectiveQuestion, q);
+  }
+});
+
+test('a connector or a tiny fragment is still a follow-up', () => {
+  const history = [{ role: 'user', content: 'How do I apply for a personal loan?' }];
+  for (const q of ['And how long does it take?', 'What about for an auto loan?', 'How long?']) {
+    assert.equal(classifyLoanQuestion(q, history).usedHistory, true, q);
+  }
+});

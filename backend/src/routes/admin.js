@@ -10,6 +10,7 @@ import { checkStorage } from '../services/storage.js';
 import { ingestApprovedPolicies } from '../services/policyIngestion.js';
 import { seedAll } from '../services/seedData.js';
 import { indexAllApplications, loanFileRagEnabled, resetLoanFileIndex } from '../services/loanFileIndexer.js';
+import { runRetrievalEval } from '../services/retrievalEval.js';
 
 // One-time setup endpoints for environments with no shell access (Render free tier).
 // Guarded by SETUP_SECRET; disable by unsetting the env var after setup.
@@ -82,6 +83,17 @@ router.all('/index-applications', async (_req, res, next) => {
   try {
     if (!loanFileRagEnabled()) return res.json({ ok: false, message: 'Loan-file search is off: it needs CHAT_PROVIDER=ollama (and LOANFILE_RAG not set to off).' });
     res.json({ ok: true, ...(await indexAllApplications()) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Scores policy retrieval on THIS server with its real embedding and Chroma settings: recall@k,
+// precision@k, MRR over the golden questions, and what each question actually retrieved. Run
+// /admin/ingest-chroma first so the policies are indexed.
+router.all('/eval-retrieval', async (_req, res, next) => {
+  try {
+    res.json({ ok: true, ...(await runRetrievalEval()) });
   } catch (err) {
     next(err);
   }
