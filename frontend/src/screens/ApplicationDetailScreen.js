@@ -119,7 +119,7 @@ export default function ApplicationDetailScreen({ route, navigation }) {
           {tab === 'documents' && <DocumentsTab app={app} onChanged={load} />}
           {tab === 'verification' && <VerificationTab app={app} />}
           {tab === 'action-needed' && <ActionNeededTab app={app} onChanged={load} />}
-          {tab === 'assistant' && <AssistantTab app={app} autoNavigate={false} />}
+          {tab === 'assistant' && <AssistantTab key={app._id} app={app} autoNavigate={false} />}
           {tab === 'decision' && <DecisionTab app={app} onChanged={load} />}
         </View>
       </View>
@@ -144,8 +144,8 @@ const styles = StyleSheet.create({
   name: { fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 2 },
   factsRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 14, gap: 24 },
   fact: { minWidth: 120 },
-  factLabel: { fontSize: 12, color: colors.faint, marginBottom: 2 },
-  factValue: { fontSize: 14, fontWeight: '700', color: colors.text },
+  factLabel: { fontSize: 14, color: colors.muted, marginBottom: 3, fontWeight: '600' },
+  factValue: { fontSize: 17, fontWeight: '800', color: '#000' },
   tabBarWrap: {
     backgroundColor: colors.card,
     borderBottomWidth: 1,

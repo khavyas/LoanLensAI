@@ -6,9 +6,9 @@ export const colors = {
   bg: '#F7F9FC',
   card: '#FFFFFF',
   text: '#101828',
-  muted: '#667085',
-  faint: '#98A2B3',
-  border: '#E4E9F0',
+  muted: '#475467', // was #667085 — secondary text, now 7.7:1 on white
+  faint: '#667085', // was #98A2B3 (2.6:1, unreadable for many eyes) — now 5:1
+  border: '#D0D5DD', // was #E4E9F0 — card and row dividers were nearly invisible
   success: '#027A48',
   successBg: '#ECFDF3',
   warning: '#B54708',

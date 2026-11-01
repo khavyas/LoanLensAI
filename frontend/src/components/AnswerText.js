@@ -102,8 +102,8 @@ export default function AnswerText({ text }) {
 }
 
 const styles = StyleSheet.create({
-  heading: { color: colors.primary, fontSize: 15, fontWeight: '800', lineHeight: 21, marginBottom: 4 },
-  body: { color: colors.text, fontSize: 14, lineHeight: 21 },
+  heading: { color: colors.primary, fontSize: 17, fontWeight: '800', lineHeight: 21, marginBottom: 4 },
+  body: { color: colors.text, fontSize: 15, lineHeight: 23 },
   bold: { fontWeight: '800', color: colors.primary },
   listRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 4, paddingLeft: 2 },
   marker: { color: colors.accent, fontSize: 14, lineHeight: 21, fontWeight: '800', minWidth: 14 },
@@ -116,5 +116,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginTop: 8,
   },
-  calloutText: { color: colors.text, fontSize: 13, lineHeight: 19 },
+  calloutText: { color: colors.text, fontSize: 15, lineHeight: 22 },
 });

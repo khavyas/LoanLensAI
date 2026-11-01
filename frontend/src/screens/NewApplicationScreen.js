@@ -326,14 +326,14 @@ export default function NewApplicationScreen({ navigation }) {
                 {RESIDENCY_OPTIONS.map((o) => (
                   <TouchableOpacity
                     key={o.value}
-                    style={[styles.productBtn, residencyStatus === o.value && styles.productBtnActive]}
+                    style={[styles.productBtn, styles.residencyBtn, residencyStatus === o.value && styles.productBtnActive]}
                     onPress={() => setResidencyStatus(o.value)}
                   >
                     <Text style={[styles.productBtnText, residencyStatus === o.value && styles.productBtnTextActive]}>{o.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
-              <Text style={styles.affordabilityHint}>
+              <Text style={styles.residencyHint}>
                 We do not verify citizenship. We only need to know whether your status will last as long as the loan.
               </Text>
             </View>
@@ -438,7 +438,11 @@ const styles = StyleSheet.create({
   productBtnActive: { borderColor: colors.accent, backgroundColor: colors.infoBg },
   productBtnText: { color: colors.muted, fontWeight: '600', fontSize: 12, textAlign: 'center' },
   productBtnTextActive: { color: colors.accent },
-  residencyRow: { flexDirection: 'row', gap: 8 },
+  // Buttons get room to breathe and the note sits BELOW them (affordabilityHint pulls itself up
+  // under an input and would overlap the buttons).
+  residencyRow: { flexDirection: 'row', gap: 10, marginTop: 2 },
+  residencyBtn: { paddingVertical: 14 },
+  residencyHint: { color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 12 },
   affordabilityHint: { color: colors.muted, fontSize: 12, marginTop: -8, marginBottom: 8, lineHeight: 17 },
   label: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
   input: {
