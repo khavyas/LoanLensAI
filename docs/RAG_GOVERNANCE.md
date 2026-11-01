@@ -46,7 +46,7 @@ Status: single bank, no tenant model (D01). Keys already use IDs only (`storage.
 | T7 | Invented citation | Chat answer | Citations accepted only if they map to a retrieved chunk; one retry, then a safe refusal | Citation-per-claim check (P6-05) |
 | T8 | PII sent to a vendor or written to logs | Embedding/chat calls, logs | RAG logs record reasons and counts only; PII-bearing content is not embedded | Redaction before indexing (P3-03); log audit of other routes (P8-03) |
 | T9 | Abuse or runaway cost (loop of questions) | `/chat` | **New:** per-user limit (20/min, `CHAT_RATE_LIMIT`); client disconnect cancels provider calls | Per-tenant token budgets (P6-08) |
-| T10 | Provider outage hangs the assistant | Ollama / Chroma | Timeouts; **new:** circuit breaker on the chat model (3 failures, 30 s cooldown, fast "try again in a minute") | Failover to a second provider and a structured-only degraded answer (P6-06) |
+| T10 | Provider outage hangs the assistant | Ollama / Chroma | Timeouts; circuit breaker per provider (3 failures, 30 s cooldown); optional Groq standby (`CHAT_FALLBACK_PROVIDER=groq`); if all fail, or policy search is down, the answer shows the retrieved policy passages plus the database status (`degraded: true`) | Live kill test of each provider |
 | T11 | Stale or deleted document still retrievable | Future loan-file index | Not reachable yet | Supersede/delete sync (P3-08) |
 | T12 | Exposed secrets (JWT, setup secret, API keys) | Config | Secrets only in env, `.env` ignored by git | Rotate exposed keys; secrets manager (P8-01) |
 

@@ -5,17 +5,31 @@ import { embedTexts } from './embeddingClient.js';
 import { generateChatText } from './ollamaClient.js';
 import { getOrCreatePolicyCollection, queryPolicyRecords } from './chromaService.js';
 import { classifyLoanQuestion } from './loanQuestionRouter.js';
-import { createCircuitBreaker, CircuitOpenError } from './circuitBreaker.js';
+import { createCircuitBreaker } from './circuitBreaker.js';
+import { createFailover, AllProvidersFailedError } from './chatFailover.js';
+import { buildDegradedAnswer } from './degradedAnswer.js';
+import { generateGroqChatText } from './groqClient.js';
 import { buildRagMessages, parseGroundedAnswer, PROMPT_VERSION } from './ragPromptBuilder.js';
 
 // Ollama + embedding model + Chroma orchestration. Status-only answers stay
 // deterministic from authorized database state; only general loan questions
 // invoke retrieval and the language model.
 
-// One breaker for the chat model: when it is down, answers fail fast instead of each question
-// waiting out the provider timeout.
-const chatBreaker = createCircuitBreaker({ name: 'chat model', threshold: 3, cooldownMs: 30000 });
-const generate = (messages, signal) => chatBreaker.run(() => generateChatText(messages, signal));
+// Chat providers in order of preference, each behind its own circuit breaker so a dead one is
+// skipped at once instead of every question waiting out its timeout. The standby (Groq) is only
+// used when CHAT_FALLBACK_PROVIDER=groq and a key is set. If every provider fails, the answer
+// degrades to the retrieved policy passages (see degradedAnswer.js) instead of an error.
+const breakerOptions = { threshold: 3, cooldownMs: 30000 };
+const providers = [{ name: 'ollama', breaker: createCircuitBreaker({ name: 'ollama', ...breakerOptions }), call: generateChatText }];
+if ((process.env.CHAT_FALLBACK_PROVIDER || '').toLowerCase() === 'groq' && process.env.GROQ_API_KEY) {
+  providers.push({ name: 'groq', breaker: createCircuitBreaker({ name: 'groq', ...breakerOptions }), call: generateGroqChatText });
+}
+const failover = createFailover(providers);
+const generate = async (messages, signal) => {
+  const { text, provider } = await failover(messages, signal);
+  if (provider !== providers[0].name) console.warn('[ragOllama] answered by standby provider', { provider });
+  return text;
+};
 
 function statusAnswer(application, documents, role = 'borrower') {
   const status = String(application.status || "unknown").replace(/[-_]/g, " ");
@@ -200,10 +214,17 @@ export async function answerQuestionWithOllama({ question, application, role, hi
   if (route.kind === "status") return statusAnswer(application, documents, role);
   let evidence = [];
   if (needsPolicy) {
-    const [queryEmbedding] = await embedTexts([route.effectiveQuestion], signal);
-    const collectionId = await getOrCreatePolicyCollection(signal);
-    const result = await queryPolicyRecords(collectionId, queryEmbedding, Math.max(RAG_CONFIG.topK * 3, RAG_CONFIG.topK), undefined, signal);
-    evidence = selectEvidence(result);
+    try {
+      const [queryEmbedding] = await embedTexts([route.effectiveQuestion], signal);
+      const collectionId = await getOrCreatePolicyCollection(signal);
+      const result = await queryPolicyRecords(collectionId, queryEmbedding, Math.max(RAG_CONFIG.topK * 3, RAG_CONFIG.topK), undefined, signal);
+      evidence = selectEvidence(result);
+    } catch (error) {
+      if (error?.name === 'AbortError' || signal?.aborted) throw error;
+      // Policy search is down: still give the application status (it comes from the database).
+      console.error('[ragOllama] retrieval failed, degrading:', error.message);
+      return buildDegradedAnswer({ statusText: needsStatus ? statusAnswer(application, documents, role).answer : '' });
+    }
   }
   if (needsPolicy && evidence.length === 0) {
     console.warn('[ragOllama] retrieval returned no usable policy evidence', {
@@ -273,8 +294,8 @@ export async function answerQuestionWithOllama({ question, application, role, hi
     return { ...verifiedAnswer, promptVersion: PROMPT_VERSION };
   } catch (error) {
     console.error('[ragOllama] request failed:', error.message);
-    if (error instanceof CircuitOpenError) {
-      throw new Error('The loan assistant is busy recovering. Please try again in a minute.');
+    if (error instanceof AllProvidersFailedError) {
+      return buildDegradedAnswer({ evidence, statusText: needsStatus ? statusAnswer(application, documents, role).answer : '' });
     }
     throw new Error('The loan assistant is temporarily unavailable. Check the configured Ollama endpoint, API key, model access, and Chroma Cloud settings.');
   }
