@@ -9,6 +9,7 @@ import PolicyChunk from '../models/PolicyChunk.js';
 import { checkStorage } from '../services/storage.js';
 import { ingestApprovedPolicies } from '../services/policyIngestion.js';
 import { seedAll } from '../services/seedData.js';
+import { indexAllApplications, loanFileRagEnabled, resetLoanFileIndex } from '../services/loanFileIndexer.js';
 
 // One-time setup endpoints for environments with no shell access (Render free tier).
 // Guarded by SETUP_SECRET; disable by unsetting the env var after setup.
@@ -75,12 +76,29 @@ router.all('/ingest-chroma', async (_req, res, next) => {
   }
 });
 
+// Builds (or rebuilds) the searchable index of every applicant's own file: application facts,
+// extracted fields, verification results, document text and review record. Safe to repeat.
+router.all('/index-applications', async (_req, res, next) => {
+  try {
+    if (!loanFileRagEnabled()) return res.json({ ok: false, message: 'Loan-file search is off: it needs CHAT_PROVIDER=ollama (and LOANFILE_RAG not set to off).' });
+    res.json({ ok: true, ...(await indexAllApplications()) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // One call for a full pre-demo reset — the whole point of "zero manual DB work".
 router.all('/reset', async (_req, res, next) => {
   try {
     const seeded = await runSeed();
     const ingested = await runIngest();
-    res.json({ ok: true, ...seeded, ...ingested });
+    // The reseeded applications have new IDs: start the loan-file index fresh and rebuild it.
+    let loanFiles = { enabled: false };
+    if (loanFileRagEnabled()) {
+      await resetLoanFileIndex();
+      loanFiles = { enabled: true, ...(await indexAllApplications().catch((e) => ({ error: e.message }))) };
+    }
+    res.json({ ok: true, ...seeded, ...ingested, loanFiles });
   } catch (err) {
     next(err);
   }

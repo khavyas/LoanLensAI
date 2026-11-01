@@ -84,3 +84,29 @@ export async function queryPolicyRecords(collectionId, embedding, nResults = RAG
     include: ['documents', 'metadatas', 'distances'],
   }, 'POST', signal);
 }
+
+// Applicants' own document/record chunks live in their own collection.
+export async function getOrCreateLoanFileCollection(signal) {
+  const payload = await chromaRequest('/collections', {
+    name: RAG_CONFIG.chromaLoanFileCollection,
+    get_or_create: true,
+    metadata: {
+      purpose: 'applicant-file-knowledge',
+      embedding_provider: RAG_CONFIG.embeddingProvider,
+      embedding_model: RAG_CONFIG.embeddingModel,
+    },
+  }, 'POST', signal);
+  if (!payload.id) throw new Error('Chroma did not return a collection ID.');
+  if (
+    (payload.metadata?.embedding_model && payload.metadata.embedding_model !== RAG_CONFIG.embeddingModel) ||
+    (payload.metadata?.embedding_provider && payload.metadata.embedding_provider !== RAG_CONFIG.embeddingProvider)
+  ) {
+    throw new Error('The loan-file collection uses a different embedding setup. Set a new CHROMA_LOANFILE_COLLECTION name and re-index.');
+  }
+  return payload.id;
+}
+
+// Drops the whole loan-file collection (a full reset re-seeds applications with new IDs).
+export async function deleteLoanFileCollection() {
+  await chromaRequest(`/collections/${encodeURIComponent(RAG_CONFIG.chromaLoanFileCollection)}`, undefined, 'DELETE');
+}

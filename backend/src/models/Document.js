@@ -26,6 +26,10 @@ const documentSchema = new mongoose.Schema(
     pageInfo: { type: mongoose.Schema.Types.Mixed, default: null },
     // Bank statements only: totals computed from every page's text.
     statementSummary: { type: mongoose.Schema.Types.Mixed, default: null },
+    // PDFs with a text layer: the selectable text of each page (page 1 is index 0), kept so the
+    // assistant can search long documents. Never returned by default (select: false) because it
+    // is raw text that can contain identifiers; the indexer asks for it and redacts it.
+    pageTexts: { type: [String], select: false, default: undefined },
     extractedFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     confidence: { type: Number, default: 0 }, // 0..1 from the extraction model
     // 'live' = a real vision-model call succeeded; 'mock' = MOCK_AI=true

@@ -7,6 +7,7 @@ import { assessApplication, canEnterCreditScore, evaluateDecision, validateCredi
 import { isStaff } from '../config/roles.js';
 import { runSimulatedChecks } from '../services/simulatedBureau.js';
 import { duplicateMatchesFor } from '../services/duplicateCheck.js';
+import { scheduleIndexApplication } from '../services/loanFileIndexer.js';
 
 // Review actions on an application: credit score entry and the decision
 // itself (approve / reject / refer / return). All rules live in
@@ -51,6 +52,7 @@ router.put('/:id/credit-score', async (req, res, next) => {
       details: { score: checked.score },
     });
     await application.save();
+    scheduleIndexApplication(application._id);
     res.json({ ok: true, creditProfile: application.creditProfile });
   } catch (err) {
     next(err);
@@ -84,6 +86,7 @@ router.post('/:id/verify', async (req, res, next) => {
       details: { simulated: true, identity: report.identity.status, sanctions: report.sanctions.status, credit: report.credit.status },
     });
     await application.save();
+    scheduleIndexApplication(application._id);
     res.json({ ok: true, verificationReport: report });
   } catch (err) {
     next(err);
@@ -110,6 +113,7 @@ router.post('/:id/decision', async (req, res, next) => {
     }
     application.reviewHistory.push(result.event);
     await application.save();
+    scheduleIndexApplication(application._id);
     res.json({ ok: true, status: application.status });
   } catch (err) {
     next(err);

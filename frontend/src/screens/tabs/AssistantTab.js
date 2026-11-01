@@ -25,12 +25,14 @@ const SAMPLE_GROUPS = {
     { title: 'Documents', questions: ['What documents have I uploaded?', 'What documents do I still need?'] },
     { title: 'Status', questions: ['What is the status of my application?', 'What do I need to do next?'] },
     { title: 'Verification', questions: ['Show my verification results', 'Why is my application in review?'] },
+    { title: 'My file (searched in my own documents)', questions: ['What employer is on my pay stub?', 'What gross monthly income does my pay stub show?', 'When does my driver license expire?'] },
     { title: 'Policy (answered from the bank documents)', questions: ['What documents do I need for a car loan?', 'How long until a decision?', 'Is a screenshot of my bank balance okay?', 'My license is expired, can I use it?', 'Can I update my application after submitting it?'] },
   ],
   officer: [
     { title: 'Documents', questions: ['Show the uploaded documents', 'Which documents are missing?'] },
     { title: 'Status', questions: ['What is the status of this application?', 'What is the next step?'] },
     { title: 'Verification', questions: ['Show the verification checks', 'Why is this application flagged?'] },
+    { title: 'This file (searched in the applicant\'s documents)', questions: ['What employer is on the pay stub?', 'What gross monthly income does the pay stub show?', 'When does the driver license expire?'] },
     { title: 'Policy (answered from the bank documents)', questions: ['What is the income tolerance policy?', 'How do I convert bi-weekly pay to monthly income?', 'What documents do I need for a small business loan?', 'How much ownership do I need to disclose?'] },
   ],
   underwriter: [
@@ -137,7 +139,7 @@ export default function AssistantTab({ app, autoNavigate = true }) {
               <View style={styles.sources}>
                 {m.sources.map((s, j) => (
                   <View key={j} style={styles.sourceChip}>
-                    <Text style={styles.sourceText}>{s.doc}</Text>
+                    <Text style={styles.sourceText}>{s.kind === 'file' && s.section ? `${s.doc} · ${s.section}` : s.doc}</Text>
                   </View>
                 ))}
               </View>

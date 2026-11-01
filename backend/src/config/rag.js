@@ -17,6 +17,8 @@ export const RAG_CONFIG = Object.freeze({
   chromaTenant: process.env.CHROMA_TENANT || 'default_tenant',
   chromaDatabase: process.env.CHROMA_DATABASE || 'default_database',
   chromaCollection: process.env.CHROMA_COLLECTION || 'loan-knowledge',
+  // Separate collection for applicants' own documents: never mixed with the policy corpus.
+  chromaLoanFileCollection: process.env.CHROMA_LOANFILE_COLLECTION || `${process.env.CHROMA_COLLECTION || 'loan-knowledge'}-loanfile`,
   chromaTimeoutMs: Number(process.env.CHROMA_TIMEOUT_MS || 30000),
   topK: Number(process.env.RAG_TOP_K || 5),
   maxDistance: Number(process.env.RAG_MAX_DISTANCE ?? 1),
