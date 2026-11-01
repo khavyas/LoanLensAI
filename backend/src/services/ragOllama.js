@@ -5,11 +5,17 @@ import { embedTexts } from './embeddingClient.js';
 import { generateChatText } from './ollamaClient.js';
 import { getOrCreatePolicyCollection, queryPolicyRecords } from './chromaService.js';
 import { classifyLoanQuestion } from './loanQuestionRouter.js';
-import { buildRagMessages, parseGroundedAnswer } from './ragPromptBuilder.js';
+import { createCircuitBreaker, CircuitOpenError } from './circuitBreaker.js';
+import { buildRagMessages, parseGroundedAnswer, PROMPT_VERSION } from './ragPromptBuilder.js';
 
 // Ollama + embedding model + Chroma orchestration. Status-only answers stay
 // deterministic from authorized database state; only general loan questions
 // invoke retrieval and the language model.
+
+// One breaker for the chat model: when it is down, answers fail fast instead of each question
+// waiting out the provider timeout.
+const chatBreaker = createCircuitBreaker({ name: 'chat model', threshold: 3, cooldownMs: 30000 });
+const generate = (messages, signal) => chatBreaker.run(() => generateChatText(messages, signal));
 
 function statusAnswer(application, documents, role = 'borrower') {
   const status = String(application.status || "unknown").replace(/[-_]/g, " ");
@@ -227,8 +233,8 @@ export async function answerQuestionWithOllama({ question, application, role, hi
   });
 
   try {
-    let raw = await generateChatText(messages, signal);
-    let answer = parseGroundedAnswer(raw, evidence, { citationsRequired: needsPolicy && evidence.length > 0 });
+    let raw = await generate(messages, signal);
+    let answer = parseGroundedAnswer(raw, evidence, { citationsRequired: needsPolicy && evidence.length > 0, question: route.effectiveQuestion });
     if (needsPolicy && evidence.length > 0 && answer.sources.length === 0) {
       console.warn('[ragOllama] answer validation failed; requesting one citation correction', {
         reason: answer.validationError,
@@ -237,18 +243,19 @@ export async function answerQuestionWithOllama({ question, application, role, hi
       });
       // Ask for plain text plus exact evidence labels. Ollama Cloud currently
       // does not support structured outputs, so JSON mode is not reliable there.
-      raw = await generateChatText([
+      raw = await generate([
         ...messages,
         { role: 'assistant', content: raw },
         { role: 'user', content: 'Keep the same evidence-grounded answer, but return plain text and add one or more exact evidence labels in square brackets, such as [P1] or [P2]. Use only labels from the supplied evidence. Do not return JSON.' },
       ], signal);
-      answer = parseGroundedAnswer(raw, evidence, { citationsRequired: true });
+      answer = parseGroundedAnswer(raw, evidence, { citationsRequired: true, question: route.effectiveQuestion });
     }
     if (needsPolicy && evidence.length > 0 && answer.validationError) {
       console.warn('[ragOllama] answer rejected after citation correction', {
         reason: answer.validationError,
         evidenceCount: evidence.length,
         model: RAG_CONFIG.ollamaChatModel,
+        promptVersion: PROMPT_VERSION,
       });
     }
     if (needsPolicy && evidence.length > 0 && answer.sources.length === 0 && needsStatus) {
@@ -263,9 +270,12 @@ export async function answerQuestionWithOllama({ question, application, role, hi
       };
     }
     const { validationError: _validationError, ...verifiedAnswer } = answer;
-    return verifiedAnswer;
+    return { ...verifiedAnswer, promptVersion: PROMPT_VERSION };
   } catch (error) {
     console.error('[ragOllama] request failed:', error.message);
+    if (error instanceof CircuitOpenError) {
+      throw new Error('The loan assistant is busy recovering. Please try again in a minute.');
+    }
     throw new Error('The loan assistant is temporarily unavailable. Check the configured Ollama endpoint, API key, model access, and Chroma Cloud settings.');
   }
 }
