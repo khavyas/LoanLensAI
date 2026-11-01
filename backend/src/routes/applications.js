@@ -10,11 +10,8 @@ import { isStaff } from '../config/roles.js';
 import { assessApplication, borrowerNotice } from '../services/decisionRules.js';
 import { validateResidency } from '../services/residency.js';
 import { duplicateMatchesFor } from '../services/duplicateCheck.js';
-<<<<<<< HEAD
 import { EDITABLE_STATUSES, editableFields, reverifyDocuments, statusAfterEdit, validateEdit } from '../services/applicationEdit.js';
-=======
 import { buildStatusNarrative } from '../services/statusNarrative.js';
->>>>>>> feat/chat-status-narrative
 
 const router = Router();
 router.use(requireAuth);
