@@ -11,6 +11,7 @@ import { readPdfPages } from '../services/pdfText.js';
 import { analyzeStatement, withoutCredits } from '../services/statementAnalysis.js';
 import { verifyDocument, openExceptions, withCrossDocumentChecks } from '../services/verification.js';
 import { scheduleIndexApplication } from '../services/loanFileIndexer.js';
+import { borrowerDocument } from '../services/borrowerWording.js';
 
 // Once an application is with the underwriter or decided, its documents are
 // the record the decision rests on — no uploads or deletions until it is
@@ -193,7 +194,8 @@ router.post('/:applicationId', upload.single('file'), async (req, res, next) => 
     // Don't echo the raw bytes or the internal storage key back — the
     // frontend only ever needs the dedicated file route below.
     const { fileData: _omit, storageKey: _key, ...docWithoutBytes } = doc.toObject();
-    res.status(201).json(withoutCredits(docWithoutBytes));
+    const shown = withoutCredits(docWithoutBytes);
+    res.status(201).json(req.user.role === 'borrower' ? borrowerDocument(shown) : shown);
   } catch (err) {
     next(err);
   }
