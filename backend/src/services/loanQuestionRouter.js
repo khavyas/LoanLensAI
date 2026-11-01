@@ -1,5 +1,5 @@
 // NEW: Deterministic routing; the model never chooses a database query or authorization scope.
-const STATUS_PATTERN = /\b(?:my|this)\s+(?:loan|application)\b.*\b(?:status|approved|rejected|pending|review|progress|next step|documents?)\b|\b(?:application|loan)\s+(?:status|progress)\b|\b(?:status|progress)\b.*\b(?:my|this)\s+(?:loan|application)\b|\b(?:application|loan)\b.*\b(?:pending|under review|approved|rejected|flagged)\b|\b(?:has my|am i|did my)\b.*\b(?:approved|rejected|pending|review)\b|\bwhat documents do i still need\b/i;
+const STATUS_PATTERN = /\bmy\s+(?:application\s+|loan\s+)?status\b|\b(?:my|this)\s+(?:loan|application)\b.*\b(?:status|approved|rejected|pending|review|progress|next step|documents?)\b|\b(?:application|loan)\s+(?:status|progress)\b|\b(?:status|progress)\b.*\b(?:my|this)\s+(?:loan|application)\b|\b(?:application|loan)\b.*\b(?:pending|under review|approved|rejected|flagged)\b|\b(?:has my|am i|did my)\b.*\b(?:approved|rejected|pending|review)\b|\bwhat documents do i still need\b/i;
 // Keep generic product words ("loan", "application") out of this pattern:
 // otherwise every status question is misrouted as mixed and a model can
 // paraphrase authoritative database state.
@@ -42,6 +42,10 @@ export function classifyLoanQuestion(question, history = []) {
   if (kind === 'clarification' && !usedHistory && current.split(/\s+/).length < 3) {
     return { kind: 'clarification', effectiveQuestion, usedHistory };
   }
-  if (kind === 'clarification') kind = 'unsupported';
+  // No keyword matched but it is a real question: let policy retrieval decide. If nothing in the
+  // approved policies is close enough, the assistant says it has no source (no guessing), so an
+  // out-of-scope question is still refused, but a valid policy question worded unusually
+  // ("Is a screenshot of my bank balance okay?") is no longer turned away before search.
+  if (kind === 'clarification') kind = 'general';
   return { kind, effectiveQuestion, usedHistory };
 }

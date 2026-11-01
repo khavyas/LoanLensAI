@@ -29,3 +29,24 @@ test('asks for clarification on an empty question and rejects unrelated topics',
   assert.equal(classifyLoanQuestion('').kind, 'clarification');
   assert.equal(classifyLoanQuestion('What is the weather today?').kind, 'unsupported');
 });
+
+test('a policy question with no keyword still goes to retrieval instead of being turned away', () => {
+  for (const q of [
+    'Is a screenshot of my bank balance okay?',
+    "My license is expired, can I use it?",
+    "What's the bank's routing number?",
+    'Can I get a mortgage?',
+    'How much ownership do I need to disclose?',
+  ]) {
+    assert.equal(classifyLoanQuestion(q).kind, 'general', q);
+  }
+});
+
+test('"my status" alone is a status question, and with a policy ask it is mixed', () => {
+  assert.equal(classifyLoanQuestion('What is my status?').kind, 'status');
+  assert.equal(classifyLoanQuestion('What is my status and what documents do I need for a car loan?').kind, 'mixed');
+});
+
+test('a very short fragment with no history still asks for clarification', () => {
+  assert.equal(classifyLoanQuestion('Hmm ok').kind, 'clarification');
+});

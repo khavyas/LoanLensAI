@@ -17,27 +17,27 @@ import { handleLocalIntent } from '../../assistantActions';
 import { goToApplicationTab } from '../../navigationRef';
 import AnswerText from '../../components/AnswerText';
 
-// Sample questions, grouped by what they open. The first three groups are
+// Sample questions, grouped by what they open. The groups before Policy are
 // answered from the application's own data and jump to the matching page; the
 // Policy group goes to the assistant's policy knowledge base.
 const SAMPLE_GROUPS = {
   borrower: [
     { title: 'Documents', questions: ['What documents have I uploaded?', 'What documents do I still need?'] },
-    { title: 'Progress', questions: ['What is the progress of my application?', 'What is my application status?'] },
+    { title: 'Status', questions: ['What is the status of my application?', 'What do I need to do next?'] },
     { title: 'Verification', questions: ['Show my verification results', 'Why is my application in review?'] },
-    { title: 'Policy', questions: ['What documents do I need for a car loan?', 'How long until a decision?', 'Is a co-signer allowed?'] },
+    { title: 'Policy (answered from the bank documents)', questions: ['What documents do I need for a car loan?', 'How long until a decision?', 'Is a screenshot of my bank balance okay?', 'My license is expired, can I use it?', 'Can I update my application after submitting it?'] },
   ],
   officer: [
     { title: 'Documents', questions: ['Show the uploaded documents', 'Which documents are missing?'] },
-    { title: 'Progress', questions: ['Where is this application in the process?', 'What is the next step?'] },
+    { title: 'Status', questions: ['What is the status of this application?', 'What is the next step?'] },
     { title: 'Verification', questions: ['Show the verification checks', 'Why is this application flagged?'] },
-    { title: 'Policy', questions: ['What is the income tolerance policy?', 'What are the small business loan requirements?'] },
+    { title: 'Policy (answered from the bank documents)', questions: ['What is the income tolerance policy?', 'How do I convert bi-weekly pay to monthly income?', 'What documents do I need for a small business loan?', 'How much ownership do I need to disclose?'] },
   ],
   underwriter: [
     { title: 'Exception review', questions: ['Why was this application referred?', 'Which parameters are not met?', 'What is the credit score on this file?'] },
     { title: 'Documents', questions: ['Show the uploaded documents', 'Show the verification checks'] },
-    { title: 'Progress', questions: ['Where is this application in the process?'] },
-    { title: 'Policy', questions: ['What is the income tolerance policy?', 'What are the small business loan requirements?'] },
+    { title: 'Status', questions: ['What is the status of this application?'] },
+    { title: 'Policy (answered from the bank documents)', questions: ['What is the income tolerance policy?', 'My visa expires before the loan ends. Can I still get a loan?'] },
   ],
 };
 
