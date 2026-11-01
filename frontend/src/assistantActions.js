@@ -165,9 +165,17 @@ export async function handleLocalIntent(question, application, role) {
   const app = await api.application(targetId);
   const p = computeProgress(app);
 
+  // Status and "what do I need to do" questions get the server's full narrative: what is done, what
+  // is wrong and how to fix it, what is next, recent activity. The same text a messaging channel
+  // would send. If it cannot be fetched, fall back to the short local summary.
+  let narrative = null;
+  if (intent.tab === 'progress' || intent.tab === 'action-needed') {
+    narrative = await api.statusSummary(app._id).catch(() => null);
+  }
+
   const answers = {
-    'action-needed': () => actionNeededAnswer(role, app, p),
-    progress: () => progressAnswer(role, app, p),
+    'action-needed': () => narrative?.text || actionNeededAnswer(role, app, p),
+    progress: () => narrative?.text || progressAnswer(role, app, p),
     documents: () => documentsAnswer(role, app, p),
     verification: () => verificationAnswer(role, app, p),
     decision: () => decisionAnswer(role, app),
