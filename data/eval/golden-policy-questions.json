@@ -1,0 +1,20 @@
+[
+  { "question": "What documents do I need for a car loan?", "expected": ["auto-loan-requirements.md"] },
+  { "question": "How long until I get a decision on my auto loan?", "expected": ["auto-loan-requirements.md"] },
+  { "question": "What interest rate will I get on an auto loan?", "expected": ["auto-loan-requirements.md"] },
+  { "question": "What documents do I need for a personal loan?", "expected": ["personal-loan-requirements.md"] },
+  { "question": "What documents do I need for a small business loan?", "expected": ["small-business-loan-requirements.md"] },
+  { "question": "How much ownership do I need to disclose for a business loan?", "expected": ["small-business-loan-requirements.md"] },
+  { "question": "Why does the legal name on my business license need to match my application?", "expected": ["small-business-loan-requirements.md", "loan-faq.md"] },
+  { "question": "What is the income tolerance between my stated income and my pay stub?", "expected": ["income-verification-policy.md"] },
+  { "question": "How do I convert bi-weekly pay to monthly income?", "expected": ["income-verification-policy.md"] },
+  { "question": "My pay stub shows less than what I entered. What should I do?", "expected": ["income-verification-policy.md", "loan-faq.md"] },
+  { "question": "Can the system automatically decline my application?", "expected": ["income-verification-policy.md", "application-process.md"] },
+  { "question": "Is a screenshot of my bank balance acceptable?", "expected": ["document-checklist.md"] },
+  { "question": "Can I use an expired driver license?", "expected": ["document-checklist.md", "residency-and-identity-policy.md"] },
+  { "question": "What happens if I do not upload documents for a month?", "expected": ["application-process.md"] },
+  { "question": "Can I update my application after submitting it?", "expected": ["loan-faq.md"] },
+  { "question": "Why was my requested loan amount flagged?", "expected": ["loan-faq.md", "small-business-loan-requirements.md"] },
+  { "question": "My visa expires before the loan ends. Can I still get a loan?", "expected": ["residency-and-identity-policy.md"] },
+  { "question": "Why was my document rejected?", "expected": ["loan-faq.md", "document-checklist.md"] }
+]
