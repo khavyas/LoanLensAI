@@ -1,4 +1,5 @@
 import { currentDocuments, missingDocuments, openExceptions } from './verification.js';
+import { borrowerExplanation } from './borrowerWording.js';
 
 // "Where do I stand?" written out in full: what is done, what is wrong and exactly what to do about
 // it, what happens next, and what has happened so far. It is plain text with a tiny markup
@@ -47,9 +48,11 @@ function exceptionLines(exceptions, borrower) {
       continue;
     }
     for (const c of e.checks || []) {
+      // Stored explanations are written for the officer; a borrower gets the same finding addressed to them.
+      const text = borrower ? borrowerExplanation(c) : c.explanation;
       const ask = borrower ? FIX[c.field]?.(name) : null;
       // Some explanations already end with the ask ("... please upload a current ID."); don't repeat it.
-      lines.push(`- **${name}** - ${c.explanation}${ask && !/upload/i.test(c.explanation) ? ` ${ask}` : ''}`);
+      lines.push(`- **${name}** - ${text}${ask && !/upload/i.test(text) ? ` ${ask}` : ''}`);
     }
   }
   return lines;
@@ -148,7 +151,7 @@ export function buildStatusNarrative({ application, documents = [], role = 'borr
 
   if (needsAction) {
     out.push([`**${borrower ? 'What you need to do' : 'Needs action'}**`, ...exceptionLines(exceptions, borrower)].join('\n'));
-    if (borrower && exceptions.some((e) => e.type === 'flagged' && (e.checks || []).some((c) => !FIX[c.field]))) out.push(DETAIL_FIX);
+    if (borrower && exceptions.some((e) => e.type === 'flagged' && (e.checks || []).some((c) => !FIX[c.field] && borrowerExplanation(c) === c.explanation))) out.push(DETAIL_FIX);
   }
 
   // What happens next.
