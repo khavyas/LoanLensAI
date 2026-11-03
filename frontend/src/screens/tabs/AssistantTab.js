@@ -91,6 +91,24 @@ export default function AssistantTab({ app, autoNavigate = true }) {
     }
   }
 
+  // Officer co-pilot: a file summary or the list of contradictions, built on the server from the
+  // record, with the policy passage that governs each finding.
+  async function runCopilot(action) {
+    if (busy) return;
+    setMessages((m) => [...m, { from: 'user', text: action === 'summary' ? 'Summarize this file' : 'List the contradictions' }]);
+    setShowSamples(false);
+    setBusy(true);
+    try {
+      const brief = await api.copilot(app._id, action);
+      setMessages((m) => [...m, { from: 'ai', text: brief.text, sources: brief.sources }]);
+    } catch (e) {
+      setMessages((m) => [...m, { from: 'ai', text: `Sorry — ${e.message}`, sources: [] }]);
+    } finally {
+      setBusy(false);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+    }
+  }
+
   return (
     // The persistent chat panel owns the width; let the conversation fill its
     // available space so the composer and messages do not collapse on web.
@@ -154,6 +172,16 @@ export default function AssistantTab({ app, autoNavigate = true }) {
         )}
       </ScrollView>
 
+      {user.role !== 'borrower' && (
+        <View style={styles.copilotRow}>
+          <TouchableOpacity style={styles.copilotBtn} onPress={() => runCopilot('summary')} disabled={busy}>
+            <Text style={styles.copilotText}>Summarize this file</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.copilotBtn} onPress={() => runCopilot('contradictions')} disabled={busy}>
+            <Text style={styles.copilotText}>List contradictions</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       {messages.length > 0 && !showSamples && (
         <TouchableOpacity style={styles.samplesToggle} onPress={() => setShowSamples(true)}>
           <Text style={styles.samplesToggleText}>💡 Sample questions</Text>
@@ -196,6 +224,9 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   navChipText: { color: colors.info, fontSize: 12, fontWeight: '700' },
+  copilotRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 14, paddingTop: 8, backgroundColor: colors.bg },
+  copilotBtn: { borderWidth: 1.5, borderColor: colors.accent, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14, backgroundColor: colors.card },
+  copilotText: { color: colors.accent, fontWeight: '800', fontSize: 13 },
   samplesToggle: { paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.bg },
   samplesToggleText: { color: colors.accent, fontSize: 12, fontWeight: '600' },
   suggestion: {
