@@ -5,6 +5,9 @@ import { answerQuestion } from '../services/rag.js';
 import { canAccessChatApplication } from '../services/chatAccess.js';
 import { isStaff } from '../config/roles.js';
 import { createRateLimiter } from '../services/rateLimiter.js';
+import Feedback from '../models/Feedback.js';
+import { buildFeedbackRecord } from '../services/feedbackRecord.js';
+import { retrievalMode } from '../services/hybridRetrieval.js';
 
 const router = Router();
 // Each question costs an embedding call plus a model call, so cap them per person.
@@ -118,6 +121,21 @@ router.post('/:applicationId', async (req, res, next) => {
     const chatRole = isStaff(req.user.role) ? 'officer' : req.user.role;
     const result = await answerQuestion({ question, application, role: chatRole, history: safeHistory, signal: abortController.signal });
     res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// A thumbs up or down on one answer. Same access rule as asking: only someone who may chat about
+// this application may rate its answers. Text is redacted before it is stored.
+router.post('/:applicationId/feedback', async (req, res, next) => {
+  try {
+    const application = await Application.findById(req.params.applicationId).select('applicantEmail');
+    if (!application || !canAccessChatApplication(req.user, application)) return res.status(404).json({ error: 'Application not found' });
+    const built = buildFeedbackRecord({ body: req.body, user: req.user, applicationId: application._id, retrievalMode: retrievalMode() });
+    if (built.error) return res.status(400).json({ error: built.error });
+    await Feedback.create(built.record);
+    res.status(201).json({ ok: true });
   } catch (err) {
     next(err);
   }

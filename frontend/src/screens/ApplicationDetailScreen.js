@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
@@ -12,6 +12,7 @@ import ActionNeededTab from './tabs/ActionNeededTab';
 import AssistantTab from './tabs/AssistantTab';
 import DecisionTab from './tabs/DecisionTab';
 import EditApplicationPanel from '../components/EditApplicationPanel';
+import IndexStatus from '../components/IndexStatus';
 import { formatChange } from '../utils/formatChange';
 import { DEFAULT_TAB, tabsForRole } from '../navigationRef';
 
@@ -54,6 +55,22 @@ export default function ApplicationDetailScreen({ route, navigation }) {
     }, [load])
   );
 
+  // While the assistant is still reading new documents, check again every few seconds.
+  const indexStatus = app?.searchIndex?.status;
+  useEffect(() => {
+    if (indexStatus !== 'indexing') return undefined;
+    const timer = setTimeout(load, 3000);
+    return () => clearTimeout(timer);
+  }, [indexStatus, load, app]);
+  const retryIndex = async () => {
+    try {
+      await api.reindex(id);
+    } catch (e) {
+      console.warn(e.message);
+    }
+    setTimeout(load, 1500);
+  };
+
   if (!app) return <Text style={styles.loading}>Loading application…</Text>;
 
   const facts =
@@ -91,6 +108,7 @@ export default function ApplicationDetailScreen({ route, navigation }) {
             </View>
             <View style={{ alignItems: 'flex-end', gap: 10 }}>
               <Pill tone={STATUS_TONE[app.status] || 'neutral'}>{statusLabel(app.status)}</Pill>
+              <IndexStatus status={indexStatus} onRetry={retryIndex} />
               {user.role === 'borrower' && app.edit?.allowed && !editing && (
                 <TouchableOpacity style={styles.editBtn} onPress={() => { setNotice(null); setEditing(true); }}>
                   <Text style={styles.editBtnText}>Edit application</Text>

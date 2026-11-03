@@ -13,6 +13,7 @@ Covers RAG plan tasks P0-01 (decisions), P0-02 (data classification), P0-03 (ID 
 | **NPI / PII** | Full SSN, SSN last-4, date of birth, address, phone, email, account numbers, credit score | **Never** | **Never** (redact first) | **Never** |
 | **Document content** | Pay stubs, licences, bank statements, extracted text | **Yes, after redaction** (`services/redaction.js`): identifier fields and patterns are removed first | Redacted text only. Vision extraction separately sends the image to the extraction provider | Never |
 | **Internal review** | Exception rationale, waivers, review history, fraud-signal explanations | No | No | Action name only |
+| **Feedback** | A thumbs up/down with the question, answer and optional comment | No | No | Stored in MongoDB **after redaction** (SSN, phone, email, account numbers removed), with the application ID, role, sources, prompt version |
 
 Rules:
 1. Raw SSN and full account numbers are never embedded, never put in object keys or IDs, never put in a prompt, never logged.

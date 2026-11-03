@@ -11,13 +11,32 @@ export const loanFileRagEnabled = () =>
   (process.env.CHAT_PROVIDER || 'anthropic').toLowerCase() === 'ollama' && process.env.LOANFILE_RAG !== 'off';
 
 // deps: { load(appId) -> { application, documents } | null, embed(texts), store: { ids(appId), upsert(records), remove(ids) } }
-export function createLoanFileIndexer({ load, embed, store, batchSize = RAG_CONFIG.embeddingBatchSize, log = console }) {
+// onStatus(appId, status, info) is told 'indexing', then 'indexed' (with the chunk count) or 'failed'
+// (with a short reason), so the screen can show whether the assistant has the latest documents.
+export function createLoanFileIndexer({ load, embed, store, batchSize = RAG_CONFIG.embeddingBatchSize, log = console, onStatus = async () => {} }) {
+  const report = async (id, status, info = {}) => {
+    try {
+      await onStatus(id, status, info);
+    } catch (error) {
+      log.error('[loanFileIndexer] could not record status:', error.message);
+    }
+  };
   const running = new Set();
   const rerun = new Set();
 
   async function index(appId) {
     const id = String(appId);
     const loaded = await load(id);
+    if (loaded) await report(id, 'indexing');
+    try {
+      return await indexLoaded(id, loaded);
+    } catch (error) {
+      if (loaded) await report(id, 'failed', { error: String(error.message || error).slice(0, 200) });
+      throw error;
+    }
+  }
+
+  async function indexLoaded(id, loaded) {
     const oldIds = await store.ids(id);
     const chunks = loaded ? buildApplicationChunks(loaded) : [];
     const records = [];
@@ -30,6 +49,7 @@ export function createLoanFileIndexer({ load, embed, store, batchSize = RAG_CONF
     const keep = new Set(records.map((r) => r.id));
     const stale = oldIds.filter((x) => !keep.has(x));
     await store.remove(stale);
+    if (loaded) await report(id, 'indexed', { chunks: records.length });
     return { applicationId: id, chunks: records.length, removed: stale.length };
   }
 
@@ -76,6 +96,13 @@ async function getDefault() {
       return { application, documents };
     },
     embed: (texts) => embedTexts(texts),
+    onStatus: async (appId, status, info) => {
+      await Application.updateOne(
+        { _id: appId },
+        { $set: { searchIndex: { status, at: new Date(), chunks: info.chunks ?? null, error: info.error ?? null } } },
+        { timestamps: false }
+      );
+    },
     store: {
       ids: async (appId) => (await chroma.getCollectionRecords(await collection(), { applicationId: { $eq: appId } })).ids || [],
       upsert: async (records) => chroma.upsertPolicyRecords(await collection(), records),
@@ -88,6 +115,10 @@ async function getDefault() {
 // Call these from routes. No-ops unless loan-file search is enabled, and never block or fail a request.
 export function scheduleIndexApplication(appId) {
   if (!loanFileRagEnabled() || !appId) return;
+  // Show "reading the latest documents" straight away, before the background work has started.
+  import('../models/Application.js')
+    .then(({ default: Application }) => Application.updateOne({ _id: appId }, { $set: { 'searchIndex.status': 'indexing', 'searchIndex.at': new Date() } }, { timestamps: false }))
+    .catch(() => {});
   getDefault().then((i) => i.schedule(appId)).catch((e) => console.error('[loanFileIndexer]', e.message));
 }
 

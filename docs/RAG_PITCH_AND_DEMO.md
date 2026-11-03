@@ -70,6 +70,7 @@ So the mental model "the LLM goes to MongoDB and retrieves" is not what happens.
 7. **Show the split.** Ask "what is the status of my application?" as Meera Iyer: exact, specific, from the database (not a model guess). Then a mixed question: status and a policy together.
 8. **Show the safety net.** Ask it to ignore its rules, or ask about another applicant. It refuses. If time allows, stop the model and show the limited answer with passages and sources.
 9. **Show measurement.** Have a finished run ready from `/admin/eval-answers`: 125 golden questions asked through the real chat as borrower, officer and underwriter. Show the pass rate per category and, above all, leak-free (it must be 100%). Retrieval alone is at `/admin/eval-retrieval` (recall@5, precision@5, MRR over 18 questions).
+10. **Show the feedback loop and the index status.** Under every answer there is a thumbs up/down; rated-down answers are stored redacted and exported as candidates for the golden set (`/admin/feedback?rating=down&format=golden`), so the test set grows from real use. In the application header, a line shows whether the assistant has read the latest documents ("Assistant has the latest documents" / "reading..." / "could not read ... Try again").
 
 ## How answer quality is measured
 
