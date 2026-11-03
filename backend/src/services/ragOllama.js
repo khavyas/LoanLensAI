@@ -8,6 +8,7 @@ import { buildStatusNarrative } from './statusNarrative.js';
 import { loanFileRagEnabled } from './loanFileIndexer.js';
 import { retrievePolicyEvidence } from './hybridRetrieval.js';
 import { retrieveFileEvidence } from './loanFileRetrieval.js';
+import { missingDocumentAnswer } from './missingDocument.js';
 import { createCircuitBreaker } from './circuitBreaker.js';
 import { createFailover, AllProvidersFailedError } from './chatFailover.js';
 import { buildDegradedAnswer } from './degradedAnswer.js';
@@ -199,6 +200,8 @@ export async function answerQuestionWithOllama({ question, application, role, hi
   const documents = existingDocuments ? rawDocuments : withCrossDocumentChecks(application, rawDocuments);
   const recordAnswer = applicationQuestionAnswer(safeQuestion, application, documents);
   if (recordAnswer) return recordAnswer;
+  const missingDoc = missingDocumentAnswer(safeQuestion, documents, role);
+  if (missingDoc) return missingDoc;
   if (route.kind === 'clarification') {
     return { answer: 'Could you clarify what you would like to know about your loan or application?', sources: [] };
   }
@@ -220,7 +223,7 @@ export async function answerQuestionWithOllama({ question, application, role, hi
       // application this request is already authorised for, and from the caller's role.
       if (loanFileRagEnabled()) {
         try {
-          const fileEvidence = await retrieveFileEvidence({ application, role, embedding: queryEmbedding, signal });
+          const fileEvidence = await retrieveFileEvidence({ application, role, question: route.effectiveQuestion, embedding: queryEmbedding, signal });
           evidence = [...evidence, ...fileEvidence];
         } catch (fileError) {
           if (fileError?.name === 'AbortError' || signal?.aborted) throw fileError;
