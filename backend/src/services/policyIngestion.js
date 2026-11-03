@@ -5,6 +5,7 @@ import { RAG_CONFIG } from '../config/rag.js';
 import { embedTexts } from './embeddingClient.js';
 import { deletePolicyRecords, getCollectionRecords, getOrCreatePolicyCollection, upsertPolicyRecords } from './chromaService.js';
 import { chunkPolicyMarkdown } from './policyChunker.js';
+import { invalidatePolicyCache } from './hybridRetrieval.js';
 
 // NEW: Idempotently indexes the repository's approved Markdown policy corpus into Chroma.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -30,6 +31,7 @@ export async function ingestPolicyText({ text, fileName, modifiedAt = new Date()
   const currentIds = new Set(records.map((record) => record.id));
   const staleIds = (oldRecords.ids || []).filter((id) => !currentIds.has(id));
   await deletePolicyRecords(collectionId, staleIds);
+  invalidatePolicyCache(); // the keyword index is rebuilt from the new chunks
   return {
     documentId: chunks[0].metadata.documentId,
     sourceFile: fileName,
@@ -64,6 +66,7 @@ export async function ingestApprovedPolicies() {
     console.log(`[rag-ingest] ${fileName}: ${records.length} chunks indexed${staleIds.length ? `, ${staleIds.length} stale chunks removed` : ''}`);
   }
 
+  invalidatePolicyCache();
   return {
     ok: true,
     collection: RAG_CONFIG.chromaCollection,

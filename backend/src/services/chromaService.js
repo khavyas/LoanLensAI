@@ -57,6 +57,25 @@ export async function getCollectionRecords(collectionId, where) {
   });
 }
 
+// Every record matching a filter, with its text, in pages (for the keyword side of hybrid search).
+export async function getCollectionDocuments(collectionId, where, pageSize = 200) {
+  const out = { ids: [], documents: [], metadatas: [] };
+  for (let offset = 0; offset < 20000; offset += pageSize) {
+    const page = await chromaRequest(`/collections/${encodeURIComponent(collectionId)}/get`, {
+      where,
+      include: ['documents', 'metadatas'],
+      limit: pageSize,
+      offset,
+    });
+    const ids = page.ids || [];
+    out.ids.push(...ids);
+    out.documents.push(...(page.documents || []));
+    out.metadatas.push(...(page.metadatas || []));
+    if (ids.length < pageSize) break;
+  }
+  return out;
+}
+
 export async function upsertPolicyRecords(collectionId, records) {
   if (!records.length) return;
   const { ids, embeddings, metadatas, documents } = records.reduce(
