@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { currentDocuments } from './verification.js';
 import { redactText, redactFields, isSensitiveLabel } from './redaction.js';
+import { borrowerExplanation } from './borrowerWording.js';
 
 // Turns ONE application into the text chunks the assistant may search (RAG plan P3-04, P3-07,
 // P5-03). Pure: no database, no network. Everything goes through redaction first, so identifiers
@@ -81,11 +82,12 @@ function textChunks(pageTexts = []) {
   return out;
 }
 
-function checkLine(c) {
+// borrower: true words the finding for the applicant; false keeps the officer's wording.
+function checkLine(c, borrower = true) {
   const hide = isSensitiveLabel(c.field);
   const expected = hide ? '[redacted]' : redactText(c.expected ?? '');
   const found = hide ? '[redacted]' : redactText(c.found ?? '');
-  const detail = hide ? '' : ` ${redactText(c.explanation || '')}`;
+  const detail = hide ? '' : ` ${redactText(borrower ? borrowerExplanation(c) : c.explanation || '')}`;
   return `${c.field}: ${c.status}. Expected ${expected}; found ${found}.${detail}`.trim();
 }
 
@@ -169,8 +171,16 @@ export function buildApplicationChunks({ application, documents = [] }) {
     if (checks.length) {
       chunks.push(makeChunk(appId, {
         kind: 'verification', audience: 'borrower', doc, docId, section: 'Verification checks',
-        text: `${header} Verification result: ${doc.verification.overall}. ${checks.map(checkLine).join(' ')}`,
+        text: `${header} Verification result: ${doc.verification.overall}. ${checks.map((c) => checkLine(c, true)).join(' ')}`,
       }));
+      // The officer's own wording for anything flagged, only ever retrieved for staff.
+      const flagged = checks.filter((c) => c.status !== 'match');
+      if (flagged.length) {
+        chunks.push(makeChunk(appId, {
+          kind: 'verification-staff', audience: 'staff', doc, docId, section: 'Verification findings (officer wording)',
+          text: `${header} Flagged findings for the loan officer: ${flagged.map((c) => checkLine(c, false)).join(' ')}`,
+        }));
+      }
     }
 
     const summary = doc.statementSummary;
