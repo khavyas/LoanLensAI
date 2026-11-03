@@ -12,6 +12,9 @@ import { validateResidency } from '../services/residency.js';
 import { duplicateMatchesFor } from '../services/duplicateCheck.js';
 import { EDITABLE_STATUSES, editableFields, reverifyDocuments, statusAfterEdit, validateEdit } from '../services/applicationEdit.js';
 import { buildStatusNarrative } from '../services/statusNarrative.js';
+import { buildCopilotBrief } from '../services/copilot.js';
+import { embedTexts } from '../services/embeddingClient.js';
+import { retrievePolicyEvidence } from '../services/hybridRetrieval.js';
 import { scheduleIndexApplication } from '../services/loanFileIndexer.js';
 
 const router = Router();
@@ -154,6 +157,34 @@ router.post('/', async (req, res, next) => {
     });
     scheduleIndexApplication(app._id);
     res.status(201).json(app);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Officer co-pilot: "summarize this file" / "list contradictions", with sources. Staff only. Facts
+// are built in code from the stored record; the retrieved policy passage for each finding is what
+// RAG adds. No language model writes this text. See services/copilot.js.
+router.get('/:id/copilot', async (req, res, next) => {
+  try {
+    if (!isStaff(req.user.role)) return res.status(403).json({ error: 'The co-pilot is for loan officers and underwriters.' });
+    const app = await Application.findById(req.params.id).lean();
+    if (!app) return res.status(404).json({ error: 'Application not found' });
+    const documents = withCrossDocumentChecks(app, await Document.find({ applicationId: app._id }).select('-fileData -storageKey').lean());
+    const assessment = assessApplication(app, documents, { duplicates: await duplicateMatchesFor(app) });
+    // Policy passages need the embedding service and Chroma, which only the RAG deployment has.
+    const policyFor = (process.env.CHAT_PROVIDER || '').toLowerCase() !== 'ollama' ? async () => null : async (text) => {
+      const [embedding] = await embedTexts([text]);
+      const [hit] = await retrievePolicyEvidence({ question: text, embedding });
+      return hit || null;
+    };
+    res.json(await buildCopilotBrief({
+      action: req.query.action === 'contradictions' ? 'contradictions' : 'summary',
+      application: app,
+      documents,
+      assessment,
+      policyFor,
+    }));
   } catch (err) {
     next(err);
   }

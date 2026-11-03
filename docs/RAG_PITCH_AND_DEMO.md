@@ -66,9 +66,10 @@ So the mental model "the LLM goes to MongoDB and retrieves" is not what happens.
 3. **Ask the standard policy questions.** Car-loan documents, decision time, income tolerance. Open a source chip to show the cited section.
 4. **Show it refusing to guess.** Ask for the routing number or a mortgage. It says it has no source.
 5. **Ask about the applicant's own file.** As Meera Iyer ask "When does my driver license expire?" and "What employer is on my pay stub?". The answer cites the document and section (for example "Driver's license · Verification checks"). As the officer, ask the same about her file, then show that Meera, signed in as a borrower, cannot see the officer's notes.
-6. **Show the split.** Ask "what is the status of my application?" as Meera Iyer: exact, specific, from the database (not a model guess). Then a mixed question: status and a policy together.
-7. **Show the safety net.** Ask it to ignore its rules, or ask about another applicant. It refuses. If time allows, stop the model and show the limited answer with passages and sources.
-8. **Show measurement.** Have a finished run ready from `/admin/eval-answers`: 125 golden questions asked through the real chat as borrower, officer and underwriter. Show the pass rate per category and, above all, leak-free (it must be 100%). Retrieval alone is at `/admin/eval-retrieval` (recall@5, precision@5, MRR over 18 questions).
+6. **Show the officer co-pilot.** Sign in as the officer, open Arjun Mehta, Assistant tab, press "Summarize this file" and then "List contradictions". Point at the "Policy:" line under the finding: the facts come from the stored record, and RAG adds the approved policy passage that governs the finding, with its source. No model writes the text, so nothing is invented.
+7. **Show the split.** Ask "what is the status of my application?" as Meera Iyer: exact, specific, from the database (not a model guess). Then a mixed question: status and a policy together.
+8. **Show the safety net.** Ask it to ignore its rules, or ask about another applicant. It refuses. If time allows, stop the model and show the limited answer with passages and sources.
+9. **Show measurement.** Have a finished run ready from `/admin/eval-answers`: 125 golden questions asked through the real chat as borrower, officer and underwriter. Show the pass rate per category and, above all, leak-free (it must be 100%). Retrieval alone is at `/admin/eval-retrieval` (recall@5, precision@5, MRR over 18 questions).
 
 ## How answer quality is measured
 
