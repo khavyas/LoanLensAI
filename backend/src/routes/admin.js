@@ -11,6 +11,7 @@ import { ingestApprovedPolicies } from '../services/policyIngestion.js';
 import { seedAll } from '../services/seedData.js';
 import { indexAllApplications, loanFileRagEnabled, resetLoanFileIndex } from '../services/loanFileIndexer.js';
 import { runRetrievalEval } from '../services/retrievalEval.js';
+import { getAnswerEvalResults, getAnswerEvalState, startAnswerEval } from '../services/answerEvalServer.js';
 
 // One-time setup endpoints for environments with no shell access (Render free tier).
 // Guarded by SETUP_SECRET; disable by unsetting the env var after setup.
@@ -94,6 +95,26 @@ router.all('/index-applications', async (_req, res, next) => {
 router.all('/eval-retrieval', async (_req, res, next) => {
   try {
     res.json({ ok: true, ...(await runRetrievalEval()) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Answer-quality evaluation: the 125 golden questions (policy, the applicant's own file, status,
+// out-of-scope, adversarial, follow-ups) asked through the real chat endpoint as borrower,
+// officer and underwriter, and scored for behavior, facts, citations, groundedness and leaks.
+// It takes several minutes, so it runs in the background:
+//   /admin/eval-answers?start=1            start a full run (optional &category=policy&limit=10)
+//   /admin/eval-answers                    progress, and the report when it has finished
+//   /admin/eval-answers?full=1             the report plus every question and answer
+// Run /admin/reset (or /admin/ingest-chroma and /admin/index-applications) first.
+router.all('/eval-answers', async (req, res, next) => {
+  try {
+    if (req.query.start) {
+      return res.json(await startAnswerEval({ category: req.query.category, limit: Number(req.query.limit) || undefined }));
+    }
+    const state = getAnswerEvalState();
+    res.json(req.query.full ? { ...state, results: getAnswerEvalResults() } : state);
   } catch (err) {
     next(err);
   }

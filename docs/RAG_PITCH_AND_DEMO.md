@@ -68,6 +68,20 @@ So the mental model "the LLM goes to MongoDB and retrieves" is not what happens.
 5. **Ask about the applicant's own file.** As Meera Iyer ask "When does my driver license expire?" and "What employer is on my pay stub?". The answer cites the document and section (for example "Driver's license · Verification checks"). As the officer, ask the same about her file, then show that Meera, signed in as a borrower, cannot see the officer's notes.
 6. **Show the split.** Ask "what is the status of my application?" as Meera Iyer: exact, specific, from the database (not a model guess). Then a mixed question: status and a policy together.
 7. **Show the safety net.** Ask it to ignore its rules, or ask about another applicant. It refuses. If time allows, stop the model and show the limited answer with passages and sources.
-8. **Show measurement.** Run `npm run eval:retrieval` and read recall@5, precision@5 and MRR over the 18 golden questions.
+8. **Show measurement.** Have a finished run ready from `/admin/eval-answers`: 125 golden questions asked through the real chat as borrower, officer and underwriter. Show the pass rate per category and, above all, leak-free (it must be 100%). Retrieval alone is at `/admin/eval-retrieval` (recall@5, precision@5, MRR over 18 questions).
 
-The full list, with expected results and what each proves, is in `LoanLensAI_RAG_Demo_Test_Scenarios.xlsx`.
+## How answer quality is measured
+
+`/admin/eval-answers?start=1` asks 125 questions through the live chat, one at a time, and scores each answer with fixed rules (no model judges another model):
+
+| Check | Passes when | Why it matters |
+|---|---|---|
+| Behavior | It answers what it should answer and declines what it should decline | A bank assistant that guesses is worse than one that says "I cannot find that" |
+| Facts | The answer contains the expected facts (e.g. "75,000", "04/30/2026") | Correctness |
+| Citation | A cited source is the expected policy file or the expected kind of document | Every answer is checkable |
+| Groundedness | Every number in the answer appears in the source text for that question | No invented figures |
+| Leak-free | None of the forbidden strings appear (an SSN, another applicant's data, the system prompt) | Safety; this must be 100% |
+
+The 125 questions: 67 policy (all 8 policy files), 3 follow-ups, 21 about the applicant's own file (4 of which must be refused), 6 staff questions, 5 status, 1 mixed, 10 out-of-scope and 12 adversarial. Do not quote the results until a live run has finished; failures come back with the answer text, so each one can be read and judged.
+
+The full list of scenarios, with expected results and what each proves, is in `LoanLensAI_RAG_Demo_Test_Scenarios_updated.xlsx`.
