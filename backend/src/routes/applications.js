@@ -15,6 +15,7 @@ import { buildStatusNarrative } from '../services/statusNarrative.js';
 import { buildCopilotBrief } from '../services/copilot.js';
 import { embedTexts } from '../services/embeddingClient.js';
 import { retrievePolicyEvidence } from '../services/hybridRetrieval.js';
+import { borrowerView } from '../services/borrowerWording.js';
 import { scheduleIndexApplication } from '../services/loanFileIndexer.js';
 
 const router = Router();
@@ -36,7 +37,8 @@ function ageOnDate(dateOfBirth, on = new Date()) {
 export function forViewer(app, role) {
   if (isStaff(role)) return app;
   const { creditProfile, reviewHistory, decision, verificationReport, ...safe } = app; // eslint-disable-line no-unused-vars
-  return { ...safe, decisionNotice: borrowerNotice(app) };
+  // Findings are re-worded for the borrower: the stored explanations are written for the officer.
+  return { ...borrowerView(safe), decisionNotice: borrowerNotice(app) };
 }
 
 // Officers see all applications; borrowers see only their own.

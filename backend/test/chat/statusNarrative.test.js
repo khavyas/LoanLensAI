@@ -120,3 +120,13 @@ test('toWhatsApp turns the markup into WhatsApp formatting with the same words',
   assert.match(wa, /• \*Driver's license\* - This ID expired/);
   assert.doesNotMatch(wa, /\*\*|^## |^> |- \[/m);
 });
+
+test('a borrower is never shown staff-directed wording; staff keep the original', () => {
+  const base = load('Arjun Mehta');
+  const borrower = buildStatusNarrative({ ...base, role: 'borrower' }).text;
+  assert.doesNotMatch(borrower, /confirm with borrower|ask the borrower|escalate to an officer/i);
+  assert.match(borrower, /The employer on this document differs from the employer on your application/);
+  assert.match(borrower, /Edit application/);
+  const staff = buildStatusNarrative({ ...base, role: 'officer' }).text;
+  assert.match(staff, /confirm with borrower/);
+});
