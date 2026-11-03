@@ -64,6 +64,7 @@ Measured with `npm run eval:retrieval` (retrieval) and the security tests (leaks
 | Cross-application or cross-tenant leaks in the security suite | 0 | `test/rag`, `test/chat` |
 | Chat latency, p95 | <= 8 s (policy), <= 1 s (status, deterministic) | to measure once monitoring exists (P8-05) |
 | Questions out of scope answered with a refusal | 100% of the golden out-of-scope set | to add to golden set v2 (P7-07) |
+| Retrieval floor enforced on pull requests | recall@5 >= 0.80 and MRR >= 0.60 on the 67 policy questions of golden set v2 | `.github/workflows/backend-ci.yml` job `retrieval-eval` (P7-05); needs the `CHROMA_*` repository secrets, skipped with a warning without them |
 
 ## 5. Decision records (P0-01)
 

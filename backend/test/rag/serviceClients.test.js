@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { embedTexts, generateChatJson } from '../../src/services/ollamaClient.js';
+import { generateChatText } from '../../src/services/ollamaClient.js';
+import { embedTexts } from '../../src/services/embeddingClient.js';
 import { getOrCreatePolicyCollection, upsertPolicyRecords, queryPolicyRecords } from '../../src/services/chromaService.js';
 import { answerQuestionWithOllama, selectEvidence } from '../../src/services/ragOllama.js';
 
@@ -19,7 +20,7 @@ test('Ollama embedding and chat clients use documented endpoints and parse respo
     const vectors = await embedTexts(['policy one', 'policy two']);
     assert.equal(vectors.length, 2);
     assert.equal(calls[0].body.model, 'embeddinggemma');
-    const json = await generateChatJson([{ role: 'user', content: 'Hello' }]);
+    const json = await generateChatText([{ role: 'user', content: 'Hello' }]);
     assert.match(json, /Grounded/);
     assert.ok(calls.some((call) => call.url.endsWith('/api/chat')));
   } finally {
@@ -98,8 +99,9 @@ test('status routing returns database state without calling Ollama or Chroma', a
       role: 'borrower',
       documents: [],
     });
-    assert.equal(result.answer, 'The status recorded for your application is submitted.');
-    assert.deepEqual(result.sources, [{ doc: 'Application status' }]);
+    assert.match(result.answer, /Where things stand/);
+    assert.match(result.answer, /Application submitted/);
+    assert.deepEqual(result.sources, [{ doc: 'Application state' }]);
     assert.equal(calls.length, 0);
   } finally {
     globalThis.fetch = originalFetch;

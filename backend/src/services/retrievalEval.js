@@ -77,3 +77,14 @@ export async function runRetrievalComparison(opts = {}) {
     brokenByHybrid: golden.map((g) => g.question).filter((q) => denseHits.has(q) && !hybridHits.has(q)),
   };
 }
+
+// The quality gate: which floors a run misses. Used by `npm run eval:retrieval` (exit code) so a
+// pull request that lowers retrieval quality cannot merge. Floors come from the governance targets.
+export function checkFloors(summary, floors = {}) {
+  const failures = [];
+  const minRecall = floors.minRecall ?? 0.8;
+  const minMrr = floors.minMrr ?? 0.6;
+  if (!(summary.recallAtK >= minRecall)) failures.push(`recall@${summary.k} ${Number(summary.recallAtK).toFixed(2)} is below ${minRecall}`);
+  if (!(summary.mrr >= minMrr)) failures.push(`MRR ${Number(summary.mrr).toFixed(2)} is below ${minMrr}`);
+  return failures;
+}

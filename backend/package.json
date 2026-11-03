@@ -13,6 +13,7 @@
     "ingest": "node src/scripts/ingestPolicies.js",
     "ingest:chroma": "node src/scripts/ingestPoliciesChroma.js",
     "eval:retrieval": "node src/scripts/evalRetrieval.js",
+    "ci:cleanup": "node src/scripts/ciCleanup.js",
     "admin:create": "node src/scripts/createAdmin.js",
     "test": "node --test --test-isolation=none",
     "reset": "npm run seed && npm run ingest"

@@ -19,3 +19,12 @@ test('runRetrievalEval scores each golden question and lists what was retrieved'
   assert.deepEqual(out.misses, ['q-miss']);
   assert.deepEqual(out.details[0], { question: 'q-hit', expected: ['a.md'], found: ['a.md', 'x.md'] });
 });
+
+test('checkFloors reports each floor a run misses and passes a good run', async () => {
+  const { checkFloors } = await import('../../src/services/retrievalEval.js');
+  assert.deepEqual(checkFloors({ k: 5, recallAtK: 0.9, mrr: 0.7 }), []);
+  assert.equal(checkFloors({ k: 5, recallAtK: 0.7, mrr: 0.7 }).length, 1);
+  assert.equal(checkFloors({ k: 5, recallAtK: 0.7, mrr: 0.4 }).length, 2);
+  assert.equal(checkFloors({ k: 5, recallAtK: 0.7, mrr: 0.4 }, { minRecall: 0.5, minMrr: 0.3 }).length, 0);
+  assert.equal(checkFloors({ k: 5, recallAtK: NaN, mrr: 0.9 }).length, 1);
+});
