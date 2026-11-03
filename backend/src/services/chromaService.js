@@ -129,3 +129,8 @@ export async function getOrCreateLoanFileCollection(signal) {
 export async function deleteLoanFileCollection() {
   await chromaRequest(`/collections/${encodeURIComponent(RAG_CONFIG.chromaLoanFileCollection)}`, undefined, 'DELETE');
 }
+
+// Drops the policy collection. Only the CI gate uses it, to remove its throwaway collection.
+export async function deletePolicyCollection() {
+  await chromaRequest(`/collections/${encodeURIComponent(RAG_CONFIG.chromaCollection)}`, undefined, 'DELETE');
+}

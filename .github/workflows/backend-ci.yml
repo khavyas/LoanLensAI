@@ -1,0 +1,103 @@
+# Quality gate for the backend.
+#   tests            runs on every pull request: unit tests, leak tests, golden-set checks, prompt checks.
+#   retrieval-eval   runs only when a pull request touches prompts, chunking, retrieval or the policy
+#                    text. It indexes the policies from the PR's code into a throwaway Chroma collection
+#                    and fails the check if recall or MRR drops under the floor.
+# To block merges, require both checks in the branch protection rule for main.
+name: backend-ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      rag: ${{ steps.filter.outputs.rag }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            rag:
+              - 'data/policies/**'
+              - 'data/eval/**'
+              - 'backend/src/config/rag.js'
+              - 'backend/src/services/ragPromptBuilder.js'
+              - 'backend/src/services/ragOllama.js'
+              - 'backend/src/services/policyIngestion.js'
+              - 'backend/src/services/policyChunker.js'
+              - 'backend/src/services/hybridRetrieval.js'
+              - 'backend/src/services/bm25.js'
+              - 'backend/src/services/embeddingClient.js'
+              - 'backend/src/services/chromaService.js'
+              - 'backend/src/services/retrievalEval.js'
+              - 'backend/src/services/retrievalMetrics.js'
+
+  retrieval-eval:
+    needs: changes
+    if: needs.changes.outputs.rag == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # A throwaway collection per run, so the PR's own chunking is measured and the real one is untouched.
+      CHROMA_COLLECTION: ci-${{ github.run_id }}-${{ github.run_attempt }}
+      EMBEDDING_PROVIDER: chroma-cloud
+      CHROMA_BASE_URL: ${{ secrets.CHROMA_BASE_URL }}
+      CHROMA_API_KEY: ${{ secrets.CHROMA_API_KEY }}
+      CHROMA_TENANT: ${{ secrets.CHROMA_TENANT }}
+      CHROMA_DATABASE: ${{ secrets.CHROMA_DATABASE }}
+      EVAL_SET: v2
+      EVAL_MODE: dense
+      EVAL_MIN_RECALL: '0.8'
+      EVAL_MIN_MRR: '0.6'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - name: Check the Chroma secrets exist
+        id: secrets
+        run: |
+          if [ -z "$CHROMA_API_KEY" ]; then
+            echo "::warning::CHROMA_* secrets are not set (or this is a fork), so the retrieval gate did not run. Add them under Settings > Secrets and variables > Actions."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Index the policies from this PR
+        if: steps.secrets.outputs.run == 'true'
+        run: npm run ingest:chroma
+      - name: Retrieval eval (fails under the recall / MRR floor)
+        if: steps.secrets.outputs.run == 'true'
+        run: npm run eval:retrieval
+      - name: Delete the throwaway collection
+        if: always() && steps.secrets.outputs.run == 'true'
+        run: npm run ci:cleanup
