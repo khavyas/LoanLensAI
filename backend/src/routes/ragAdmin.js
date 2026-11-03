@@ -6,6 +6,7 @@ import { requireRole } from '../middleware/requireRole.js';
 import { RAG_CONFIG } from '../config/rag.js';
 import { extractPolicyText } from '../services/policyFileText.js';
 import { deletePolicyRecords, getCollectionRecords, getOrCreatePolicyCollection } from '../services/chromaService.js';
+import { invalidatePolicyCache } from '../services/hybridRetrieval.js';
 import { ingestPolicyText } from '../services/policyIngestion.js';
 
 const router = Router();
@@ -77,6 +78,7 @@ router.delete('/documents/:documentId', async (req, res, next) => {
     const ids = records.ids || [];
     if (!ids.length) return res.status(404).json({ error: 'Policy document not found.' });
     await deletePolicyRecords(collectionId, ids);
+    invalidatePolicyCache();
     res.json({ ok: true, deletedChunks: ids.length });
   } catch (error) {
     next(error);

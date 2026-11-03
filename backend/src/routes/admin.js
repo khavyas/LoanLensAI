@@ -10,7 +10,7 @@ import { checkStorage } from '../services/storage.js';
 import { ingestApprovedPolicies } from '../services/policyIngestion.js';
 import { seedAll } from '../services/seedData.js';
 import { indexAllApplications, loanFileRagEnabled, resetLoanFileIndex } from '../services/loanFileIndexer.js';
-import { runRetrievalEval } from '../services/retrievalEval.js';
+import { runRetrievalComparison, runRetrievalEval } from '../services/retrievalEval.js';
 import { getAnswerEvalResults, getAnswerEvalState, startAnswerEval } from '../services/answerEvalServer.js';
 
 // One-time setup endpoints for environments with no shell access (Render free tier).
@@ -92,9 +92,15 @@ router.all('/index-applications', async (_req, res, next) => {
 // Scores policy retrieval on THIS server with its real embedding and Chroma settings: recall@k,
 // precision@k, MRR over the golden questions, and what each question actually retrieved. Run
 // /admin/ingest-chroma first so the policies are indexed.
-router.all('/eval-retrieval', async (_req, res, next) => {
+//   /admin/eval-retrieval                       the 18 original questions, current mode
+//   /admin/eval-retrieval?set=v2                the 67 policy questions of the 125-question set
+//   /admin/eval-retrieval?mode=hybrid           score hybrid search instead of vector-only
+//   /admin/eval-retrieval?compare=1             both modes on the same questions, with the difference
+router.all('/eval-retrieval', async (req, res, next) => {
   try {
-    res.json({ ok: true, ...(await runRetrievalEval()) });
+    const set = req.query.set === 'v2' ? 'v2' : 'v1';
+    if (req.query.compare) return res.json({ ok: true, ...(await runRetrievalComparison({ set: req.query.set === 'v1' ? 'v1' : 'v2' })) });
+    res.json({ ok: true, ...(await runRetrievalEval({ set, mode: req.query.mode === 'hybrid' ? 'hybrid' : undefined })) });
   } catch (err) {
     next(err);
   }

@@ -3,10 +3,10 @@ import { RAG_CONFIG } from '../config/rag.js';
 import { missingDocuments, withCrossDocumentChecks } from './verification.js';
 import { embedTexts } from './embeddingClient.js';
 import { generateChatText } from './ollamaClient.js';
-import { getOrCreatePolicyCollection, queryPolicyRecords } from './chromaService.js';
 import { classifyLoanQuestion } from './loanQuestionRouter.js';
 import { buildStatusNarrative } from './statusNarrative.js';
 import { loanFileRagEnabled } from './loanFileIndexer.js';
+import { retrievePolicyEvidence } from './hybridRetrieval.js';
 import { retrieveFileEvidence } from './loanFileRetrieval.js';
 import { createCircuitBreaker } from './circuitBreaker.js';
 import { createFailover, AllProvidersFailedError } from './chatFailover.js';
@@ -213,9 +213,8 @@ export async function answerQuestionWithOllama({ question, application, role, hi
   if (needsPolicy) {
     try {
       const [queryEmbedding] = await embedTexts([route.effectiveQuestion], signal);
-      const collectionId = await getOrCreatePolicyCollection(signal);
-      const result = await queryPolicyRecords(collectionId, queryEmbedding, Math.max(RAG_CONFIG.topK * 3, RAG_CONFIG.topK), undefined, signal);
-      evidence = selectEvidence(result);
+      // Policy evidence: vector search, plus keyword search and rerank when RAG_RETRIEVAL=hybrid.
+      evidence = await retrievePolicyEvidence({ question: route.effectiveQuestion, embedding: queryEmbedding, signal });
       // The applicant's own file (their documents, verification results and review record) is
       // searched with the same question vector. The filter is built on the server from the
       // application this request is already authorised for, and from the caller's role.
