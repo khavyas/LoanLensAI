@@ -114,6 +114,35 @@ def long_statement():
     print(json.dumps(truth, indent=2))
 
 
+NULLS = {k: None for k in (
+    "employerName", "grossMonthlyIncome", "payPeriod", "address", "ssnLast4", "documentDate", "businessName", "ein",
+    "annualBusinessRevenue", "ownershipPercent", "netPay", "recentDepositAmount", "recentDepositSource", "grossPayPeriod",
+    "socialSecurityWithheld", "medicareWithheld", "ytdGrossPay", "payPeriodNumber")}
+
+
+def write_fixtures():
+    """What a reader of these two files would extract. The backend uses this when no extraction AI is available
+    (MOCK_AI, or a failed provider call), keyed by file name exactly like the seeded documents, so the demo
+    files are recognised instead of coming back as 'Unknown, 30%'."""
+    license_fields = dict(NULLS, fullName="Meera Iyer", address="9 Willow Court, Springfield", dateOfBirth="09/21/1990",
+                          licenseNumber="SP-415509-M", licenseExpiry="04/30/2031")
+    license_fx = {"docType": "drivers-license", "confidence": 0.97, "fields": license_fields}
+    statement_fx = {
+        "docType": "bank-statement", "confidence": 0.93,
+        "fields": dict(NULLS, fullName="Jordan Rivera", documentDate="12/31/2026", recentDepositAmount=1480.02,
+                       recentDepositSource="Brightline Logistics - Direct Deposit"),
+    }
+    fixtures = {
+        "meera-iyer-renewed-drivers-license": license_fx,
+        "meera-iyer-drivers-license-renewed": license_fx,
+        "jordan-rivera-long-bank-statement": statement_fx,
+    }
+    with open(os.path.join(HERE, "demo-fixtures.json"), "w") as f:
+        json.dump(fixtures, f, indent=2)
+    print("wrote demo-fixtures.json")
+
+
 if __name__ == "__main__":
     renewed_license()
     long_statement()
+    write_fixtures()

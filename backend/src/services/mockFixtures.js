@@ -420,6 +420,15 @@ try {
   // Optional file: without it only the original seed documents are recognised.
 }
 
+// The files to upload live during the demo (data/demo): Meera's renewed licence and the long statement.
+// Written by data/demo/generate_demo_files.py next to the files themselves.
+const DEMO_FIXTURES_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../data/demo/demo-fixtures.json');
+try {
+  Object.assign(FIXTURES, JSON.parse(fs.readFileSync(DEMO_FIXTURES_PATH, 'utf8')));
+} catch {
+  // Optional file.
+}
+
 export function mockClassifyAndExtract(originalFilename) {
   const key = (originalFilename || '').toLowerCase().replace(/\.[^.]+$/, '');
   const fixture = FIXTURES[key];
