@@ -1,0 +1,12 @@
+{
+  "file": "jordan-rivera-long-bank-statement.pdf",
+  "pages": 29,
+  "transactions": 191,
+  "largestDeposit": 6250.0,
+  "largestDepositDescription": "ACME CORP ANNUAL BONUS DIRECT DEP",
+  "largestDepositDate": "07/17/2026",
+  "largestDepositPage": 16,
+  "totalDeposits": 45082.26,
+  "totalWithdrawals": 21901.64,
+  "endingBalance": 25321.17
+}

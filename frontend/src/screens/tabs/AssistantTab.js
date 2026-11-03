@@ -206,13 +206,16 @@ export default function AssistantTab({ app, autoNavigate = true }) {
       </ScrollView>
 
       {user.role !== 'borrower' && (
-        <View style={styles.copilotRow}>
-          <TouchableOpacity style={styles.copilotBtn} onPress={() => runCopilot('summary')} disabled={busy}>
-            <Text style={styles.copilotText}>Summarize this file</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.copilotBtn} onPress={() => runCopilot('contradictions')} disabled={busy}>
-            <Text style={styles.copilotText}>List contradictions</Text>
-          </TouchableOpacity>
+        <View style={styles.copilotBar}>
+          <Text style={styles.copilotLabel}>OFFICER TOOLS</Text>
+          <View style={styles.copilotRow}>
+            <TouchableOpacity style={[styles.copilotBtn, busy && { opacity: 0.6 }]} onPress={() => runCopilot('summary')} disabled={busy}>
+              <Text style={styles.copilotText}>{'☰'}  Summarize this file</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.copilotBtn, busy && { opacity: 0.6 }]} onPress={() => runCopilot('contradictions')} disabled={busy}>
+              <Text style={styles.copilotText}>{'⚠'}  List contradictions</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
       {messages.length > 0 && !showSamples && (
@@ -262,9 +265,12 @@ const styles = StyleSheet.create({
   rateBtn: { borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingVertical: 3, paddingHorizontal: 10, backgroundColor: colors.card },
   rateIcon: { fontSize: 14 },
   rateThanks: { color: colors.success, fontSize: 12, fontWeight: '600' },
-  copilotRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 14, paddingTop: 8, backgroundColor: colors.bg },
-  copilotBtn: { borderWidth: 1.5, borderColor: colors.accent, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14, backgroundColor: colors.card },
-  copilotText: { color: colors.accent, fontWeight: '800', fontSize: 13 },
+  // Solid navy, squarer buttons under a small label: clearly tools, not tappable sample questions.
+  copilotBar: { paddingHorizontal: 14, paddingTop: 10, backgroundColor: colors.bg, borderTopWidth: 1, borderColor: colors.border },
+  copilotLabel: { color: colors.faint, fontSize: 11, fontWeight: '800', letterSpacing: 0.8, marginBottom: 6 },
+  copilotRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  copilotBtn: { borderRadius: 8, paddingVertical: 9, paddingHorizontal: 14, backgroundColor: colors.primary },
+  copilotText: { color: '#FFFFFF', fontWeight: '800', fontSize: 13 },
   samplesToggle: { paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.bg },
   samplesToggleText: { color: colors.accent, fontSize: 12, fontWeight: '600' },
   suggestion: {
