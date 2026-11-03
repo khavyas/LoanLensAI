@@ -106,3 +106,17 @@ test('chunk ids are stable across runs, so re-indexing replaces instead of dupli
   assert.deepEqual(a, b);
   assert.equal(new Set(a).size, a.length);
 });
+
+test('the borrower verification chunk is in borrower wording; the officer wording is a staff-only chunk', () => {
+  const def = { ...APPLICATIONS.find((a) => a.applicantName === 'Arjun Mehta'), _id: 'app-arjun', status: 'needs-review', createdAt: new Date('2026-10-20') };
+  const documents = withCrossDocumentChecks(def, DOCUMENT_FILES['Arjun Mehta'].map((file, i) => {
+    const e = mockClassifyAndExtract(file);
+    return { _id: 'a' + i, fileName: file, docType: e.docType, status: 'current', createdAt: new Date('2026-10-21'), extractedFields: e.fields, verification: verifyDocument(def, e) };
+  }));
+  const chunks = buildApplicationChunks({ application: def, documents });
+  const borrowerText = chunks.filter((c) => c.metadata.audience === 'borrower').map((c) => c.text).join('\n');
+  assert.doesNotMatch(borrowerText, /confirm with borrower|ask the borrower|escalate to an officer/i);
+  const staff = chunks.find((c) => c.metadata.kind === 'verification-staff');
+  assert.equal(staff.metadata.audience, 'staff');
+  assert.match(staff.text, /confirm with borrower/);
+});
