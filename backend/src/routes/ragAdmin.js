@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import path from 'node:path';
 import { requireAuth } from '../middleware/auth.js';
-import { requireRole } from '../middleware/requireRole.js';
+import { can } from '../services/authz.js';
 import { RAG_CONFIG } from '../config/rag.js';
 import { extractPolicyText } from '../services/policyFileText.js';
 import { deletePolicyRecords, getCollectionRecords, getOrCreatePolicyCollection } from '../services/chromaService.js';
@@ -15,7 +15,7 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024, files: 10 },
 });
 
-router.use(requireAuth, requireRole('admin'));
+router.use(requireAuth, (req, res, next) => (can(req.user, 'rag:admin') ? next() : res.status(403).json({ error: 'Administrator access required' })));
 
 function safeFileName(originalName) {
   const base = path.basename(String(originalName || '')).normalize('NFKC').replace(/[^\w .()-]/g, '_').trim();

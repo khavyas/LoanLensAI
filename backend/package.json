@@ -14,6 +14,7 @@
     "ingest:chroma": "node src/scripts/ingestPoliciesChroma.js",
     "eval:retrieval": "node src/scripts/evalRetrieval.js",
     "ci:cleanup": "node src/scripts/ciCleanup.js",
+    "arena": "node src/scripts/arena.js",
     "admin:create": "node src/scripts/createAdmin.js",
     "test": "node --test --test-isolation=none",
     "reset": "npm run seed && npm run ingest"

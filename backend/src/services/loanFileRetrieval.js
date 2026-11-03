@@ -1,12 +1,14 @@
 import { RAG_CONFIG } from '../config/rag.js';
+import { fileAudiences, mayReadStaffContent } from './authz.js';
 
 // Retrieval from one applicant's own file. The filter is built ONLY here, from the application the
 // route already authorised and the signed-in role; it never comes from the question or the model.
-// A search without an application ID is refused (RAG plan P5-03, edge case E10).
+// A search without an application ID is refused (RAG plan P5-03, edge case E10). Which audiences a
+// role may read is decided in authz.js (P2-05).
 
 export function buildFileFilter({ applicationId, role }) {
   if (!applicationId) throw new Error('A loan-file search needs an application ID.');
-  const audiences = role === 'borrower' ? ['borrower'] : ['borrower', 'staff'];
+  const audiences = fileAudiences(role); // refuses an unknown role
   return {
     $and: [
       { applicationId: { $eq: String(applicationId) } },
@@ -21,7 +23,7 @@ export function buildFileFilter({ applicationId, role }) {
 // For staff, those questions also fetch the review record directly. Borrowers never get it: the
 // audience filter below is applied to this extra search as well.
 const REVIEW_INTENT = /\b(notes?|referr\w*|review\s+(?:record|history)|waiv\w*|underwriter|approved|declined|rejected|returned|who\s+(?:reviewed|approved|referred))\b/i;
-export const focusedKinds = (question, role) => (role !== 'borrower' && REVIEW_INTENT.test(String(question || '')) ? ['review-record'] : []);
+export const focusedKinds = (question, role) => (mayReadStaffContent(role) && REVIEW_INTENT.test(String(question || '')) ? ['review-record'] : []);
 
 // deps lets tests supply a fake search; the default talks to Chroma Cloud.
 export async function retrieveFileEvidence({ application, role, question = '', embedding, signal, topK = 4, deps }) {

@@ -7,6 +7,7 @@ import { withoutCredits } from '../services/statementAnalysis.js';
 import { REQUIRED_DOCS_BY_PRODUCT, PRODUCT_TYPES } from '../config/requiredDocs.js';
 import { AFFORDABILITY, maxAffordableAmount, maxAffordableBusinessAmount } from '../config/affordability.js';
 import { isStaff } from '../config/roles.js';
+import { can } from '../services/authz.js';
 import { assessApplication, borrowerNotice } from '../services/decisionRules.js';
 import { validateResidency } from '../services/residency.js';
 import { duplicateMatchesFor } from '../services/duplicateCheck.js';
@@ -183,7 +184,7 @@ router.post('/:id/reindex', async (req, res, next) => {
 // RAG adds. No language model writes this text. See services/copilot.js.
 router.get('/:id/copilot', async (req, res, next) => {
   try {
-    if (!isStaff(req.user.role)) return res.status(403).json({ error: 'The co-pilot is for loan officers and underwriters.' });
+    if (!can(req.user, 'copilot:use')) return res.status(403).json({ error: 'The co-pilot is for loan officers and underwriters.' });
     const app = await Application.findById(req.params.id).lean();
     if (!app) return res.status(404).json({ error: 'Application not found' });
     const documents = withCrossDocumentChecks(app, await Document.find({ applicationId: app._id }).select('-fileData -storageKey').lean());
