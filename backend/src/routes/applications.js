@@ -162,6 +162,20 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+// Ask the assistant to re-read this application's documents (for example after a failed index).
+// The applicant or any staff member may do it; it only schedules the same background re-index.
+router.post('/:id/reindex', async (req, res, next) => {
+  try {
+    const app = await Application.findById(req.params.id).select('applicantEmail').lean();
+    if (!app) return res.status(404).json({ error: 'Application not found' });
+    if (!isStaff(req.user.role) && app.applicantEmail !== req.user.email) return res.status(403).json({ error: 'Not your application' });
+    scheduleIndexApplication(app._id);
+    res.status(202).json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Officer co-pilot: "summarize this file" / "list contradictions", with sources. Staff only. Facts
 // are built in code from the stored record; the retrieved policy passage for each finding is what
 // RAG adds. No language model writes this text. See services/copilot.js.

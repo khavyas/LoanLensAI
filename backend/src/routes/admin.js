@@ -12,6 +12,8 @@ import { seedAll } from '../services/seedData.js';
 import { indexAllApplications, loanFileRagEnabled, resetLoanFileIndex } from '../services/loanFileIndexer.js';
 import { runRetrievalComparison, runRetrievalEval } from '../services/retrievalEval.js';
 import { getAnswerEvalResults, getAnswerEvalState, startAnswerEval } from '../services/answerEvalServer.js';
+import Feedback from '../models/Feedback.js';
+import { goldenCandidates } from '../services/feedbackRecord.js';
 
 // One-time setup endpoints for environments with no shell access (Render free tier).
 // Guarded by SETUP_SECRET; disable by unsetting the env var after setup.
@@ -121,6 +123,25 @@ router.all('/eval-answers', async (req, res, next) => {
     }
     const state = getAnswerEvalState();
     res.json(req.query.full ? { ...state, results: getAnswerEvalResults() } : state);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Thumbs up/down left on assistant answers (text is stored redacted).
+//   /admin/feedback                     the latest 50, with a count of up and down
+//   /admin/feedback?rating=down         only the rated-down answers
+//   /admin/feedback?rating=down&format=golden   the same as skeletons for the golden question set
+router.all('/feedback', async (req, res, next) => {
+  try {
+    const filter = ['up', 'down'].includes(req.query.rating) ? { rating: req.query.rating } : {};
+    const rows = await Feedback.find(filter).sort({ createdAt: -1 }).limit(Math.min(Number(req.query.limit) || 50, 200)).lean();
+    if (req.query.format === 'golden') return res.json({ ok: true, candidates: goldenCandidates(rows) });
+    res.json({
+      ok: true,
+      counts: { up: await Feedback.countDocuments({ rating: 'up' }), down: await Feedback.countDocuments({ rating: 'down' }) },
+      feedback: rows.map((f) => ({ id: f._id, at: f.createdAt, role: f.role, rating: f.rating, question: f.question, answer: f.answer, comment: f.comment, sources: f.sources, promptVersion: f.promptVersion, retrievalMode: f.retrievalMode })),
+    });
   } catch (err) {
     next(err);
   }

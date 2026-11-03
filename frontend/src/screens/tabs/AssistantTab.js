@@ -71,16 +71,19 @@ export default function AssistantTab({ app, autoNavigate = true }) {
         setMessages((m) => [...m, {
           from: 'ai',
           text: local.answer,
+          question,
           sources: local.sources,
           nav: { tab: local.tab, label: local.label, applicationId: local.applicationId },
         }]);
         if (autoNavigate) goToApplicationTab(local.applicationId, local.tab);
         return;
       }
-      const { answer, sources } = await api.ask(app._id, question, history);
+      const { answer, sources, promptVersion } = await api.ask(app._id, question, history);
       setMessages((m) => [...m, {
         from: 'ai',
         text: answer,
+        question,
+        promptVersion,
         sources,
       }]);
     } catch (e) {
@@ -88,6 +91,19 @@ export default function AssistantTab({ app, autoNavigate = true }) {
     } finally {
       setBusy(false);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+    }
+  }
+
+  // A thumbs up or down on one answer. It is stored (redacted) so wrong answers can become new
+  // test questions. A failed save never disturbs the conversation.
+  async function rate(index, rating) {
+    const m = messages[index];
+    if (!m?.question || m.rated) return;
+    setMessages((all) => all.map((x, i) => (i === index ? { ...x, rated: rating } : x)));
+    try {
+      await api.feedback(app._id, { rating, question: m.question, answer: m.text, sources: m.sources, promptVersion: m.promptVersion });
+    } catch (e) {
+      console.warn('feedback not saved:', e.message);
     }
   }
 
@@ -100,7 +116,7 @@ export default function AssistantTab({ app, autoNavigate = true }) {
     setBusy(true);
     try {
       const brief = await api.copilot(app._id, action);
-      setMessages((m) => [...m, { from: 'ai', text: brief.text, sources: brief.sources }]);
+      setMessages((m) => [...m, { from: 'ai', text: brief.text, question: action === 'summary' ? 'Summarize this file' : 'List the contradictions', sources: brief.sources }]);
     } catch (e) {
       setMessages((m) => [...m, { from: 'ai', text: `Sorry — ${e.message}`, sources: [] }]);
     } finally {
@@ -160,6 +176,23 @@ export default function AssistantTab({ app, autoNavigate = true }) {
                     <Text style={styles.sourceText}>{s.kind === 'file' && s.section ? `${s.doc} · ${s.section}` : s.doc}</Text>
                   </View>
                 ))}
+              </View>
+            )}
+            {m.from === 'ai' && m.question && (
+              <View style={styles.rateRow}>
+                {m.rated ? (
+                  <Text style={styles.rateThanks}>Thanks for the feedback</Text>
+                ) : (
+                  <>
+                    <Text style={styles.rateLabel}>Was this helpful?</Text>
+                    <TouchableOpacity style={styles.rateBtn} onPress={() => rate(i, 'up')} accessibilityLabel="Helpful">
+                      <Text style={styles.rateIcon}>{'👍'}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.rateBtn} onPress={() => rate(i, 'down')} accessibilityLabel="Not helpful">
+                      <Text style={styles.rateIcon}>{'👎'}</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
             )}
           </View>
@@ -224,6 +257,11 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   navChipText: { color: colors.info, fontSize: 12, fontWeight: '700' },
+  rateRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
+  rateLabel: { color: colors.faint, fontSize: 12, marginRight: 2 },
+  rateBtn: { borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingVertical: 3, paddingHorizontal: 10, backgroundColor: colors.card },
+  rateIcon: { fontSize: 14 },
+  rateThanks: { color: colors.success, fontSize: 12, fontWeight: '600' },
   copilotRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 14, paddingTop: 8, backgroundColor: colors.bg },
   copilotBtn: { borderWidth: 1.5, borderColor: colors.accent, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14, backgroundColor: colors.card },
   copilotText: { color: colors.accent, fontWeight: '800', fontSize: 13 },

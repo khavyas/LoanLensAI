@@ -70,4 +70,6 @@ export const api = {
   // NEW: Optional user-only history is additive; older callers can continue to send only a question.
   ask: (applicationId, question, history = []) =>
     request(`/chat/${applicationId}`, { method: 'POST', body: { question, history } }),
+  feedback: (applicationId, body) => request(`/chat/${applicationId}/feedback`, { method: 'POST', body }),
+  reindex: (applicationId) => request(`/applications/${applicationId}/reindex`, { method: 'POST' }),
 };

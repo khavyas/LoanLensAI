@@ -73,6 +73,14 @@ const applicationSchema = new mongoose.Schema(
         conditions: [String],
       },
     },
+    // Whether the assistant's search index has this application's latest documents:
+    // indexing | indexed | failed (only set when loan-file search is on).
+    searchIndex: {
+      status: { type: String, enum: ['indexing', 'indexed', 'failed'] },
+      at: Date,
+      chunks: Number,
+      error: String,
+    },
     // Append-only audit trail of every review action.
     reviewHistory: [
       {
