@@ -73,6 +73,23 @@ So the mental model "the LLM goes to MongoDB and retrieves" is not what happens.
 9. **Show measurement.** Have a finished run ready from `/admin/eval-answers`: 125 golden questions asked through the real chat as borrower, officer and underwriter. Show the pass rate per category and, above all, leak-free (it must be 100%). Retrieval alone is at `/admin/eval-retrieval` (recall@5, precision@5, MRR over 18 questions).
 10. **Show the feedback loop and the index status.** Under every answer there is a thumbs up/down; rated-down answers are stored redacted and exported as candidates for the golden set (`/admin/feedback?rating=down&format=golden`), so the test set grows from real use. In the application header, a line shows whether the assistant has read the latest documents ("Assistant has the latest documents" / "reading..." / "could not read ... Try again").
 
+## Fraud Arena (a two-minute segment)
+
+Open `/admin/arena?secret=...` (the same secret as the other admin URLs). Press **Generate attack** a few times, then **Run 25**. Each press builds a forged application from a genuine one (pay stub income raised, licence date of birth changed, identity reused under another name, and so on), runs LoanLens's real document checks on it, and shows whether they were caught and by which check. Click a row to show exactly what was changed.
+
+What to say:
+
+- "These are the real checks, run on forged files, scored live. Genuine files are in the mix too, so we also count false alarms (zero)."
+- Point at the four numbers: attacks built to be caught are all caught; known-limit forgeries slip through; borderline edits are caught only when large enough.
+- **Show a miss on purpose.** Open a "Stub AND bank deposit both forged consistently" row: "If a forger edits two documents to agree with each other, no document check can prove it. That needs the payroll provider or the bank. We list these openly instead of hiding them." Then the borderline row: "The bank deposit is allowed to differ by 10 percent, so a small edit slips through and a big one is caught."
+- Use **Reset** with a fixed seed (for example 1) for a rehearsed run; use another seed for a fresh one a juror can trigger.
+
+What not to claim:
+
+- Do not quote the overall detection percentage as a real-world fraud catch rate. It depends on the mix of attacks in the catalogue, which the page says. Quote the four numbers.
+- Do not say it tests doctored images. The attacks edit the extracted fields; checking a tampered picture needs the live vision model (tracker FA-12).
+- Say that the "should be caught" label was set from what the checks were designed to do. The value of the arena is that it re-measures this every time a check changes: `npm run arena -- --runs 200 --seed 7` exits with an error if any result differs from its label.
+
 ## How answer quality is measured
 
 `/admin/eval-answers?start=1` asks 125 questions through the live chat, one at a time, and scores each answer with fixed rules (no model judges another model):

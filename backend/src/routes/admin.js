@@ -14,6 +14,8 @@ import { runRetrievalComparison, runRetrievalEval } from '../services/retrievalE
 import { getAnswerEvalResults, getAnswerEvalState, startAnswerEval } from '../services/answerEvalServer.js';
 import Feedback from '../models/Feedback.js';
 import { goldenCandidates } from '../services/feedbackRecord.js';
+import { createArena } from '../services/fraudArena/index.js';
+import { ARENA_PAGE } from './arenaPage.js';
 
 // One-time setup endpoints for environments with no shell access (Render free tier).
 // Guarded by SETUP_SECRET; disable by unsetting the env var after setup.
@@ -126,6 +128,25 @@ router.all('/eval-answers', async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+// Fraud Arena: forged applications run through the real document checks, scored live (plan FA-07).
+//   /admin/arena                  the page (open it with ?secret=...)
+//   /admin/arena/next[?count=25]  one more attack (or up to 100)
+//   /admin/arena/report           the scoreboard so far
+//   /admin/arena/reset[?seed=7]   clear it, optionally with a new seed
+// Held in memory only: nothing is written to the database, and a redeploy clears it.
+const arena = createArena({ seed: 1 });
+router.get('/arena', (_req, res) => res.type('html').send(ARENA_PAGE));
+router.all('/arena/next', (req, res) => {
+  arena.batch(Math.min(Math.max(Number(req.query.count) || 1, 1), 100));
+  res.json(arena.report());
+});
+router.all('/arena/report', (_req, res) => res.json(arena.report()));
+router.all('/arena/reset', (req, res) => {
+  const seed = Number.parseInt(req.query.seed, 10);
+  arena.reset(Number.isFinite(seed) && seed >= 0 ? seed : 1);
+  res.json(arena.report());
 });
 
 // Thumbs up/down left on assistant answers (text is stored redacted).
