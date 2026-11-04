@@ -30,7 +30,7 @@ if ((process.env.CHAT_FALLBACK_PROVIDER || '').toLowerCase() === 'groq' && proce
   providers.push({ name: 'groq', breaker: createCircuitBreaker({ name: 'groq', ...breakerOptions }), call: generateGroqChatText });
 }
 const failover = createFailover(providers);
-const generate = async (messages, signal) => {
+export const generate = async (messages, signal) => {
   const { text, provider } = await failover(messages, signal);
   if (provider !== providers[0].name) console.warn('[ragOllama] answered by standby provider', { provider });
   return text;

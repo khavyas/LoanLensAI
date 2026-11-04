@@ -16,6 +16,7 @@ import { colors } from '../../theme';
 import { handleLocalIntent } from '../../assistantActions';
 import { goToApplicationTab } from '../../navigationRef';
 import AnswerText from '../../components/AnswerText';
+import CourtroomCard from '../../components/CourtroomCard';
 
 // Sample questions, grouped by what they open. The groups before Policy are
 // answered from the application's own data and jump to the matching page; the
@@ -125,6 +126,23 @@ export default function AssistantTab({ app, autoNavigate = true }) {
     }
   }
 
+  // Two-sided file review: the case for and against, every point cited. A decision aid for staff.
+  async function runCourtroom() {
+    if (busy) return;
+    setMessages((m) => [...m, { from: 'user', text: 'Two-sided file review' }]);
+    setShowSamples(false);
+    setBusy(true);
+    try {
+      const review = await api.courtroom(app._id);
+      setMessages((m) => [...m, { from: 'ai', courtroom: review, text: '', sources: [] }]);
+    } catch (e) {
+      setMessages((m) => [...m, { from: 'ai', text: `Sorry — ${e.message}`, sources: [] }]);
+    } finally {
+      setBusy(false);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+    }
+  }
+
   return (
     // The persistent chat panel owns the width; let the conversation fill its
     // available space so the composer and messages do not collapse on web.
@@ -158,6 +176,8 @@ export default function AssistantTab({ app, autoNavigate = true }) {
           <View key={i} style={[styles.bubble, m.from === 'user' ? styles.userBubble : styles.aiBubble]}>
             {m.from === 'user' ? (
               <Text style={styles.userText}>{m.text}</Text>
+            ) : m.courtroom ? (
+              <CourtroomCard review={m.courtroom} />
             ) : (
               <AnswerText text={m.text} />
             )}
@@ -215,6 +235,9 @@ export default function AssistantTab({ app, autoNavigate = true }) {
             <TouchableOpacity style={[styles.copilotBtn, busy && { opacity: 0.6 }]} onPress={() => runCopilot('contradictions')} disabled={busy}>
               <Text style={styles.copilotText}>{'⚠'}  List contradictions</Text>
             </TouchableOpacity>
+            <TouchableOpacity style={[styles.copilotBtn, styles.courtroomBtn, busy && { opacity: 0.6 }]} onPress={runCourtroom} disabled={busy}>
+              <Text style={styles.copilotText}>{'⚖'}  Two-sided review</Text>
+            </TouchableOpacity>
           </View>
         </View>
       )}
@@ -271,6 +294,7 @@ const styles = StyleSheet.create({
   copilotRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   copilotBtn: { borderRadius: 8, paddingVertical: 9, paddingHorizontal: 14, backgroundColor: colors.primary },
   copilotText: { color: '#FFFFFF', fontWeight: '800', fontSize: 13 },
+  courtroomBtn: { backgroundColor: colors.accent },
   samplesToggle: { paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.bg },
   samplesToggleText: { color: colors.accent, fontSize: 12, fontWeight: '600' },
   suggestion: {
