@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -17,6 +16,7 @@ import { handleLocalIntent } from '../../assistantActions';
 import { goToApplicationTab } from '../../navigationRef';
 import AnswerText from '../../components/AnswerText';
 import CourtroomCard from '../../components/CourtroomCard';
+import AgentProgress from '../../components/AgentProgress';
 
 // Sample questions, grouped by what they open. The groups before Policy are
 // answered from the application's own data and jump to the matching page; the
@@ -49,8 +49,14 @@ export default function AssistantTab({ app, autoNavigate = true }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
+  const [busyKind, setBusyKind] = useState('chat'); // which steps the progress panel shows
   const [showSamples, setShowSamples] = useState(false);
   const scrollRef = useRef(null);
+
+  // Keep the progress panel in view while the assistant works.
+  useEffect(() => {
+    if (busy) setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
+  }, [busy]);
 
   async function send(text) {
     const question = (text || input).trim();
@@ -63,6 +69,7 @@ export default function AssistantTab({ app, autoNavigate = true }) {
     setInput('');
     setMessages((m) => [...m, { from: 'user', text: question }]);
     setShowSamples(false);
+    setBusyKind('chat');
     setBusy(true);
     try {
       // Questions about this application's own state are answered from its
@@ -114,6 +121,7 @@ export default function AssistantTab({ app, autoNavigate = true }) {
     if (busy) return;
     setMessages((m) => [...m, { from: 'user', text: action === 'summary' ? 'Summarize this file' : 'List the contradictions' }]);
     setShowSamples(false);
+    setBusyKind('brief');
     setBusy(true);
     try {
       const brief = await api.copilot(app._id, action);
@@ -131,6 +139,7 @@ export default function AssistantTab({ app, autoNavigate = true }) {
     if (busy) return;
     setMessages((m) => [...m, { from: 'user', text: 'Two-sided file review' }]);
     setShowSamples(false);
+    setBusyKind('review');
     setBusy(true);
     try {
       const review = await api.courtroom(app._id);
@@ -218,9 +227,8 @@ export default function AssistantTab({ app, autoNavigate = true }) {
           </View>
         ))}
         {busy && (
-          <View style={[styles.bubble, styles.aiBubble, styles.typing]}>
-            <ActivityIndicator size="small" color={colors.accent} />
-            <Text style={styles.typingText}>Checking policy documents…</Text>
+          <View style={[styles.bubble, styles.aiBubble]}>
+            <AgentProgress kind={busyKind} />
           </View>
         )}
       </ScrollView>
@@ -332,8 +340,6 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   sourceText: { color: colors.neutral, fontSize: 11, fontWeight: '600' },
-  typing: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  typingText: { color: colors.muted, fontSize: 13 },
   inputRow: {
     flexShrink: 0,
     flexDirection: 'row',
