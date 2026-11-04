@@ -90,6 +90,28 @@ What not to claim:
 - Do not say it tests doctored images. The attacks edit the extracted fields; checking a tampered picture needs the live vision model (tracker FA-12).
 - Say that the "should be caught" label was set from what the checks were designed to do. The value of the arena is that it re-measures this every time a check changes: `npm run arena -- --runs 200 --seed 7` exits with an error if any result differs from its label.
 
+## Two-sided file review (a two-minute segment)
+
+Sign in as the officer, open **Meera Iyer** (expired licence), Assistant tab, press the blue **Two-sided review** button next to Summarize and List contradictions. Two columns appear: **For the applicant** (checks that match, requirements met) and **For caution** (the expired licence, the unmet requirement, the policy that governs it). Every point carries chips (S = the application record, F = the applicant's file, P = the approved policy). Then open **Priya Nair** (clean file): it says "No contest" and makes no model call.
+
+What to say:
+
+- "A summary gives the officer one story. This makes both cases, each backed by evidence they can click, before they decide."
+- "It is a decision aid. The banner says so. It never recommends approve or decline; any point that sounds like a verdict is thrown away."
+- "Every flag the database knows about appears on the caution side even if the model forgets it, and the model cannot silence it. A point with no valid citation, or a figure that is not in what it cites, is dropped."
+- "If the chat model is down, the columns fill from the record alone and the screen says so."
+
+What it is not (the scope decision for this feature):
+
+- It does not recommend an outcome, score the borrower, or use any outside data.
+- It opens only for files with something flagged (a failed or warned check, an unmet requirement, or an identity that matches another application). Items not yet run, such as sanctions screening, count neither way.
+- Personal values (date of birth, address, name, SSN) are replaced by "hidden for privacy" before anything is sent to the model. The audit log records counts and chunk IDs, not text.
+
+What not to claim:
+
+- Do not call it a trial or say "AI judges the loan". The file is reviewed from two sides and the human decides.
+- The model-written wording has not been measured on Render yet; the offline tests prove the safeguards (citations, figures, verdict wording, coverage), not that every sentence reads well. Run it on Render before the demo and read both sides once.
+
 ## How answer quality is measured
 
 `/admin/eval-answers?start=1` asks 125 questions through the live chat, one at a time, and scores each answer with fixed rules (no model judges another model):

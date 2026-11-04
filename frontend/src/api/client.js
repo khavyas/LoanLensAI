@@ -55,6 +55,7 @@ export const api = {
   application: (id) => request(`/applications/${id}`),
   statusSummary: (id) => request(`/applications/${id}/status-summary`),
   copilot: (id, action) => request(`/applications/${id}/copilot?action=${action}`),
+  courtroom: (id) => request(`/applications/${id}/courtroom`, { method: 'POST' }),
   setCreditScore: (id, score) => request(`/applications/${id}/credit-score`, { method: 'PUT', body: { score } }),
   runChecks: (id) => request(`/applications/${id}/verify`, { method: 'POST' }),
   decide: (id, body) => request(`/applications/${id}/decision`, { method: 'POST', body }),

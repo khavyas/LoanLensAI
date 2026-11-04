@@ -13,11 +13,16 @@ import { validateResidency } from '../services/residency.js';
 import { duplicateMatchesFor } from '../services/duplicateCheck.js';
 import { EDITABLE_STATUSES, editableFields, reverifyDocuments, statusAfterEdit, validateEdit } from '../services/applicationEdit.js';
 import { buildStatusNarrative } from '../services/statusNarrative.js';
-import { buildCopilotBrief } from '../services/copilot.js';
+import { buildCopilotBrief, collectFindings } from '../services/copilot.js';
 import { embedTexts } from '../services/embeddingClient.js';
 import { retrievePolicyEvidence } from '../services/hybridRetrieval.js';
 import { borrowerView } from '../services/borrowerWording.js';
-import { scheduleIndexApplication } from '../services/loanFileIndexer.js';
+import { loanFileRagEnabled, scheduleIndexApplication } from '../services/loanFileIndexer.js';
+import { courtroomEligible, createReviewCache, reviewKey, runCourtroom } from '../services/courtroom.js';
+import { gatherEvidence } from '../services/courtroomEvidence.js';
+import { retrieveFileEvidence } from '../services/loanFileRetrieval.js';
+import { generate as generateChat } from '../services/ragOllama.js';
+import { createRateLimiter } from '../services/rateLimiter.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -202,6 +207,57 @@ router.get('/:id/copilot', async (req, res, next) => {
       assessment,
       policyFor,
     }));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Two-sided file review (courtroom, tracker CR-07): the strongest case for and against the application,
+// every point cited to the shared evidence pool. Staff only; a decision aid, it never recommends.
+// Opened twice for the same file it costs nothing (cached until the file changes), and it is rate limited
+// because each run calls the chat model twice. See services/courtroom.js.
+const courtroomLimiter = createRateLimiter({ limit: 6, windowMs: 60000 });
+const courtroomCache = createReviewCache();
+router.post('/:id/courtroom', async (req, res, next) => {
+  try {
+    if (!can(req.user, 'copilot:use')) return res.status(403).json({ error: 'The two-sided review is for loan officers and underwriters.' });
+    const limited = courtroomLimiter.check(String(req.user.sub || req.user.email));
+    if (!limited.allowed) {
+      res.set('Retry-After', String(limited.retryAfterSec));
+      return res.status(429).json({ error: `Please wait ${limited.retryAfterSec} seconds before opening another review.` });
+    }
+    const app = await Application.findById(req.params.id).lean();
+    if (!app) return res.status(404).json({ error: 'Application not found' });
+    const documents = withCrossDocumentChecks(app, await Document.find({ applicationId: app._id }).select('-fileData -storageKey').lean());
+    const key = reviewKey(app, documents, loanFileRagEnabled() ? 'rag' : 'plain');
+    const cached = courtroomCache.get(key);
+    if (cached) return res.json({ ...cached, cached: true });
+
+    const duplicates = await duplicateMatchesFor(app);
+    const assessment = assessApplication(app, documents, { duplicates });
+    const modelAvailable = (process.env.CHAT_PROVIDER || '').toLowerCase() === 'ollama';
+    const abortController = new AbortController();
+    res.on('close', () => { if (!res.writableEnded) abortController.abort(); });
+    const findings = collectFindings(documents);
+    // A clean file is a "no contest": skip the searches and the model entirely.
+    const unmet = (assessment.parameters || []).filter((p) => p.status === 'unmet');
+    const worthArguing = courtroomEligible({ findings, unmet, duplicates }).eligible;
+    const { fileEvidence, policyEvidence } = await gatherEvidence({
+      application: app,
+      findings,
+      enabled: modelAvailable && worthArguing,
+      embed: embedTexts,
+      searchPolicy: retrievePolicyEvidence,
+      searchFile: retrieveFileEvidence,
+      signal: abortController.signal,
+    });
+    const result = await runCourtroom({
+      application: app, documents, assessment, duplicates, fileEvidence, policyEvidence,
+      generate: modelAvailable && worthArguing ? generateChat : null,
+      signal: abortController.signal,
+    });
+    if (!result.degraded) courtroomCache.set(key, result);
+    res.json(result);
   } catch (err) {
     next(err);
   }
