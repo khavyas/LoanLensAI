@@ -19,7 +19,8 @@ export default function IndexStatus({ status, onRetry }) {
       </View>
     );
   }
-  return <Text style={[styles.text, { color: colors.success }]}>{'✓'} Assistant has the latest documents</Text>;
+  // Up to date is the normal state, so it shows nothing. Only "reading" and "could not read" are worth a line.
+  return null;
 }
 
 const styles = StyleSheet.create({
