@@ -235,7 +235,7 @@ export default function AssistantTab({ app, autoNavigate = true }) {
             <TouchableOpacity style={[styles.copilotBtn, busy && { opacity: 0.6 }]} onPress={() => runCopilot('contradictions')} disabled={busy}>
               <Text style={styles.copilotText}>{'⚠'}  List contradictions</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.copilotBtn, styles.courtroomBtn, busy && { opacity: 0.6 }]} onPress={runCourtroom} disabled={busy}>
+            <TouchableOpacity style={[styles.copilotBtn, busy && { opacity: 0.6 }]} onPress={runCourtroom} disabled={busy}>
               <Text style={styles.copilotText}>{'⚖'}  Two-sided review</Text>
             </TouchableOpacity>
           </View>
@@ -293,8 +293,7 @@ const styles = StyleSheet.create({
   copilotLabel: { color: colors.faint, fontSize: 11, fontWeight: '800', letterSpacing: 0.8, marginBottom: 6 },
   copilotRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   copilotBtn: { borderRadius: 8, paddingVertical: 9, paddingHorizontal: 14, backgroundColor: colors.primary },
-  copilotText: { color: '#FFFFFF', fontWeight: '800', fontSize: 13 },
-  courtroomBtn: { backgroundColor: colors.accent },
+  copilotText: { color: '#FFFFFF', fontSize: 13 },
   samplesToggle: { paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.bg },
   samplesToggleText: { color: colors.accent, fontSize: 12, fontWeight: '600' },
   suggestion: {
