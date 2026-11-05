@@ -41,7 +41,7 @@ been run, nothing can be approved or referred (the identity, sanctions and credi
 
 | Borrower | Login | What the jury sees |
 |---|---|---|
-| **Priya Nair** — clean | `priya.nair@example.demo` | Documents and bureau all pass, score 742. The loan officer can approve. |
+| **Priya Nair** — spotless paperwork, failed background | `priya.nair@example.demo` | Documents, identity and credit (742) all pass, but the sanctions and background screening fails: one FIR on record and no tax history found (scripted). Cannot be approved or waived. The clean happy path is now a live applicant such as Nisha Rao (SSN 8842). |
 | **Arjun Mehta** — low score | `arjun.mehta@example.demo` | Score 598 against a 620 minimum. Officer cannot approve, refers; underwriter approves as an exception. |
 | **Rohan Desai** — SSN mismatch | `rohan.desai@example.demo` | Documents look fine, but the SSN is on file for a different person: identity **fails**, credit is skipped, and no one can waive it. |
 | **Meera Iyer** — expired ID | `meera.iyer@example.demo` | Her licence expired 04/30/2026: rejected as a document, shown in Action Needed with a Re-upload button. Real check, not simulated. |
@@ -58,7 +58,7 @@ Test-only records (not seeded): last-4 `0911` = name resembles a sanctions-list 
 
 ## Suggested demo order
 
-1. Priya: run the checks, approve. (The happy path.)
+1. Priya: run the checks. Everything is clean except the background screening, which fails.
 2. Rohan: run the checks, show the identity failure. (The system catches a stolen or mistyped identity.)
 3. Meera: Action Needed shows the expired ID. (A real document check.)
 4. Arjun: run the checks, refer with a reason, switch to the underwriter, approve as an exception.

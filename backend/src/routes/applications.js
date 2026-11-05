@@ -20,6 +20,7 @@ import { borrowerView } from '../services/borrowerWording.js';
 import { loanFileRagEnabled, scheduleIndexApplication } from '../services/loanFileIndexer.js';
 import { courtroomEligible, createReviewCache, reviewKey, runCourtroom } from '../services/courtroom.js';
 import { gatherEvidence } from '../services/courtroomEvidence.js';
+import { demoCaseFor } from '../config/demoCaseFiles.js';
 import { retrieveFileEvidence } from '../services/loanFileRetrieval.js';
 import { generate as generateChat } from '../services/ragOllama.js';
 import { createRateLimiter } from '../services/rateLimiter.js';
@@ -229,7 +230,8 @@ router.post('/:id/courtroom', async (req, res, next) => {
     const app = await Application.findById(req.params.id).lean();
     if (!app) return res.status(404).json({ error: 'Application not found' });
     const documents = withCrossDocumentChecks(app, await Document.find({ applicationId: app._id }).select('-fileData -storageKey').lean());
-    const key = reviewKey(app, documents, loanFileRagEnabled() ? 'rag' : 'plain');
+    const demoCase = demoCaseFor(app);
+    const key = reviewKey(app, documents, (loanFileRagEnabled() ? 'rag' : 'plain') + (demoCase ? ':demo' : '') + ':' + (app.verificationReport?.sanctions?.status || ''));
     const cached = courtroomCache.get(key);
     if (cached) return res.json({ ...cached, cached: true });
 
@@ -241,7 +243,7 @@ router.post('/:id/courtroom', async (req, res, next) => {
     const findings = collectFindings(documents);
     // A clean file is a "no contest": skip the searches and the model entirely.
     const unmet = (assessment.parameters || []).filter((p) => p.status === 'unmet');
-    const worthArguing = courtroomEligible({ findings, unmet, duplicates }).eligible;
+    const worthArguing = courtroomEligible({ findings, unmet, duplicates }).eligible || Boolean(demoCase);
     const { fileEvidence, policyEvidence } = await gatherEvidence({
       application: app,
       findings,
@@ -252,7 +254,7 @@ router.post('/:id/courtroom', async (req, res, next) => {
       signal: abortController.signal,
     });
     const result = await runCourtroom({
-      application: app, documents, assessment, duplicates, fileEvidence, policyEvidence,
+      application: app, documents, assessment, duplicates, fileEvidence, policyEvidence, demoCase,
       generate: modelAvailable && worthArguing ? generateChat : null,
       signal: abortController.signal,
     });

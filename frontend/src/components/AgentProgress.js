@@ -9,14 +9,14 @@ import { colors } from '../theme';
 
 export const PROGRESS_STEPS = {
   review: {
-    title: 'Reviewing the file',
+    title: 'The court is assembling',
     steps: [
-      'Reading the application record',
-      'Collecting the document checks and findings',
-      "Searching the applicant's file",
-      'Looking up the approved policy that applies',
-      'Weighing the case for and against',
-      'Checking every point against its evidence',
+      'Calling the application record to the stand',
+      'Hearing the document checks',
+      "Searching the applicant's file for exhibits",
+      'Pulling the approved policy that applies',
+      'Briefing both counsel',
+      'Checking every claim against its evidence',
     ],
   },
   brief: {

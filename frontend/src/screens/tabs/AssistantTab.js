@@ -137,7 +137,7 @@ export default function AssistantTab({ app, autoNavigate = true }) {
   // Two-sided file review: the case for and against, every point cited. A decision aid for staff.
   async function runCourtroom() {
     if (busy) return;
-    setMessages((m) => [...m, { from: 'user', text: 'Two-sided file review' }]);
+    setMessages((m) => [...m, { from: 'user', text: 'Open the courtroom' }]);
     setShowSamples(false);
     setBusyKind('review');
     setBusy(true);
@@ -244,7 +244,7 @@ export default function AssistantTab({ app, autoNavigate = true }) {
               <Text style={styles.copilotText}>{'⚠'}  List contradictions</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.copilotBtn, busy && { opacity: 0.6 }]} onPress={runCourtroom} disabled={busy}>
-              <Text style={styles.copilotText}>{'⚖'}  Two-sided review</Text>
+              <Text style={styles.copilotText}>{'⚖'}  Open the courtroom</Text>
             </TouchableOpacity>
           </View>
         </View>

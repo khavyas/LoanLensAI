@@ -34,10 +34,14 @@ export function runSimulatedChecks(application, { now = new Date(), personas = T
         detail: 'The name and date of birth do not match the record held for this SSN. This can indicate a mistyped SSN or a stolen or synthetic identity.',
       };
 
+  // An adverse background record belongs to the person it was scripted for: it is reported only when the
+  // identity check matched, so someone who merely reuses that SSN (Anil Kapoor) does not inherit it.
   const sanctions =
     persona.sanctions === 'potential-match'
       ? { status: 'potential-match', detail: 'The name resembles an entry on a sanctions list. Compliance must review before any approval.' }
-      : { status: 'clear', detail: 'No sanctions-list match for this name.' };
+      : persona.sanctions === 'adverse-record' && verified
+        ? { status: 'failed', detail: persona.adverse.detail, findings: persona.adverse.findings }
+        : { status: 'clear', detail: 'No sanctions-list match for this name.' };
 
   let credit;
   if (!verified) {
