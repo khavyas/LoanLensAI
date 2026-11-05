@@ -10,6 +10,7 @@ import { retrievePolicyEvidence } from './hybridRetrieval.js';
 import { retrieveFileEvidence } from './loanFileRetrieval.js';
 import { missingDocumentAnswer } from './missingDocument.js';
 import { officerFeedbackAnswer } from './officerFeedback.js';
+import { referralReasonAnswer } from './referralReason.js';
 import { createCircuitBreaker } from './circuitBreaker.js';
 import { createFailover, AllProvidersFailedError } from './chatFailover.js';
 import { buildDegradedAnswer } from './degradedAnswer.js';
@@ -203,6 +204,8 @@ export async function answerQuestionWithOllama({ question, application, role, hi
   if (recordAnswer) return recordAnswer;
   const missingDoc = missingDocumentAnswer(safeQuestion, documents, role);
   if (missingDoc) return missingDoc;
+  const whyReferred = referralReasonAnswer(safeQuestion, application, documents, role);
+  if (whyReferred) return whyReferred;
   const officerSaid = officerFeedbackAnswer(safeQuestion, application, documents, role);
   if (officerSaid) return officerSaid;
   if (route.kind === 'clarification') {
