@@ -17,13 +17,13 @@ The administrator already has the bank's eight real policies in the policy conso
 
 | # | Who | What they do | What happens |
 | --- | --- | --- | --- |
-| 1 | **Jordan** (borrower@loanlens.demo) | Asks: **What is the late payment grace period?** | It says it could not find that in the approved policies. |
+| 1 | **Jordan** (borrower@loanlens.demo) | Asks: **What is the grace period for late payments?** | It says it could not find that in the approved policies. |
 | 2 | **Administrator** (admin@loanlens.demo, from "Administrator sign in") | Uploads **v1** `demo-grace-period.md` in the policy console. | The console lists the file with 4 chunks. |
-| 3 | **Jordan** | Asks the same question again. | **10 days**, with a source chip naming `demo-grace-period.md`. |
-| 4 | **Jordan** | Asks: **Is there a late fee if I pay 12 days after the due date?** | Yes, a late fee of $25 (12 days is past the 10-day grace period). |
+| 3 | **Jordan** | Asks the same question as step 1 again. | **10 days**, with a source chip naming `demo-grace-period.md`. |
+| 4 | **Jordan** | Asks: **How many days can I be late without a fee?** | **10 days**, and a $25 fee after that. |
 | 5 | **Administrator** | Uploads **v2** `demo-grace-period.md` (same name, now 15 days). | Still 4 chunks; the old text is replaced. |
-| 6 | **Jordan** | Asks the question from step 3 again: **What is the late payment grace period?** | **15 days**. No trace of 10. |
-| 7 | **Jordan** | Asks the question from step 4 again: **Is there a late fee if I pay 12 days after the due date?** | No late fee (12 days is inside the 15-day grace period). |
+| 6 | **Jordan** | Asks the question from step 1 again: **What is the grace period for late payments?** | **15 days**. No trace of 10. |
+| 7 | **Jordan** | Asks the question from step 4 again: **How many days can I be late without a fee?** | **15 days**, and a $25 fee after that. |
 | 8 | **Administrator** | Deletes `demo-grace-period.md` in the console. | The file disappears from the list. |
 | 9 | **Jordan** | Asks the grace-period question once more. | It could not find that again. |
 
