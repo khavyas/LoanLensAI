@@ -182,7 +182,7 @@ export default function AssistantTab({ app, autoNavigate = true }) {
         )}
 
         {messages.map((m, i) => (
-          <View key={i} style={[styles.bubble, m.from === 'user' ? styles.userBubble : styles.aiBubble]}>
+          <View key={i} style={[styles.bubble, m.from === 'user' ? styles.userBubble : styles.aiBubble, m.courtroom && styles.courtBubble]}>
             {m.from === 'user' ? (
               <Text style={styles.userText}>{m.text}</Text>
             ) : m.courtroom ? (
@@ -316,6 +316,7 @@ const styles = StyleSheet.create({
   },
   suggestionText: { color: colors.accent, fontWeight: '600', fontSize: 13 },
   bubble: { borderRadius: 12, padding: 14, marginBottom: 10, maxWidth: '85%' },
+  courtBubble: { width: '100%', maxWidth: '100%', padding: 0, borderWidth: 0, backgroundColor: 'transparent' },
   userBubble: { backgroundColor: colors.primary, alignSelf: 'flex-end', borderBottomRightRadius: 4 },
   aiBubble: {
     backgroundColor: colors.card,

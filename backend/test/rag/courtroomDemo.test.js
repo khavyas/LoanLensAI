@@ -5,7 +5,7 @@ import { mockClassifyAndExtract } from '../../src/services/mockFixtures.js';
 import { verifyDocument, withCrossDocumentChecks } from '../../src/services/verification.js';
 import { runSimulatedChecks } from '../../src/services/simulatedBureau.js';
 import { assessApplication } from '../../src/services/decisionRules.js';
-import { runCourtroom, buildDebate, soundsLikeVerdict } from '../../src/services/courtroom.js';
+import { runCourtroom, buildDebate, buildSummary, gistOf, soundsLikeVerdict } from '../../src/services/courtroom.js';
 import { DEMO_CASES, demoCaseFor } from '../../src/config/demoCaseFiles.js';
 
 const NOW = new Date('2026-11-05T12:00:00Z');
@@ -38,7 +38,7 @@ test('the three scripted cases match only their own name and SSN', () => {
 test('no scripted line tells the officer what to decide', () => {
   for (const c of DEMO_CASES) {
     for (const p of [...c.for, ...c.against]) {
-      for (const text of [p.text, p.reply?.text].filter(Boolean)) assert.equal(soundsLikeVerdict(text), false, text);
+      for (const text of [p.text, p.gist, p.reply?.text].filter(Boolean)) assert.equal(soundsLikeVerdict(text), false, text);
     }
   }
 });
@@ -94,4 +94,21 @@ test('the hearing opens with the risk reviewer, alternates, and keeps every risk
   assert.equal(d.filter((t) => t.side === 'against').length, 7, 'no risk-side flag is dropped');
   assert.equal(d.filter((t) => t.side === 'for').length, 4, 'the advocate is capped');
   assert.equal(d.find((t) => t.side === 'for').reply.side, 'against');
+});
+
+test('Meera: the closing report is short points, in plain words, with no references', async () => {
+  const r = await hear('Meera Iyer');
+  assert.match(r.summary.concerns[0], /^Poor saving habits/);
+  assert.ok(r.summary.strengths.some((x) => /Bills paid on time/.test(x)));
+  for (const line of [...r.summary.concerns, ...r.summary.strengths]) {
+    assert.ok(line.length <= 130, line);
+    assert.doesNotMatch(line, /\[[SFPX]\d+\]/);
+  }
+  assert.ok(r.summary.concerns.some((x) => /ID expiry/i.test(x)), 'a record-derived flag is summarised too');
+});
+
+test('a point without a written gist is summarised by its first sentence', () => {
+  assert.equal(gistOf({ text: 'Pay stub matches. Name and income agree.' }), 'Pay stub matches');
+  const s = buildSummary({ points: [{ text: 'A. B.' }, { text: 'A. C.' }] }, { points: [] });
+  assert.deepEqual(s.concerns, ['A']);
 });

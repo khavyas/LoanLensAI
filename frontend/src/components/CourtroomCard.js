@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, ScrollView, StyleSheet } from 'react-native';
 import { colors } from '../theme';
 
 // The courtroom: the two sides of a file argued as a hearing the officer presides over. The risk reviewer
@@ -159,6 +159,9 @@ export default function CourtroomCard({ review }) {
   const [playing, setPlaying] = useState(true);
   const [typing, setTyping] = useState(null);
   const [marks, setMarks] = useState({});
+  const [wide, setWide] = useState(false);
+  const scroller = useRef(null);
+  const marksTouched = useRef(false); // once the officer starts weighing points, stop moving the page under them
 
   useEffect(() => {
     if (!playing) { setTyping(null); return undefined; }
@@ -168,18 +171,27 @@ export default function CourtroomCard({ review }) {
     return () => clearTimeout(t);
   }, [playing, heard, turns]);
 
+  // Follow the hearing: each new speaker or bubble scrolls the left pane to the latest point.
+  useEffect(() => {
+    if (!wide || heard === 0) return undefined;
+    const go = () => scroller.current?.scrollToEnd({ animated: false });
+    const t1 = setTimeout(go, 80);
+    const t2 = setTimeout(go, 450); // again once the bubble has finished sliding in
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [heard, typing, wide]);
+
   if (!review) return null;
 
   const sustainedFor = turns.filter((t, i) => i < heard && t.side === 'for' && marks[i] === 'sustain').length;
   const sustainedAgainst = turns.filter((t, i) => i < heard && t.side === 'against' && marks[i] === 'sustain').length;
   const tilt = Math.max(-1, Math.min(1, (sustainedAgainst - sustainedFor) / 3));
   const done = heard >= turns.length;
-  const mark = (i, kind) => setMarks((m) => ({ ...m, [i]: m[i] === kind ? undefined : kind }));
+  const mark = (i, kind) => { marksTouched.current = true; setMarks((m) => ({ ...m, [i]: m[i] === kind ? undefined : kind })); };
   const skip = () => { setPlaying(false); setTyping(null); setHeard(turns.length); };
-  const replay = () => { setMarks({}); setHeard(0); setPlaying(true); };
+  const replay = () => { marksTouched.current = false; setMarks({}); setHeard(0); setPlaying(true); };
 
   return (
-    <View style={styles.card}>
+    <View style={styles.card} onLayout={(e) => setWide(e.nativeEvent.layout.width >= 860)}>
       <View style={styles.header}>
         <View style={styles.headTop}>
           <View style={styles.titleRow}>
@@ -221,21 +233,56 @@ export default function CourtroomCard({ review }) {
             <View style={styles.degraded}><Text style={styles.degradedText}>{review.degradedNote}</Text></View>
           )}
 
-          <Text style={styles.order}>{'“Order in the court. The risk reviewer will open.”'}</Text>
-          {turns.slice(0, heard).map((t, i) => (
-            <Turn key={i} turn={t} mark={marks[i]} onMark={(k) => mark(i, k)} />
-          ))}
-          {typing && <Typing side={typing} />}
+          <View style={[styles.panes, wide && styles.panesWide]}>
+            <View style={[styles.hearing, wide && styles.hearingWide]}>
+              <Text style={styles.paneTitle}>THE HEARING</Text>
+              <ScrollView
+                ref={scroller}
+                style={wide ? styles.hearingScroll : null}
+                nestedScrollEnabled
+                onContentSizeChange={() => { if (wide && heard > 0 && !marksTouched.current) scroller.current?.scrollToEnd({ animated: false }); }}
+              >
+                <Text style={styles.order}>{'“Order in the court. The risk reviewer will open.”'}</Text>
+                {turns.slice(0, heard).map((t, i) => (
+                  <Turn key={i} turn={t} mark={marks[i]} onMark={(k) => mark(i, k)} />
+                ))}
+                {typing && <Typing side={typing} />}
+              </ScrollView>
+              <View style={styles.controls}>
+                <Text style={styles.progress}>{done ? `Court adjourned. ${turns.length} points heard.` : `Heard ${heard} of ${turns.length}`}</Text>
+                {done ? (
+                  <TouchableOpacity onPress={replay} style={styles.ctl} accessibilityRole="button"><Text style={styles.ctlText}>Replay the hearing</Text></TouchableOpacity>
+                ) : (
+                  <TouchableOpacity onPress={skip} style={styles.ctl} accessibilityRole="button"><Text style={styles.ctlText}>Skip to the end</Text></TouchableOpacity>
+                )}
+              </View>
+            </View>
 
-          <View style={styles.controls}>
-            <Text style={styles.progress}>{done ? `Court adjourned. ${turns.length} points heard.` : `Heard ${heard} of ${turns.length}`}</Text>
-            {done ? (
-              <TouchableOpacity onPress={replay} style={styles.ctl} accessibilityRole="button"><Text style={styles.ctlText}>Replay the hearing</Text></TouchableOpacity>
-            ) : (
-              <TouchableOpacity onPress={skip} style={styles.ctl} accessibilityRole="button"><Text style={styles.ctlText}>Skip to the end</Text></TouchableOpacity>
-            )}
+            <View style={[styles.report, wide && styles.reportWide]}>
+              <Text style={styles.paneTitle}>FINAL REPORT</Text>
+              {!done || !review.summary ? (
+                <View>
+                  <Text style={styles.reportWait}>The report is published when the hearing ends.</Text>
+                  {[88, 70, 80, 56].map((w, i) => <View key={i} style={[styles.skeleton, { width: `${w}%` }]} />)}
+                </View>
+              ) : (
+                <Enter>
+                  <Text style={styles.reportFor}>{review.subject || 'This application'}: summary of the points heard</Text>
+                  <Text style={[styles.reportHead, { color: colors.danger }]}>CONCERNS</Text>
+                  {review.summary.concerns.length === 0 && <Text style={styles.reportLine}>None raised.</Text>}
+                  {review.summary.concerns.map((c) => (
+                    <View key={c} style={styles.reportRow}><Text style={[styles.bullet, { color: colors.danger }]}>{'●'}</Text><Text style={styles.reportLine}>{c}</Text></View>
+                  ))}
+                  <Text style={[styles.reportHead, { color: colors.success, marginTop: 12 }]}>IN THE APPLICANT'S FAVOUR</Text>
+                  {review.summary.strengths.length === 0 && <Text style={styles.reportLine}>None raised.</Text>}
+                  {review.summary.strengths.map((c) => (
+                    <View key={c} style={styles.reportRow}><Text style={[styles.bullet, { color: colors.success }]}>{'●'}</Text><Text style={styles.reportLine}>{c}</Text></View>
+                  ))}
+                  <Text style={styles.closing}>A summary of what was argued. It is not a recommendation, nothing here is saved or sent, and the decision stays with you.</Text>
+                </Enter>
+              )}
+            </View>
           </View>
-          {done && <Text style={styles.closing}>The bench is yours. Nothing here is saved or sent, and the decision stays with you.</Text>}
         </View>
       )}
 
@@ -250,7 +297,7 @@ export default function CourtroomCard({ review }) {
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, overflow: 'hidden', backgroundColor: colors.card, width: '100%', maxWidth: 820 },
+  card: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, overflow: 'hidden', backgroundColor: colors.card, width: '100%', maxWidth: 1180 },
   header: { backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 14 },
   headTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -314,7 +361,22 @@ const styles = StyleSheet.create({
   progress: { color: colors.muted, fontSize: 12 },
   ctl: { borderWidth: 1, borderColor: colors.accent, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 5 },
   ctlText: { color: colors.accent, fontSize: 12, fontWeight: '600' },
-  closing: { color: colors.faint, fontSize: 12, marginTop: 8, fontStyle: 'italic' },
+  panes: { marginTop: 12, gap: 12 },
+  panesWide: { flexDirection: 'row', alignItems: 'stretch' },
+  hearing: { borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: colors.card, padding: 12 },
+  hearingWide: { flex: 3 },
+  hearingScroll: { height: 520 },
+  report: { borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: colors.card, padding: 14 },
+  reportWide: { flex: 2 },
+  paneTitle: { color: colors.faint, fontSize: 11, letterSpacing: 1.2, fontWeight: '700', marginBottom: 4 },
+  reportWait: { color: colors.faint, fontSize: 13, fontStyle: 'italic', marginTop: 6, marginBottom: 14 },
+  skeleton: { height: 10, borderRadius: 5, backgroundColor: colors.neutralBg, marginBottom: 10 },
+  reportFor: { color: colors.text, fontSize: 15, fontWeight: '700', marginTop: 4, marginBottom: 12 },
+  reportHead: { fontSize: 11, letterSpacing: 1, fontWeight: '700', marginBottom: 6 },
+  reportRow: { flexDirection: 'row', gap: 8, marginBottom: 6, alignItems: 'flex-start' },
+  bullet: { fontSize: 9, marginTop: 6 },
+  reportLine: { color: colors.text, fontSize: 14, lineHeight: 20, flex: 1 },
+  closing: { color: colors.faint, fontSize: 12, marginTop: 14, fontStyle: 'italic' },
   dismissed: { color: colors.text, fontSize: 15, fontWeight: '700', textAlign: 'center', marginTop: 6 },
   noContestText: { color: colors.muted, fontSize: 14, lineHeight: 20, textAlign: 'center', marginTop: 4 },
   degraded: { backgroundColor: colors.warningBg, borderRadius: 8, padding: 8, marginTop: 10 },

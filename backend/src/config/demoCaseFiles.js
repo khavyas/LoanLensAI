@@ -36,11 +36,13 @@ export const DEMO_CASES = [
     against: [
       {
         text: 'Exhibit X1, Your Honour: 41 food-delivery orders in 30 days (Swiggy 23, Zomato 18), 17 Amazon boxes and 6 trips to the mall. The statement reads like a loyalty-programme leaderboard.',
+        gist: "Poor saving habits: only $162 (3% of income) left at month end",
         cites: [MEERA_X1],
         reply: { text: 'Cross-examined: yes, but look at what is missing. No overdrafts, no returned payments, rent on time. She spends her own money and pays her bills first.', cites: [MEERA_X2] },
       },
       {
         text: 'Clothes and mall spending came to $1,128 this month and recurs in every statement. Discretionary spending is 55% of income and only $162 is left at month end, a savings rate of 3%.',
+        gist: "Heavy discretionary spending: 41 food-delivery orders, 17 Amazon orders and 6 mall visits in 30 days",
         cites: [MEERA_X1],
         reply: { text: 'Her pay stub confirms the income. A thin buffer is a risk worth watching, not a missed payment, and there is none on this record.', cites: [MEERA_X2] },
       },
@@ -48,6 +50,7 @@ export const DEMO_CASES = [
     for: [
       {
         text: 'Objection! Ordering dinner is not a crime. Rent, utilities and phone cleared on time in all three statements, with no overdrafts and no returned payments.',
+        gist: "Bills paid on time: no overdrafts or returned payments",
         cites: [MEERA_X2],
         reply: { text: 'Noted, Your Honour. But the buffer is $162. One surprise bill and the instalment is what bounces.', cites: [MEERA_X1] },
       },
@@ -60,22 +63,26 @@ export const DEMO_CASES = [
     against: [
       {
         text: 'Three employers in twelve months, Your Honour. Ridgeway, then Harbor, then Brightline. He has changed jobs more often than most people change phone plans.',
+        gist: "Unstable employment: 3 employers in 12 months",
         cites: [JORDAN_X1, JORDAN_X2],
         reply: { text: 'Pay stayed in a narrow band: $3,900, then $4,300, then $4,200. He was never out of work for more than three weeks, and the SSN trace confirms every employer is real.', cites: [JORDAN_X1, JORDAN_X2] },
       },
       {
         text: 'This loan runs for years and his longest job so far lasted five months. How do we know he will still be earning in a year, and who stands behind that income?',
+        gist: "Income is not assured: longest job was 5 months, with two gaps in pay",
         cites: [JORDAN_X1],
         reply: { text: 'Nobody can guarantee income for anyone. The record shows a working borrower with a credit score of 705 and no missed payments.', cites: [JORDAN_X2] },
       },
       {
         text: 'Even his current income needs explaining: the application says $5,000 a month and the latest payroll credit is $4,200.',
+        gist: "Stated income is $5,000 a month; latest payroll credit is $4,200",
         cites: [JORDAN_X3],
       },
     ],
     for: [
       {
         text: 'Order! The man works. Three employers, all confirmed by the SSN trace, with pay between $3,900 and $4,300 and never more than three weeks between jobs.',
+        gist: "Pay held between $3,900 and $4,300, and every employer is confirmed",
         cites: [JORDAN_X1, JORDAN_X2],
         reply: { text: 'Two gaps in one year, Your Honour, and a loan that does not pause when the paycheque does.', cites: [JORDAN_X1] },
       },
@@ -88,11 +95,13 @@ export const DEMO_CASES = [
     against: [
       {
         text: 'Her paperwork is spotless, Your Honour. Her background is another matter: one FIR on record under her name.',
+        gist: "Background screening failed: one FIR on record",
         cites: [PRIYA_X1],
         reply: { text: 'An FIR is a complaint, not a conviction, and nothing on this record says otherwise. A complaint is a reason to ask questions, not a finding.', cites: [PRIYA_X1] },
       },
       {
         text: 'And on tax and social responsibility: no filed returns and no tax payments in any record searched, in three years. The bank is being asked to trust her with $15,000.',
+        gist: "No tax returns or tax payments found in three years",
         cites: [PRIYA_X2],
         reply: { text: 'Her pay stub shows $868.98 withheld by her employer in one pay period. Tax is being paid on her behalf, and the gap may be in the records searched, not in her conduct.', cites: [PRIYA_X3] },
       },
@@ -100,6 +109,7 @@ export const DEMO_CASES = [
     for: [
       {
         text: 'Every document she supplied is genuine and agrees with the application, and her credit score is 742.',
+        gist: "Documents are genuine and consistent, with a credit score of 742",
         cites: [PRIYA_X3],
         reply: { text: 'Documents prove who she is and what she earns, Your Honour. They do not answer what the background search found.', cites: [PRIYA_X1] },
       },
