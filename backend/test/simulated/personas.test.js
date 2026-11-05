@@ -77,14 +77,13 @@ test('Meera Iyer: the bureau is clean but her expired license is rejected as a d
   assert.equal(s.assessment.canRefer, false);
 });
 
-test('Kavya Reddy: no credit history means no score — it cannot proceed without manual review', () => {
+test('Kavya Reddy: score 572 is the only shortfall, so the file can be referred for an exception', () => {
   const s = story('Kavya Reddy');
-  assert.equal(s.report.credit.status, 'thin-file');
+  assert.equal(s.report.credit.score, 572);
   assert.equal(s.exceptions.length, 0);
-  assert.equal(param(s.assessment, 'credit-score').status, 'pending');
-  assert.match(param(s.assessment, 'credit-score').detail, /thin file/i);
+  assert.deepEqual(s.assessment.unmetKeys, ['credit-score']);
   assert.equal(s.assessment.canApprove, false);
-  assert.equal(s.assessment.canRefer, false);
+  assert.equal(s.assessment.canRefer, true);
 });
 
 test('nothing is approvable until the identity and credit checks have been run', () => {

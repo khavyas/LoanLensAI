@@ -8,7 +8,7 @@
 //   5567 Arjun Mehta     low score -> underwriter exception path
 //   7301 Rohan Desai     SSN is on file for a DIFFERENT person -> identity fails
 //   2218 Meera Iyer      clean at the bureau; her driver's license is expired
-//   4410 Kavya Reddy     thin file: no credit history, no score
+//   4410 Kavya Reddy     low score (572): the underwriter-exception path
 //   9034 (again) Anil Kapoor reuses Priya's SSN/date of birth: the bureau says the
 //                       SSN belongs to Priya, and the duplicate check flags it too
 //   6150 Lakshmi Pillai  clean; the visa-holder residency rule is the story, not the bureau
@@ -19,7 +19,7 @@ export const TEST_PERSONAS = {
   '5567': { label: 'Low credit score', nameOnFile: 'Arjun Mehta', dobOnFile: '1996-05-09', credit: { status: 'scored', score: 598 }, sanctions: 'clear' },
   '7301': { label: 'SSN belongs to someone else', nameOnFile: 'Vikram Nambiar', dobOnFile: '1979-02-02', credit: { status: 'scored', score: 701 }, sanctions: 'clear' },
   '2218': { label: 'Clean at the bureau (expired ID is a document problem)', nameOnFile: 'Meera Iyer', dobOnFile: '1990-09-21', credit: { status: 'scored', score: 715 }, sanctions: 'clear' },
-  '4410': { label: 'Thin file, no credit history', nameOnFile: 'Kavya Reddy', dobOnFile: '2003-07-09', credit: { status: 'thin-file' }, sanctions: 'clear' },
+  '4410': { label: 'Low credit score', nameOnFile: 'Kavya Reddy', dobOnFile: '2003-07-09', credit: { status: 'scored', score: 572 }, sanctions: 'clear' },
   // Demo-only applicant (not seeded): created live in the jury demo, see docs/DEMO_SCRIPT.md.
   '8842': { label: 'Clean borrower (live demo applicant)', nameOnFile: 'Nisha Rao', dobOnFile: '1993-02-15', credit: { status: 'scored', score: 720 }, sanctions: 'clear' },
   '6150': { label: 'Clean at the bureau (visa ends before the loan: a residency exception)', nameOnFile: 'Lakshmi Pillai', dobOnFile: '1992-04-18', credit: { status: 'scored', score: 730 }, sanctions: 'clear' },
