@@ -72,6 +72,7 @@ export function buildFacts({ findings, documents, missing, unmet, met, duplicate
       sourceTitle: f.document, section: 'Verification checks',
       text: redactText(`${f.document}, ${f.check} (${f.severity}): expected ${expected}; found ${found}. ${f.explanation || ''}`.trim()),
       summary: `${f.document}, ${f.check}: expected ${expected}; found ${found}.`,
+      gist: `${f.document}: ${f.check} check flagged`,
     });
   }
   for (const type of missing) {
@@ -80,6 +81,7 @@ export function buildFacts({ findings, documents, missing, unmet, met, duplicate
       sourceTitle: 'Application record', section: 'Required documents',
       text: `${docLabel(type)} is required and has not been uploaded.`,
       summary: `${docLabel(type)} is required and has not been uploaded.`,
+      gist: `${docLabel(type)} not uploaded`,
     });
   }
   for (const p of unmet) {
@@ -88,25 +90,26 @@ export function buildFacts({ findings, documents, missing, unmet, met, duplicate
       sourceTitle: 'Approval requirements', section: p.label,
       text: `Requirement not met: ${p.label}. ${p.detail || ''}${p.waivable ? ' An underwriter can waive this.' : ''}`.trim(),
       summary: `Requirement not met: ${p.label}. ${p.detail || ''}`.trim(),
+      gist: `${p.label} not met`,
     });
   }
   for (const d of duplicates) {
     const text = d.kind === 'different-name'
       ? 'An earlier application used the same SSN last 4 digits and date of birth under a different name.'
       : 'The same person has another application that is still open.';
-    facts.push({ kind: 'fact', side: 'against', mandatory: true, sourceTitle: 'Identity check', section: 'Duplicate identity', text, summary: text });
+    facts.push({ kind: 'fact', side: 'against', mandatory: true, sourceTitle: 'Identity check', section: 'Duplicate identity', text, summary: text, gist: 'Identity matches another application' });
   }
   // What is in the applicant's favour, from the same checks.
   for (const doc of currentDocuments(documents)) {
     const matching = (doc.verification?.checks || []).filter((c) => c.status === 'match').map((c) => c.field);
     if (matching.length) {
       const text = `${docLabel(doc.docType)}: these checks match the application: ${matching.join(', ')}.`;
-      facts.push({ kind: 'fact', side: 'for', sourceTitle: docLabel(doc.docType), section: 'Verification checks', text, summary: text });
+      facts.push({ kind: 'fact', side: 'for', sourceTitle: docLabel(doc.docType), section: 'Verification checks', text, summary: text, gist: `${docLabel(doc.docType)} matches the application` });
     }
   }
   for (const p of met) {
     const text = `Requirement met: ${p.label}. ${p.detail || ''}`.trim();
-    facts.push({ kind: 'fact', side: 'for', sourceTitle: 'Approval requirements', section: p.label, text, summary: text });
+    facts.push({ kind: 'fact', side: 'for', sourceTitle: 'Approval requirements', section: p.label, text, summary: text, gist: `${p.label}: met` });
   }
   return facts;
 }
@@ -207,7 +210,7 @@ export function parsePoints(raw, pool) {
 
 // ---------- 6. Assembly, coverage guard and fallbacks ----------
 
-const rulePoint = (item) => ({ text: clip(redactText(item.summary || item.text), MAX_POINT_CHARS), origin: 'rule', cites: [citeOf(item)] });
+const rulePoint = (item) => ({ text: clip(redactText(item.summary || item.text), MAX_POINT_CHARS), gist: item.gist, origin: 'rule', cites: [citeOf(item)] });
 
 // Every mandatory fact must be cited on the AGAINST side. Anything the model skipped is added from the
 // database wording, so the officer never sees a risk-side that leaves out a flag the system knows about.
@@ -237,7 +240,7 @@ export function assembleReview({ forRaw, againstRaw, pool }) {
 // ---------- 7. The hearing ----------
 
 // Scripted demo points (config/demoCaseFiles.js) join each side ahead of the record-derived points.
-const scriptedPoint = (p) => ({ text: p.text, origin: 'demo', cites: p.cites, reply: p.reply || null });
+const scriptedPoint = (p) => ({ text: p.text, gist: p.gist, origin: 'demo', cites: p.cites, reply: p.reply || null });
 
 // The two sides as a spoken exchange: the risk reviewer opens, then they alternate. Every point on the
 // risk side is heard (the coverage guard promised the officer would see every flag); the advocate is
@@ -254,6 +257,22 @@ export function buildDebate(against, forSide) {
     if (advocate[i]) turns.push(turn('for', advocate[i]));
   }
   return turns;
+}
+
+// The closing report: every point as one short line, no references. Scripted points carry a written gist;
+// others use their first sentence. Every risk-side point is listed (the coverage guard applies here too);
+// the advocate's side is capped like the hearing.
+export const gistOf = (p) => {
+  if (p.gist) return p.gist;
+  const first = String(p.text || '').split(/(?<=[.!?])\s/)[0].trim();
+  return clip(first, 110).replace(/[.]$/, '');
+};
+export function buildSummary(against, forSide) {
+  const uniq = (list) => [...new Set(list)];
+  return {
+    concerns: uniq(against.points.map(gistOf)),
+    strengths: uniq(forSide.points.slice(0, MAX_ADVOCATE_TURNS).map(gistOf)),
+  };
 }
 
 // ---------- 8. The review ----------
@@ -317,6 +336,7 @@ export async function runCourtroom({ application, documents, assessment, duplica
     for: review.for,
     against: review.against,
     debate: buildDebate(review.against, review.for),
+    summary: buildSummary(review.against, review.for),
     openItems: missing.length + unmet.length,
   };
 }
