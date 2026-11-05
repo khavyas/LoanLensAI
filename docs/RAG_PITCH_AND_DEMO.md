@@ -92,7 +92,7 @@ What not to claim:
 
 ## Two-sided file review (a two-minute segment)
 
-Sign in as the officer, open **Meera Iyer** (expired licence), Assistant tab, press the **Two-sided review** button next to Summarize and List contradictions. Two columns appear: **For the applicant** (checks that match, requirements met) and **For caution** (the expired licence, the unmet requirement, the policy that governs it). Every point carries chips (S = the application record, F = the applicant's file, P = the approved policy). Then open **Priya Nair** (clean file): it says "No contest" and makes no model call.
+Sign in as the officer, open **Meera Iyer** (expired licence), Assistant tab, press the **Two-sided review** button next to Summarize and List contradictions. Two columns appear: **For the applicant** (checks that match, requirements met) and **For caution** (the expired licence, the unmet requirement, the policy that governs it). Every point carries chips (S = the application record, F = the applicant's file, P = the approved policy). Tap a chip to open the exact evidence it cites. While it works, a progress panel shows the steps as they happen (reading the record, collecting the checks, searching the file, looking up policy, weighing both sides, checking every point against its evidence); the steps are a guide to the real order of work, not live server progress. Then open **Priya Nair** (clean file): it says "No contest" and makes no model call.
 
 What to say:
 
