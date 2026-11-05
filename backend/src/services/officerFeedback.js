@@ -22,9 +22,13 @@ const OFFICER = /\b(officer|underwriter|reviewer|loan\s+team|bank\s+staff)\b/i;
 const FEEDBACK = /\b(say|said|says|comment\w*|feedback|remark\w*|notes?|decid\w*|decision|reviewed|looked|opened|seen|respond\w*|repl(?:y|ied)|told|think|thought)\b/i;
 const MINE = /\b(my|me|our|us)\b/i;
 
+// Words that can only mean "what did they write about this file", so "what comment was made by the loan
+// officer?" counts without "my". Broader words (decide, think) still need "my" to avoid policy questions.
+const WRITTEN = /\b(comment\w*|feedback|remark\w*|notes?|said|says?|replied|reply)\b/i;
+
 export const isOfficerFeedbackQuestion = (question) => {
   const q = String(question || '');
-  return OFFICER.test(q) && FEEDBACK.test(q) && MINE.test(q);
+  return OFFICER.test(q) && FEEDBACK.test(q) && (MINE.test(q) || WRITTEN.test(q));
 };
 
 export function officerFeedbackAnswer(question, application, documents = [], role = 'borrower') {

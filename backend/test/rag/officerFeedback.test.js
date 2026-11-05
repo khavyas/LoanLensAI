@@ -7,7 +7,7 @@ const doc = (docType, over = {}) => ({ docType, status: 'current', verification:
 const Q = 'what did the officer say about my application?';
 
 test('recognises questions about what the officer said, and ignores policy questions', () => {
-  for (const q of [Q, 'Has the loan officer reviewed my file?', 'Any comments from the underwriter on my loan?', 'What did the officer decide about me?']) {
+  for (const q of [Q, 'Has the loan officer reviewed my file?', 'Any comments from the underwriter on my loan?', 'What did the officer decide about me?', 'what comment was made by the loan officer?']) {
     assert.equal(isOfficerFeedbackQuestion(q), true, q);
   }
   for (const q of ['How long does the loan officer take to review?', 'What does the underwriter review?', 'What documents do I need?', 'What is the status of my application?']) {
