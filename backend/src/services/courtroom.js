@@ -234,9 +234,31 @@ export function assembleReview({ forRaw, againstRaw, pool }) {
   };
 }
 
-// ---------- 7. The review ----------
+// ---------- 7. The hearing ----------
 
-export async function runCourtroom({ application, documents, assessment, duplicates = [], fileEvidence = [], policyEvidence = [], generate, signal, log = console }) {
+// Scripted demo points (config/demoCaseFiles.js) join each side ahead of the record-derived points.
+const scriptedPoint = (p) => ({ text: p.text, origin: 'demo', cites: p.cites, reply: p.reply || null });
+
+// The two sides as a spoken exchange: the risk reviewer opens, then they alternate. Every point on the
+// risk side is heard (the coverage guard promised the officer would see every flag); the advocate is
+// capped so a long file stays watchable. A reply is the other side answering that point under cross-examination.
+export const MAX_ADVOCATE_TURNS = 4;
+export function buildDebate(against, forSide) {
+  const risk = against.points;
+  const advocate = forSide.points.slice(0, MAX_ADVOCATE_TURNS);
+  const turns = [];
+  const n = Math.max(risk.length, advocate.length);
+  const turn = (side, p) => ({ side, text: p.text, cites: p.cites, origin: p.origin, reply: p.reply ? { side: side === 'against' ? 'for' : 'against', ...p.reply } : null });
+  for (let i = 0; i < n; i += 1) {
+    if (risk[i]) turns.push(turn('against', risk[i]));
+    if (advocate[i]) turns.push(turn('for', advocate[i]));
+  }
+  return turns;
+}
+
+// ---------- 8. The review ----------
+
+export async function runCourtroom({ application, documents, assessment, duplicates = [], fileEvidence = [], policyEvidence = [], generate, signal, demoCase = null, log = console }) {
   const findings = collectFindings(documents);
   const missing = missingDocuments(application, documents);
   const params = assessment?.parameters || [];
@@ -244,7 +266,9 @@ export async function runCourtroom({ application, documents, assessment, duplica
   const unmet = params.filter((p) => p.status === 'unmet');
   const met = params.filter((p) => p.status === 'met');
   const gate = courtroomEligible({ findings, missing, unmet, duplicates });
-  const base = { version: COURTROOM_VERSION, decisionAid: DECISION_AID };
+  if (demoCase && !gate.eligible) { gate.eligible = true; gate.reasons = []; }
+  if (demoCase) gate.reasons = [...gate.reasons, demoCase.reason];
+  const base = { version: COURTROOM_VERSION, decisionAid: DECISION_AID, subject: application.applicantName || null };
   if (!gate.eligible) return { ...base, eligible: false, noContest: gate.message, for: null, against: null, degraded: false };
 
   const facts = buildFacts({ findings, documents, missing, unmet, met, duplicates });
@@ -264,6 +288,12 @@ export async function runCourtroom({ application, documents, assessment, duplica
     failures = 2;
   }
   const review = assembleReview({ forRaw, againstRaw, pool });
+  if (demoCase) {
+    review.for.points = [...demoCase.for.map(scriptedPoint), ...review.for.points];
+    review.against.points = [...demoCase.against.map(scriptedPoint), ...review.against.points];
+    review.for.empty = false;
+    review.against.empty = false;
+  }
   const degraded = failures > 0;
   log.info?.('[courtroom]', {
     version: COURTROOM_VERSION,
@@ -275,6 +305,7 @@ export async function runCourtroom({ application, documents, assessment, duplica
     addedByRules: review.against.addedByRules,
     rejected: review.rejected,
     degraded,
+    demo: Boolean(demoCase),
   });
   return {
     ...base,
@@ -282,8 +313,10 @@ export async function runCourtroom({ application, documents, assessment, duplica
     reasons: gate.reasons,
     degraded,
     degradedNote: degraded ? 'The assistant model was not available for at least one side, so that side shows the checks from the record only.' : null,
+    scripted: Boolean(demoCase),
     for: review.for,
     against: review.against,
+    debate: buildDebate(review.against, review.for),
     openItems: missing.length + unmet.length,
   };
 }

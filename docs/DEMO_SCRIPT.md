@@ -263,7 +263,7 @@ All logins use password `demo1234`.
 
 | Order | Borrower (login) | What to do | What the jury sees | Line to say |
 |---|---|---|---|---|
-| 1 | **Priya Nair** (`priya.nair@example.demo`) | Run the checks | Identity verified, sanctions clear, score 742, every parameter **Met**, Approve enabled | "The happy path: everything is checked, nothing needs a human beyond the sign-off." |
+| 1 | **Priya Nair** (`priya.nair@example.demo`) | Run the checks | Identity verified, score 742, but **Sanctions and background screening: Failed** (one FIR on record, no tax history found), Approve disabled | "Her paperwork is perfect and the background check is not. Documents alone never decide a loan." |
 | 2 | **Rohan Desai** (`rohan.desai@example.demo`) | Run the checks | Identity **Failed**, credit report **Skipped**, no referral possible | "His documents are perfect — but the SSN belongs to someone else. This is how a stolen or mistyped identity gets caught, and nobody can override it." |
 | 3 | **Meera Iyer** (`meera.iyer@example.demo`) | Open **Action Needed** (no simulation) | Drivers License: **ID expiry** mismatch, Re-upload button | "A real document check: policy does not accept an expired ID, and the borrower is told exactly what to fix." |
 | 4 | **Arjun Mehta** (`arjun.mehta@example.demo`) | Run the checks, then refer, then switch user | Score **598** against a 620 minimum: Approve is disabled, Refer is enabled | "A low score is not the end — but only a named senior role can approve outside the rules." |

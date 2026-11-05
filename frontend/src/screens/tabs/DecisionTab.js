@@ -125,7 +125,7 @@ export default function DecisionTab({ app, onChanged }) {
   const checkRows = report
     ? [
         { title: 'Identity (SSN, name, date of birth)', ...report.identity },
-        { title: 'Sanctions screening', ...report.sanctions },
+        { title: 'Sanctions and background screening', ...report.sanctions },
         { title: 'Credit report', ...report.credit },
       ]
     : [];
@@ -169,6 +169,12 @@ export default function DecisionTab({ app, onChanged }) {
                     <Pill tone={CHECK_TONE[r.status]}>{CHECK_LABEL[r.status]}</Pill>
                   </View>
                   <Text style={styles.paramDetail}>{r.detail}</Text>
+                  {(r.findings || []).map((f) => (
+                    <Text key={f.label} style={styles.paramDetail}>
+                      <Text style={{ fontWeight: '700', color: colors.danger }}>{f.label}: </Text>
+                      {f.text}
+                    </Text>
+                  ))}
                 </View>
               </View>
             ))}

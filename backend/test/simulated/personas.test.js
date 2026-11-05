@@ -37,12 +37,22 @@ function story(name) {
 
 const param = (a, key) => a.parameters.find((p) => p.key === key);
 
-test('Priya Nair: clean documents, clean bureau — a loan officer can approve', () => {
+test('Priya Nair: spotless documents and a 742 score, but the background screening fails and cannot be waived', () => {
   const s = story('Priya Nair');
-  assert.deepEqual(s.assessment.unmetKeys, []);
-  assert.equal(s.assessment.canApprove, true);
+  assert.equal(s.exceptions.length, 0, 'every document check passes');
   assert.equal(s.report.credit.score, 742);
-  assert.equal(s.exceptions.length, 0);
+  assert.equal(s.report.sanctions.status, 'failed');
+  assert.match(s.report.sanctions.detail, /FIR/);
+  assert.deepEqual(s.report.sanctions.findings.map((f) => f.label), ['Police records', 'Tax and social responsibility']);
+  assert.deepEqual(s.assessment.unmetKeys, ['sanctions']);
+  assert.equal(s.assessment.canApprove, false);
+  assert.equal(s.assessment.canRefer, false, 'a failed screening is not an exception an underwriter can waive');
+});
+
+test("Anil Kapoor reuses Priya's SSN but does not inherit her background record", () => {
+  const r = runSimulatedChecks({ applicantName: 'Anil Kapoor', ssnLast4: '9034', dateOfBirth: new Date('1991-11-22') }, { now: NOW });
+  assert.equal(r.identity.status, 'failed');
+  assert.equal(r.sanctions.status, 'clear');
 });
 
 test('Arjun Mehta: score 598 is the only shortfall, so the file can be referred for an exception', () => {

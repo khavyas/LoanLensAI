@@ -90,27 +90,19 @@ What not to claim:
 - Do not say it tests doctored images. The attacks edit the extracted fields; checking a tampered picture needs the live vision model (tracker FA-12).
 - Say that the "should be caught" label was set from what the checks were designed to do. The value of the arena is that it re-measures this every time a check changes: `npm run arena -- --runs 200 --seed 7` exits with an error if any result differs from its label.
 
-## Two-sided file review (a two-minute segment)
+## The courtroom (a two-minute segment)
 
-Sign in as the officer, open **Meera Iyer** (expired licence), Assistant tab, press the **Two-sided review** button next to Summarize and List contradictions. Two columns appear: **For the applicant** (checks that match, requirements met) and **For caution** (the expired licence, the unmet requirement, the policy that governs it). Every point carries chips (S = the application record, F = the applicant's file, P = the approved policy). Tap a chip to open the exact evidence it cites. While it works, a progress panel shows the steps as they happen (reading the record, collecting the checks, searching the file, looking up policy, weighing both sides, checking every point against its evidence); the steps are a guide to the real order of work, not live server progress. Then open **Priya Nair** (clean file): it says "No contest" and makes no model call.
+Sign in as the officer, open an application, Assistant tab, press **Open the courtroom**. A progress panel ("The court is assembling") runs first, then the hearing opens in one box: the risk reviewer speaks, the advocate answers, and they alternate as chat bubbles, each with a typing pause. The officer is the judge: **Sustain** a point that persuades them, **Overrule** one that does not (the scale at the top tilts with their own weighing, nothing else), or **Cross-examine** a point to hear the other side answer it. Chips open the evidence (S = application record, F = applicant's file, P = approved policy, ◆ X = scripted demo exhibit). Nothing is saved and nothing recommends an outcome.
 
-What to say:
+Three scripted case files (config/demoCaseFiles.js, matched on name and SSN, labelled as scripted on screen):
 
-- "A summary gives the officer one story. This makes both cases, each backed by evidence they can click, before they decide."
-- "It is a decision aid. The banner says so. It never recommends approve or decline; any point that sounds like a verdict is thrown away."
-- "Every flag the database knows about appears on the caution side even if the model forgets it, and the model cannot silence it. A point with no valid citation, or a figure that is not in what it cites, is dropped."
-- "If the chat model is down, the columns fill from the record alone and the screen says so."
+| Borrower | Story | Lines to land |
+| --- | --- | --- |
+| **Meera Iyer** | Expired licence plus a spending pattern: 41 food-delivery orders (Swiggy 23, Zomato 18), 17 Amazon orders, 6 mall visits, $162 left at month end | Cross-examine the first risk point: the advocate answers that rent and utilities cleared on time with no overdrafts. |
+| **Jordan Rivera** | Three employers in 12 months, traced from payroll credits and an SSN employment trace | "How do we know he will still be earning in a year?" The advocate answers with the narrow pay band and the confirmed employers. |
+| **Priya Nair** | Perfect paperwork, but the background screening failed (one FIR, no tax history). Open her **Decision** tab first to show it. | Cross-examine the tax point: the advocate answers that her pay stub shows $868.98 withheld. |
 
-What it is not (the scope decision for this feature):
-
-- It does not recommend an outcome, score the borrower, or use any outside data.
-- It opens only for files with something flagged (a failed or warned check, an unmet requirement, or an identity that matches another application). Items not yet run, such as sanctions screening, count neither way.
-- Personal values (date of birth, address, name, SSN) are replaced by "hidden for privacy" before anything is sent to the model. The audit log records counts and chunk IDs, not text.
-
-What not to claim:
-
-- Do not call it a trial or say "AI judges the loan". The file is reviewed from two sides and the human decides.
-- The model-written wording has not been measured on Render yet; the offline tests prove the safeguards (citations, figures, verdict wording, coverage), not that every sentence reads well. Run it on Render before the demo and read both sides once.
+These numbers and records are scripted, as is the simulated bureau; say so. Any other applicant runs the same screen from the real record, and a clean file says "Case dismissed: no contest" with no model call.
 
 ## How answer quality is measured
 
