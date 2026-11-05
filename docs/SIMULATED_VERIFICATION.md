@@ -45,7 +45,7 @@ been run, nothing can be approved or referred (the identity, sanctions and credi
 | **Arjun Mehta** — low score | `arjun.mehta@example.demo` | Score 598 against a 620 minimum. Officer cannot approve, refers; underwriter approves as an exception. |
 | **Rohan Desai** — SSN mismatch | `rohan.desai@example.demo` | Documents look fine, but the SSN is on file for a different person: identity **fails**, credit is skipped, and no one can waive it. |
 | **Meera Iyer** — expired ID | `meera.iyer@example.demo` | Her licence expired 04/30/2026: rejected as a document, shown in Action Needed with a Re-upload button. Real check, not simulated. |
-| **Kavya Reddy** — no credit history | `kavya.reddy@example.demo` | Documents fine, but a "thin file": no score exists, so the file needs manual review (enter a score by hand, or decline). |
+| **Kavya Reddy** — low credit score | `kavya.reddy@example.demo` | Documents fine, credit score 572 (minimum 660). The only shortfall, so the officer can refer it and an underwriter can approve as an exception with compensating factors. |
 | **Anil Kapoor** — reused identity | `anil.kapoor@example.demo` | Same SSN last-4 and date of birth as Priya Nair, under a different name. The **duplicate-identity** check stops his file *before any bureau call* and links to the earlier record; the bureau then also says the SSN is Priya's. Priya's own file is unaffected. Cannot be waived. |
 | **Lakshmi Pillai** — visa ends before the loan | `lakshmi.pillai@example.demo` | Everything clean (score 730), but her visa runs to 2028-06-30 and a 36-month loan runs to 2029-10. **Residency** is Not Met, so the officer cannot approve; the underwriter can approve with a condition such as proof of renewal. |
 
