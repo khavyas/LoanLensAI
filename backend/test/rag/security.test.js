@@ -43,11 +43,11 @@ function populatedStore() {
   return { rows, search };
 }
 
-test('leakage matrix: every application x role sees only its own current, permitted chunks (0 leaks)', async () => {
+test('leakage matrix: every application x role sees only its own current, permitted chunks (0 leaks); unknown roles are refused', async () => {
   const { search } = populatedStore();
   let checked = 0;
   for (const app of APPS) {
-    for (const role of ['borrower', 'officer', 'underwriter', 'admin', 'unknown-role', undefined]) {
+    for (const role of ['borrower', 'officer', 'underwriter', 'admin']) {
       const found = await retrieveFileEvidence({ application: { _id: app }, role, embedding: [0], topK: 50, deps: { search } });
       const text = found.map((e) => e.text).join('\n');
       for (const other of APPS.filter((a) => a !== app)) {
@@ -55,13 +55,17 @@ test('leakage matrix: every application x role sees only its own current, permit
       }
       assert.doesNotMatch(text, /\(superseded\)/, `${role} on ${app} saw a superseded chunk`);
       assert.match(text, new RegExp(SECRET(app, 'borrower')));
-      // Only a signed-in borrower is restricted to the borrower audience; every other value of role is
-      // treated as staff, so the role must have come from the verified token (see the access test below).
-      if (role === 'borrower') assert.doesNotMatch(text, /-staff\b/, 'borrower saw staff-only text');
+      // Only staff may read staff-only text; borrowers and admins (who chat as an applicant) may not.
+      if (role === 'borrower' || role === 'admin') assert.doesNotMatch(text, /-staff\b/, `${role} saw staff-only text`);
+      else assert.match(text, new RegExp(SECRET(app, 'staff')));
       checked += 1;
     }
+    // An unrecognised or missing role fails closed: no search is run at all.
+    for (const role of ['unknown-role', 'Officer', '', undefined, null]) {
+      await assert.rejects(retrieveFileEvidence({ application: { _id: app }, role, embedding: [0], deps: { search } }), /Unknown role/, String(role));
+    }
   }
-  assert.equal(checked, APPS.length * 6);
+  assert.equal(checked, APPS.length * 4);
 });
 
 test('the filter cannot be changed by the question, the model, or extra arguments', async () => {
