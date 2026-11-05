@@ -20,14 +20,16 @@ The administrator already has the bank's eight real policies in the policy conso
 | 1 | **Jordan** (borrower@loanlens.demo) | Asks: **What is the grace period for late payments?** | It says it could not find that in the approved policies. |
 | 2 | **Administrator** (admin@loanlens.demo, from "Administrator sign in") | Uploads **v1** `demo-grace-period.md` in the policy console. | The console lists the file with 4 chunks. |
 | 3 | **Jordan** | Asks the same question as step 1 again. | **10 days**, with a source chip naming `demo-grace-period.md`. |
-| 4 | **Jordan** | Asks: **How many days can I be late without a fee?** | **10 days**, and a $25 fee after that. |
+| 4 | **Jordan** | Asks: **How many days can I be late without a fee?** | You can be late for up to **10 days** without a fee. |
 | 5 | **Administrator** | Uploads **v2** `demo-grace-period.md` (same name, now 15 days). | Still 4 chunks; the old text is replaced. |
 | 6 | **Jordan** | Asks the question from step 1 again: **What is the grace period for late payments?** | **15 days**. No trace of 10. |
-| 7 | **Jordan** | Asks the question from step 4 again: **How many days can I be late without a fee?** | **15 days**, and a $25 fee after that. |
+| 7 | **Jordan** | Asks the question from step 4 again: **How many days can I be late without a fee?** | Up to **15 days** without a fee. |
 | 8 | **Administrator** | Deletes `demo-grace-period.md` in the console. | The file disappears from the list. |
 | 9 | **Jordan** | Asks the grace-period question once more. | It could not find that again. |
 
 Upload **v1** at step 2, after Jordan has seen "could not find". Upload **v2** at step 5, after Jordan has seen the 10-day answer and the $25 fee. Steps 8 and 9 are the clean-up and are optional.
+
+The assistant answers only what was asked, so it will not mention the $25 fee unless you ask. To show that the whole new document is searchable, ask **What is the late fee?** at any point after step 2: it answers **$25**, in both versions (the fee does not change between v1 and v2).
 
 If the Chroma Cloud dashboard is open in another tab, refresh it after steps 2, 5 and 8: the records carry `sourceFile: demo-grace-period.md`, the text changes from 10 to 15 days after step 5, and the records are gone after step 8.
 
